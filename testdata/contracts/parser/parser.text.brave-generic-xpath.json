@@ -14,6 +14,11 @@
   },
   "fixture_id": "parser.text.brave-generic-xpath",
   "input": {
+    "elements_order": [
+      "title",
+      "href",
+      "body"
+    ],
     "elements_xpath": {
       "body": ".//div[contains(@class, 'snippet')]//div[contains(@class, 'content')]//text()",
       "href": ".//a[div[contains(@class, 'title')]]/@href",

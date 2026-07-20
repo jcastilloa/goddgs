@@ -169,9 +169,18 @@ from Git alone today. Task 2.1 must resolve, record, and retain the exact
 installed runtime versions (and ideally wheel hashes) used to generate every
 fixture. This record is fixture provenance, not a new upstream baseline.
 
-Potential parser candidate `github.com/antchfx/htmlquery` exists, but it is not
-accepted by this audit. Its XPath behavior, HTML recovery, maintenance state,
-license, and fixture results must be reviewed in the OpenSpec task.
+Parser evaluation (task 4.1) selected pure-Go
+`github.com/lestrrat-go/helium v0.6.0` behind `internal/parser`: its isolated
+adapter probe matched all 14 frozen lxml XPath fixtures and its HTML/XPath
+packages passed under `-race`. `github.com/antchfx/htmlquery v1.3.6` was
+rejected after two semantic mismatches: Yahoo News XPath union returned
+`primary.jpg` instead of lxml `fallback.jpg`, and malformed Startpage recovery
+included `Body` in title. Details, license, cgo review, and update rule are in
+`docs/dependency-decisions.md`. Tasks 4.2–4.5 then implemented the internal
+adapter with all source XPath strings unchanged, `json.Decoder.UseNumber` for
+JSON engines, race checks for independent/shared read-only documents, and
+representative offline benchmarks. This does not prove engine request,
+transport, TLS/fingerprint, or engine-specific post-processing parity.
 
 ## Implementation blockers and required responses
 

@@ -14,6 +14,11 @@
   },
   "fixture_id": "parser.text.duckduckgo-generic-xpath",
   "input": {
+    "elements_order": [
+      "title",
+      "href",
+      "body"
+    ],
     "elements_xpath": {
       "body": "./a//text()",
       "href": "./a/@href",

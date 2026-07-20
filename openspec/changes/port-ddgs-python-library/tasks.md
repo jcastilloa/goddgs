@@ -30,11 +30,11 @@
 
 ## 4. Parser/XPath compatibility gate
 
-- [ ] 4.1 Evaluate Go HTML/XPath candidates against frozen lxml fixtures; document version, license, maintenance, semantic differences, and acceptance/rejection evidence.
-- [ ] 4.2 Write failing table-driven parser tests for every source XPath expression, malformed HTML recovery, unions, attributes, whitespace, and Anna's Archive comment removal.
-- [ ] 4.3 Implement/select parser adapter only after evidence; make XPath fixtures green without selector rewrites merely to fit implementation.
-- [ ] 4.4 Add JSON extraction tests preserving absent/null/nested/mixed behavior for Grokipedia, Bing Images metadata, and DuckDuckGo media/video responses.
-- [ ] 4.5 Run parser contracts under race detection and benchmark representative fixtures; record intentional limits before proceeding.
+- [x] 4.1 Evaluate Go HTML/XPath candidates against frozen lxml fixtures; document version, license, maintenance, semantic differences, and acceptance/rejection evidence. Evidence: 14 synthetic `lxml` fixtures under `testdata/contracts/parser/`; pure-Go `github.com/lestrrat-go/helium v0.6.0` matched 14/14, passed its `html`/`xpath1` tests under `-race`, and is documented in `docs/dependency-decisions.md`. `htmlquery v1.3.6` was rejected after Yahoo union and malformed Startpage recovery divergences; cgo `libxml2` was rejected (2026-07-20).
+- [x] 4.2 Write failing table-driven parser tests for every source XPath expression, malformed HTML recovery, unions, attributes, whitespace, and Anna's Archive comment removal. Evidence: `internal/parser/parser_test.go` was RED against the unavailable adapter, then retained 14 frozen lxml fixtures with source expressions/order and no selector rewrites (2026-07-20).
+- [x] 4.3 Implement/select parser adapter only after evidence; make XPath fixtures green without selector rewrites merely to fit implementation. Evidence: `internal/parser/parser.go` uses the reviewed internal Helium HTML/XPath adapter; all 14 lxml XPath fixtures, including document union order and malformed recovery, pass (2026-07-20).
+- [x] 4.4 Add JSON extraction tests preserving absent/null/nested/mixed behavior for Grokipedia, Bing Images metadata, and DuckDuckGo media/video responses. Evidence: seven table-driven `json_loads` contracts, including malformed/trailing JSON errors, in `internal/parser/json_test.go`; `DecodeJSON` retains `json.Number`, null, absent map keys, nested maps/lists, and mixed values (2026-07-20).
+- [x] 4.5 Run parser contracts under race detection and benchmark representative fixtures; record intentional limits before proceeding. Evidence: `go test -race -count=20 ./internal/parser`, independent and shared-document concurrent reads, `CGO_ENABLED=0 go test ./internal/parser`, and 100x representative XPath/JSON benchmarks pass. Parser remains offline-only; it neither proves transport/fingerprints nor engine-specific post-processing (2026-07-20).
 
 ## 5. Transport compatibility gate
 

@@ -14,6 +14,11 @@
   },
   "fixture_id": "parser.text.yahoo-generic-xpath",
   "input": {
+    "elements_order": [
+      "title",
+      "href",
+      "body"
+    ],
     "elements_xpath": {
       "body": ".//div[contains(@class, 'Text')]//text()",
       "href": ".//div[contains(@class, 'Title')]//a/@href",

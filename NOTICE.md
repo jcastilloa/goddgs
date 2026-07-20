@@ -9,3 +9,7 @@
 
 No upstream affiliation or endorsement is implied. Any future third-party Go
 dependency must have its license and provenance reviewed before addition.
+
+Parser dependency notice:
+
+- `github.com/lestrrat-go/helium` v0.6.0, Copyright (c) 2015 lestrrat, MIT.

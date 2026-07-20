@@ -14,6 +14,11 @@
   },
   "fixture_id": "parser.images.bing-special-xpath",
   "input": {
+    "elements_order": [
+      "metadata",
+      "dimension",
+      "source"
+    ],
     "elements_xpath": {
       "dimension": ".//div[contains(@class, 'img_info')][./span]/span[@class='nowrap']/text()",
       "metadata": ".//a[@class='iusc']/@m",

@@ -14,6 +14,11 @@
   },
   "fixture_id": "parser.text.google-generic-xpath",
   "input": {
+    "elements_order": [
+      "title",
+      "href",
+      "body"
+    ],
     "elements_xpath": {
       "body": "./div/div[last()]//text()",
       "href": ".//a[.//h3]/@href",

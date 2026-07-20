@@ -12,16 +12,17 @@ verification result.
   `github.com/jcastillo/goddgs`.
 - Active OpenSpec change: `openspec/changes/port-ddgs-python-library/`.
 - Public façade/configuration, normalizers, ordered result aggregation, ranker,
-  backend selection/static registry, and an isolated fixture-tested scheduler
-  core are implemented. No live search engine, transport, parser, renderer,
-  extraction implementation, or public-client-to-engine composition exists
-  yet; those internal package boundaries remain intentional.
+  backend selection/static registry, isolated fixture-tested scheduler core,
+  and offline HTML/XPath/JSON parser adapter are complete. No live search
+  engine, transport, renderer, extraction implementation, or
+  public-client-to-engine composition exists yet; those internal package
+  boundaries remain intentional.
 - Tasks 2.1–2.7 are complete. The isolated Python oracle lives temporarily at
   `/tmp/goddgs-reference-a12929a`; exact resolved packages and rebuild steps
   are in `docs/reference-environment.md`. It made no external engine request.
-- Fixture corpus has 217 deterministic synthetic/offline contracts: 129 pure,
-  79 engine-visible, and 9 extract contracts under their respective
-  `testdata/contracts/` directories. `tools/reference_capture.py --check`
+- Fixture corpus has 238 deterministic synthetic/offline contracts: 129 pure,
+  79 engine-visible, 9 extract, and 21 parser contracts under their
+  respective `testdata/contracts/` directories. `tools/reference_capture.py --check`
   validates frozen SHA, resolved-package provenance, result/error shape, trace
   order, kind-specific redaction, output separation, a dynamic matrix for every
   active engine (option-bearing success, empty 200, malformed 200, 503/None),
@@ -130,13 +131,16 @@ Treat registry output as truth.
 | Source dependency | Why it matters | Go status |
 | --- | --- | --- |
 | `primp>=1.2.3` | randomized browser impersonation, TLS/HTTP behavior, proxy/certs, HTML render properties | hard compatibility gate; `net/http` alone is not assumed sufficient |
-| `lxml>=4.9.4` | tolerant HTML parse + XPath | need fixture-proven Go XPath/parser choice |
+| `lxml>=4.9.4` | tolerant HTML parse + XPath | Helium v0.6.0 internal adapter passes 14 frozen lxml fixtures; JSON decoder preserves `json.Number`/raw mixed values |
 | `httpx[http2,socks,brotli]`, `httpcore`, `h2` | DDG text temporary client; random HTTP/2/TLS behavior | hard compatibility gate |
 | `fake-useragent>=2.2.0` | DDG text random user agent | capture/preserve acceptable UA behavior |
 | Click/FastAPI/Uvicorn/MCP | CLI/service only | explicitly excluded |
 
-Go candidate `github.com/antchfx/htmlquery` was discovered but is not approved
-yet. It must pass all captured XPath fixtures before adoption.
+Go parser `github.com/lestrrat-go/helium v0.6.0` is approved and implemented
+behind `internal/parser` after a 14/14 lxml corpus/race probe. `htmlquery
+v1.3.6` is rejected for XPath-union and malformed-HTML divergence. Parser JSON
+uses `UseNumber`, rejects a second top-level value, and leaves source field
+ordering to engine adapters.
 
 The frozen Python repository has no dependency lockfile; its `pyproject.toml`
 only declares lower bounds. Before fixture capture, task 2.1 must record exact
@@ -147,8 +151,9 @@ resolved runtime package versions (and preferably wheel hashes) as provenance.
 1. **Browser fingerprint parity — critical.** Source uses `primp` random
    impersonation and custom HTTP/2 settings. Need a Go transport strategy,
    proof per affected engine, and license/reproducibility review.
-2. **XPath/HTML parity — critical.** lxml recovery and XPath semantics may
-   differ from Go parsers. Every source selector needs response fixtures.
+2. **Engine parser integration — high.** Internal Helium/JSON parser contracts
+   are complete, but no engine adapter has consumed them with a real transport
+   response or source-specific post-processing yet.
 3. **`extract()` rendering — critical.** `primp` provides `text_markdown`,
    `text_plain`, and `text_rich`; no Go equivalent selected. Raw HTML/bytes
    are easy, rendered output needs differential fixtures.
@@ -188,8 +193,7 @@ resolved runtime package versions (and preferably wheel hashes) as provenance.
    never write an engine without its fixture evidence.
 3. Capture engine-visible request behavior and define the lossless per-category
    scheduler request shape; only then compose the public façade with engines.
-4. Prove parser/XPath adapter against fixtures.
-5. Implement transport capability and first engine vertically; then engine
+4. Implement transport capability and first engine vertically; then engine
    groups, extraction, race/live integration gates.
 
 ## Verification baseline
@@ -236,7 +240,7 @@ Verification recorded on 2026-07-20:
 | 2026-07-20 | Complete fixture schema and pure capture corpus | 23 synthetic/offline contracts cover normalizers, VQD, proxy, aggregation, ranker, backend selection, scheduler quirks, error classification, and lazy extraction selection; no engine HTTP occurred |
 | 2026-07-20 | Complete API/configuration TDD slice (tasks 3.1–3.2) | RED fixtures/tests preceded `ddgs.go`/`api.go`; constructor preserves absent vs empty proxy, `tb`, timeout nil/zero/default, TLS bool/PEM; façade preserves raw maps/content kinds and context cancellation through a private executor port |
 | 2026-07-20 | Complete normalizer TDD slice (tasks 3.3–3.4) | 72 fixture corpus proves text/URL/date/VQD/proxy parity, including malformed percent bytes, all Python HTML5 entities, Python-only `nGt;`/`nLt;`, VQD repr, and date error boundaries |
-| 2026-07-20 | Pin `golang.org/x/text` at `v0.31.0` | Its NFC table stays Unicode 15.0.0 on future Go toolchains; `v0.40.0` switches to Unicode 17 under Go 1.27. Go 1.27+ is intentionally rejected pending baseline review because standard Unicode tables also drift |
+| 2026-07-20 | Pin `golang.org/x/text` at `v0.40.0` with Go 1.26.1 minimum | Helium requires it; its `!go1.27` NFC table remains Unicode 15.0.0, while project guard continues rejecting Go 1.27+ before Unicode 17 can drift behavior |
 | 2026-07-20 | Model date normalization as `(value, error)` internally | Frozen CPython/Linux raises `ValueError`/`OSError` for out-of-range timestamps; formatting Go-only years would violate parity. Future JSON adapters must retain `json.Number` until integer/float distinction is resolved |
 | 2026-07-20 | Keep ordered internal `search.Result` fields until the public map boundary | Python aggregation selects the first eligible field in object insertion order, including dynamic fields; Go map iteration cannot carry this contract |
 | 2026-07-20 | Preserve raw body `len()` failures in duplicate aggregation | Frozen Python raises `TypeError` for falsy `None`/bool/numeric body values on the second duplicate; coercion or a friendly zero length would alter behavior |
@@ -247,6 +251,8 @@ Verification recorded on 2026-07-20:
 | 2026-07-20 | Complete active-engine request/response matrix (task 2.5) | 79 sanitized synthetic fixtures cover all 16 active category/engine pairs with option-bearing success, empty/malformed 200, and 503/`None`; capturer rejects frozen-registry pair missing required path |
 | 2026-07-20 | Complete extraction fixture corpus (task 2.6) | Nine sanitized loopback-only fixtures freeze raw bytes/text, Markdown/plain/rich output, unknown-format fallback, 503 error, selected response property, and invalid-UTF-8 behavior; no Go renderer is approved yet |
 | 2026-07-20 | Make fixture sanitation executable (task 2.7) | Capturer audits/rejects URL userinfo, unapproved loopback, local paths, auth headers, and secret/session/token-like cookies; manual corpus audit found only synthetic/public values and no live payload or credentials |
+| 2026-07-20 | Approve Helium for internal XPath adapter (task 4.1) | `github.com/lestrrat-go/helium v0.6.0` matched all 14 frozen lxml fixtures and upstream `html`/`xpath1` race tests; pure Go core, MIT license, no enabled cgo path. Reject htmlquery and cgo libxml2 binding; adapter remains TDD pending |
+| 2026-07-20 | Complete parser TDD gate (tasks 4.2–4.5) | `internal/parser` preserves 14 lxml XPath contracts plus 7 JSON contracts with `UseNumber`; cgo-off, race x20, concurrent-document reads, and representative 100x benchmarks pass. Parser remains an offline syntax/XPath boundary, not transport or engine proof. |
 
 ## Core TDD evidence — 2026-07-20
 
@@ -288,6 +294,16 @@ Verification recorded on 2026-07-20:
   source error heuristic, rank-before-slice, provider timing, and max-result
   forms. It snapshots optional request pointers and the engine slice at entry;
   each worker receives a separate immutable request value.
+- **RED/GREEN/REFACTOR 4.2–4.5:** XPath tests first failed against an
+  unavailable parser adapter; Helium then passed all source expressions,
+  document-order union, attributes, whitespace collapse, malformed recovery,
+  and Anna comment removal without selector rewrites. JSON tests first failed
+  against an unavailable decoder, then passed Grokipedia/Bing/DDG absent/null,
+  nested/mixed, malformed, and trailing-value fixtures. `golang-pro`,
+  hexagonal boundary review, `golang-testing`, TDD, clean-code, and
+  simplification applied. Parser code is pure/no goroutines, so concurrency and
+  debugger were N/A for implementation; task 4.5 nevertheless ran shared and
+  independent-document concurrent reads under `-race` x20 plus cgo-off tests.
 - **Skills assessed:** `golang-pro`, `go-clean-ddd-hexagonal` (public façade
   port), `golang-testing`, TDD RED/GREEN/REFACTOR, `clean-code`, and
   `go-code-simplification` applied. `go-concurrency-patterns` and

@@ -15,12 +15,13 @@ inventada para Go.
   versiones resueltas antes de sustituir expectativas. Cada fixture también
   guarda `source.resolved_packages` para que la procedencia quede junto al
   resultado, no sólo en documentación.
-- `contract.kind` vale `pure`, `engine` o `extract`. Los casos de motor deben
-  indicar categoría, motor y operación.
+- `contract.kind` vale `pure`, `engine`, `extract` o `parser`. Los casos de
+  motor y parser deben indicar categoría, motor y operación.
 - Los ficheros se separan por clase: `testdata/contracts/pure/`,
-  `testdata/contracts/engine/` y `testdata/contracts/extract/`. El capturador
-  conserva `--output` para los puros y expone `--engine-output` y
-  `--extract-output` para los otros dos destinos.
+  `testdata/contracts/engine/`, `testdata/contracts/extract/` y
+  `testdata/contracts/parser/`. El capturador conserva `--output` para los
+  puros y expone `--engine-output`, `--extract-output` y `--parser-output`
+  para los otros destinos.
 - `trace` conserva secuencia, no sólo petición final: bootstrap VQD, cookies,
   Startpage `sc`, Wikipedia extract y redirects son observables.
 - Una entrada `response` sintética conserva `status`, `text` y `content_hex`.
@@ -71,6 +72,25 @@ Antes de cada escritura, el capturador rechaza URL con userinfo, loopback no
 permitido, rutas locales, headers de autenticación y nombres de cookie que
 parecen secreto/sesión/token. Las cookies de payload de motor restantes son
 valores estáticos sintéticos revisados, no cookies de sesión.
+
+## Captura sintética de parser
+
+Las fixtures bajo `parser/` ejecutan el `lxml` congelado con el mismo
+`HTMLParser(remove_blank_text=True, remove_comments=True, remove_pis=True,
+collect_ids=False)` que `BaseSearchEngine`. Conservan HTML sintético, XPath
+fuente, valores XPath crudos, valor unido con el `"".join(...).split()` de
+fuente y `elements_order`. Esa lista conserva el orden de `elements_xpath` de
+Python; no se puede recuperar de un objeto JSON/mapa Go. Incluyen selectores de
+documento, uniones, atributos, recuperación HTML malformada y el
+preprocesado de Anna's Archive. No guardan HTML de terceros ni autorizan un
+selector reescrito para acomodar un parser Go.
+
+Las mismas fixtures incluyen operaciones `json_loads` de motores JSON:
+Grokipedia, metadata `m` de Bing Images y respuestas DuckDuckGo de imágenes,
+noticias y vídeo. Congelan claves ausentes frente a `null`, mapas/listas
+anidados, valores mixtos y errores de JSON truncado o con segundo valor. Go
+debe conservar números como `json.Number`; el orden de objetos JSON no se usa
+para resultado porque los adaptadores llevan orden declarado de campos fuente.
 
 ## Ejemplo mínimo puro
 

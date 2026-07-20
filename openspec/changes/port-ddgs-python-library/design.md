@@ -218,11 +218,24 @@ fingerprint dependency creates supply-chain/cgo risk.
 **Proven:** HTML engines use lxml recovery/XPath; `primp` provides Markdown,
 plain, rich extract properties.
 
-**Decision:** preserve source XPath expressions as contract and evaluate Go
-candidate parser against malformed/union/attribute fixture corpus.
-`github.com/antchfx/htmlquery` is a candidate only. Do not rewrite selectors
-to fit parser. Capture all extract formats and accept renderer only when corpus
+**Decision:** preserve source XPath expressions as contract and use
+`github.com/lestrrat-go/helium v0.6.0` behind `internal/parser`, never exposing
+its types. An isolated pure-Go probe matched all 14 frozen lxml fixtures,
+including document-order XPath union and malformed Startpage recovery; its
+HTML/XPath packages also passed under `-race`. The parser stays on its secure
+defaults: no external network/filesystem loader, DTD, XInclude, or cgo path.
+`github.com/antchfx/htmlquery v1.3.6` is rejected: it failed the Yahoo News
+union and malformed Startpage contracts. Do not rewrite selectors to fit a
+candidate. Capture all extract formats and accept renderer only when corpus
 matches; unknown format defaults to source Markdown.
+
+JSON-backed engines decode one complete JSON value through `internal/parser`
+with `json.Decoder.UseNumber`. This preserves integer-versus-float lexical
+form for later date normalization and retains `null`, missing map keys, nested
+objects, and lists without string coercion. A second JSON value is rejected,
+as `json.loads` does. JSON object insertion order is intentionally not a
+parser contract: engine adapters must pass their frozen source field mapping
+in declaration order to the ordered result boundary.
 
 ### Fixtures precede engine work; live testing is secondary
 
@@ -264,7 +277,6 @@ oracle encode guesses.
 1. What final Git remote/import path replaces `github.com/jcastillo/goddgs`?
 2. Which reviewed Go transport proves required fingerprinting without bad cgo,
    license, security, or maintenance trade-offs?
-3. Which parser matches lxml corpus, and where is an adapter required?
-4. Which renderer matches `primp` Markdown/plain/rich output?
-5. How should source-wide `DDGS.threads` map to Go without mutable global state?
-6. Can all source random choices be internal/injectable for deterministic tests?
+3. Which renderer matches `primp` Markdown/plain/rich output?
+4. How should source-wide `DDGS.threads` map to Go without mutable global state?
+5. Can all source random choices be internal/injectable for deterministic tests?

@@ -14,6 +14,11 @@
   },
   "fixture_id": "parser.text.bing-generic-xpath",
   "input": {
+    "elements_order": [
+      "title",
+      "href",
+      "body"
+    ],
     "elements_xpath": {
       "body": ".//p//text()",
       "href": ".//h2/a/@href",

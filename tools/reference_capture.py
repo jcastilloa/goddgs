@@ -3870,6 +3870,7 @@ def _parser_xpath_fixture(
             "html": html_text,
             "items_xpath": items_xpath,
             "elements_xpath": elements_xpath,
+            "elements_order": list(elements_xpath),
             "pre_process_html": "remove_comment_delimiters" if pre_process_html else "none",
         },
         _ok({"item_count": len(items), "items": output_items}),
@@ -4107,6 +4108,152 @@ def _parser_xpath_fixtures() -> list[Fixture]:
     return fixtures
 
 
+def _parser_json_fixtures() -> list[Fixture]:
+    """Capture json.loads values used by JSON-backed frozen engines."""
+    cases = [
+        (
+            "parser.text.grokipedia-json-absent-null-nested",
+            "text",
+            "grokipedia",
+            """
+            {
+              "results": [
+                {
+                  "title": "__Fixture Grokipedia__",
+                  "snippet": null,
+                  "nested": {"tags": ["fixture", null], "rank": 1}
+                }
+              ]
+            }
+            """,
+            [
+                "Grokipedia accesses this json.loads object with an optional null snippet and a required slug later.",
+                "The fixture deliberately omits slug to preserve absent-key behavior before engine-specific access.",
+            ],
+        ),
+        (
+            "parser.images.bing-metadata-json-mixed",
+            "images",
+            "bing",
+            """
+            {
+              "t": "Fixture Bing Image",
+              "murl": null,
+              "turl": "https://bing-image.fixture/thumb",
+              "purl": "https://bing-page.fixture/page",
+              "width": 640,
+              "height": 480,
+              "flags": [true, null],
+              "nested": {"ratio": 1.5}
+            }
+            """,
+            ["Bing Images applies json.loads to the HTML m attribute before selecting metadata fields."],
+        ),
+        (
+            "parser.images.duckduckgo-json-mixed",
+            "images",
+            "duckduckgo",
+            """
+            {
+              "results": [
+                {
+                  "title": "Fixture image",
+                  "image": "https://image.fixture/a",
+                  "thumbnail": null,
+                  "height": 480,
+                  "width": 640,
+                  "source": {"name": "fixture"}
+                }
+              ]
+            }
+            """,
+            ["DuckDuckGo Images copies JSON result values without string coercion."],
+        ),
+        (
+            "parser.news.duckduckgo-json-absent-null-mixed",
+            "news",
+            "duckduckgo",
+            """
+            {
+              "results": [
+                {
+                  "date": 1,
+                  "title": "Fixture news",
+                  "excerpt": null,
+                  "source": 7,
+                  "metadata": {"regions": ["us-en", null]}
+                }
+              ]
+            }
+            """,
+            ["DuckDuckGo News reads optional image/url fields with dict.get, so their absence must survive decoding."],
+        ),
+        (
+            "parser.videos.duckduckgo-json-heterogeneous",
+            "videos",
+            "duckduckgo",
+            """
+            {
+              "results": [
+                {
+                  "title": "Fixture video",
+                  "content": null,
+                  "duration": 12,
+                  "images": {"large": "https://video.fixture/large"},
+                  "published": 42,
+                  "publisher": null,
+                  "statistics": {"views": 9},
+                  "uploader": ["fixture", null]
+                }
+              ]
+            }
+            """,
+            ["DuckDuckGo Videos retains nested and heterogeneous JSON values in result fields."],
+        ),
+    ]
+
+    fixtures = []
+    for fixture_id, category, engine, source_json, notes in cases:
+        source_json = source_json.strip()
+        fixtures.append(
+            _parser_fixture(
+                fixture_id,
+                category,
+                engine,
+                "json_loads",
+                {"json": source_json},
+                _ok(json.loads(source_json)),
+                notes=notes,
+            )
+        )
+
+    trailing_json = '{"results": []} {"unexpected": true}'
+    fixtures.append(
+        _parser_fixture(
+            "parser.text.grokipedia-json-trailing-data-error",
+            "text",
+            "grokipedia",
+            "json_loads",
+            {"json": trailing_json},
+            _error(lambda: json.loads(trailing_json)),
+            notes=["Python json.loads rejects a second JSON value after an otherwise valid object."],
+        )
+    )
+    malformed_json = '{"results": ['
+    fixtures.append(
+        _parser_fixture(
+            "parser.images.duckduckgo-json-malformed-error",
+            "images",
+            "duckduckgo",
+            "json_loads",
+            {"json": malformed_json},
+            _error(lambda: json.loads(malformed_json)),
+            notes=["Python json.loads rejects truncated DuckDuckGo-style JSON before an engine can inspect results."],
+        )
+    )
+    return fixtures
+
+
 def _fixture_path(
     fixture: Fixture,
     pure_output: Path,
@@ -4138,6 +4285,7 @@ def build_fixtures() -> list[Fixture]:
         *_error_and_extract_fixtures(),
         *_extract_fixtures(),
         *_parser_xpath_fixtures(),
+        *_parser_json_fixtures(),
         *_engine_visible_fixtures(),
         *_json_engine_matrix_fixtures(),
         *_html_engine_matrix_fixtures(),

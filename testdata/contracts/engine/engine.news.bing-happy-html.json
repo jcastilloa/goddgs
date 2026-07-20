@@ -1,0 +1,104 @@
+{
+  "contract": {
+    "category": "news",
+    "engine": "bing",
+    "kind": "engine",
+    "operation": "search"
+  },
+  "controls": {
+    "clock": "not used",
+    "notes": [
+      "all HTTP responses are synthetic"
+    ],
+    "random": "not used"
+  },
+  "fixture_id": "engine.news.bing-happy-html",
+  "input": {
+    "page": 2,
+    "query": "fixture bing news",
+    "region": "DE-de",
+    "safesearch": "off",
+    "timelimit": "d"
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs and responses",
+      "no external request",
+      "no credentials or live session cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "field_order": [
+      [
+        "date",
+        "title",
+        "body",
+        "url",
+        "image",
+        "source"
+      ]
+    ],
+    "output": [
+      {
+        "body": "Fixture body",
+        "date": "fixture date",
+        "image": "https://www.bing.com/image?fixture",
+        "source": "Fixture source",
+        "title": "Fixture Bing News",
+        "url": "https://bing-news.example/a+b"
+      }
+    ],
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "kind": "request",
+      "method": "GET",
+      "query": {
+        "InfiniteScroll": "1",
+        "SFX": "2",
+        "cc": "de",
+        "first": "21",
+        "q": "fixture bing news",
+        "qft": "interval=\"4\"",
+        "setlang": "de"
+      },
+      "sequence": 1,
+      "url": "https://www.bing.com/news/infinitescrollajax"
+    },
+    {
+      "content_hex": "0a20202020202020202020202020202020202020203c68746d6c3e3c626f64793e3c64697620636c6173733d226e6577736974656d2220646174612d7469746c653d22466978747572652042696e67204e657773222075726c3d2268747470733a2f2f62696e672d6e6577732e6578616d706c652f61253230622220646174612d617574686f723d224669787475726520736f75726365223e0a202020202020202020202020202020202020202020203c7370616e20617269612d6c6162656c3d22666978747572652064617465223e3c2f7370616e3e3c64697620636c6173733d22736e6970706574223e46697874757265203c623e626f64793c2f623e3c2f6469763e0a202020202020202020202020202020202020202020203c6120636c6173733d22696d61676522207372633d222f696d6167653f6669787475726526616d703b747261636b696e673d31223e3c2f613e0a20202020202020202020202020202020202020203c2f6469763e3c2f626f64793e3c2f68746d6c3e0a2020202020202020202020202020202020202020",
+      "kind": "response",
+      "sequence": 2,
+      "status": 200,
+      "text": "\n                    <html><body><div class=\"newsitem\" data-title=\"Fixture Bing News\" url=\"https://bing-news.example/a%20b\" data-author=\"Fixture source\">\n                      <span aria-label=\"fixture date\"></span><div class=\"snippet\">Fixture <b>body</b></div>\n                      <a class=\"image\" src=\"/image?fixture&amp;tracking=1\"></a>\n                    </div></body></html>\n                    "
+    }
+  ]
+}

@@ -1,0 +1,546 @@
+{
+  "contract": {
+    "kind": "pure",
+    "operation": "get_engines"
+  },
+  "controls": {
+    "clock": "not used",
+    "random": "shuffle patched to reverse; sort tie key is frozen function object"
+  },
+  "fixture_id": "pure.backend-auto-priority-stable-shuffle",
+  "input": {
+    "cases": [
+      {
+        "backend": "auto",
+        "category": "text",
+        "label": "auto"
+      },
+      {
+        "backend": "all",
+        "category": "text",
+        "label": "all"
+      },
+      {
+        "backend": "missing",
+        "category": "text",
+        "label": "invalid_fallback"
+      },
+      {
+        "backend": "bing",
+        "category": "text",
+        "label": "disabled_bing_fallback"
+      },
+      {
+        "backend": " second, first ",
+        "category": "text",
+        "label": "explicit_trimmed"
+      },
+      {
+        "backend": "missing, first",
+        "category": "text",
+        "label": "explicit_with_invalid"
+      },
+      {
+        "backend": "first, first, second",
+        "category": "text",
+        "label": "explicit_duplicates"
+      },
+      {
+        "backend": "auto, missing",
+        "category": "text",
+        "label": "mixed_auto_invalid"
+      },
+      {
+        "backend": ", missing, ",
+        "category": "text",
+        "label": "empty_invalid_fallback"
+      },
+      {
+        "backend": "AUTO",
+        "category": "text",
+        "label": "uppercase_auto_fallback"
+      },
+      {
+        "backend": "\u001csecond\u001c, first ",
+        "category": "text",
+        "label": "control_whitespace_trimmed"
+      },
+      {
+        "backend": "​first​",
+        "category": "text",
+        "label": "zero_width_not_trimmed_fallback"
+      },
+      {
+        "backend": "all",
+        "category": "images",
+        "label": "nontext_all"
+      }
+    ],
+    "category": "text",
+    "registry": [
+      {
+        "category": "text",
+        "engines": [
+          {
+            "disabled": false,
+            "name": "first",
+            "priority": 1,
+            "provider": "first"
+          },
+          {
+            "disabled": false,
+            "name": "wikipedia",
+            "priority": 2,
+            "provider": "wikipedia"
+          },
+          {
+            "disabled": false,
+            "name": "grokipedia",
+            "priority": 1.9,
+            "provider": "grokipedia"
+          },
+          {
+            "disabled": false,
+            "name": "second",
+            "priority": 1,
+            "provider": "second"
+          }
+        ]
+      },
+      {
+        "category": "images",
+        "engines": [
+          {
+            "disabled": false,
+            "name": "first",
+            "priority": 1,
+            "provider": "first"
+          },
+          {
+            "disabled": false,
+            "name": "second",
+            "priority": 1,
+            "provider": "second"
+          }
+        ]
+      }
+    ],
+    "shuffle": "reverse"
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs",
+      "no external request",
+      "no credentials or cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "output": {
+      "all": [
+        {
+          "name": "wikipedia",
+          "priority": 2,
+          "provider": "wikipedia"
+        },
+        {
+          "name": "grokipedia",
+          "priority": 1.9,
+          "provider": "grokipedia"
+        },
+        {
+          "name": "second",
+          "priority": 1,
+          "provider": "second"
+        },
+        {
+          "name": "first",
+          "priority": 1,
+          "provider": "first"
+        }
+      ],
+      "auto": [
+        {
+          "name": "wikipedia",
+          "priority": 2,
+          "provider": "wikipedia"
+        },
+        {
+          "name": "grokipedia",
+          "priority": 1.9,
+          "provider": "grokipedia"
+        },
+        {
+          "name": "second",
+          "priority": 1,
+          "provider": "second"
+        },
+        {
+          "name": "first",
+          "priority": 1,
+          "provider": "first"
+        }
+      ],
+      "control_whitespace_trimmed": [
+        {
+          "name": "second",
+          "priority": 1,
+          "provider": "second"
+        },
+        {
+          "name": "first",
+          "priority": 1,
+          "provider": "first"
+        }
+      ],
+      "disabled_bing_fallback": [
+        {
+          "name": "wikipedia",
+          "priority": 2,
+          "provider": "wikipedia"
+        },
+        {
+          "name": "grokipedia",
+          "priority": 1.9,
+          "provider": "grokipedia"
+        },
+        {
+          "name": "second",
+          "priority": 1,
+          "provider": "second"
+        },
+        {
+          "name": "first",
+          "priority": 1,
+          "provider": "first"
+        }
+      ],
+      "empty_invalid_fallback": [
+        {
+          "name": "wikipedia",
+          "priority": 2,
+          "provider": "wikipedia"
+        },
+        {
+          "name": "grokipedia",
+          "priority": 1.9,
+          "provider": "grokipedia"
+        },
+        {
+          "name": "second",
+          "priority": 1,
+          "provider": "second"
+        },
+        {
+          "name": "first",
+          "priority": 1,
+          "provider": "first"
+        }
+      ],
+      "explicit_duplicates": [
+        {
+          "name": "first",
+          "priority": 1,
+          "provider": "first"
+        },
+        {
+          "name": "first",
+          "priority": 1,
+          "provider": "first"
+        },
+        {
+          "name": "second",
+          "priority": 1,
+          "provider": "second"
+        }
+      ],
+      "explicit_trimmed": [
+        {
+          "name": "second",
+          "priority": 1,
+          "provider": "second"
+        },
+        {
+          "name": "first",
+          "priority": 1,
+          "provider": "first"
+        }
+      ],
+      "explicit_with_invalid": [
+        {
+          "name": "first",
+          "priority": 1,
+          "provider": "first"
+        }
+      ],
+      "invalid_fallback": [
+        {
+          "name": "wikipedia",
+          "priority": 2,
+          "provider": "wikipedia"
+        },
+        {
+          "name": "grokipedia",
+          "priority": 1.9,
+          "provider": "grokipedia"
+        },
+        {
+          "name": "second",
+          "priority": 1,
+          "provider": "second"
+        },
+        {
+          "name": "first",
+          "priority": 1,
+          "provider": "first"
+        }
+      ],
+      "mixed_auto_invalid": [
+        {
+          "name": "wikipedia",
+          "priority": 2,
+          "provider": "wikipedia"
+        },
+        {
+          "name": "grokipedia",
+          "priority": 1.9,
+          "provider": "grokipedia"
+        },
+        {
+          "name": "second",
+          "priority": 1,
+          "provider": "second"
+        },
+        {
+          "name": "first",
+          "priority": 1,
+          "provider": "first"
+        }
+      ],
+      "nontext_all": [
+        {
+          "name": "second",
+          "priority": 1,
+          "provider": "second"
+        },
+        {
+          "name": "first",
+          "priority": 1,
+          "provider": "first"
+        }
+      ],
+      "shuffle_inputs": {
+        "all": [
+          [
+            "first",
+            "wikipedia",
+            "grokipedia",
+            "second"
+          ]
+        ],
+        "auto": [
+          [
+            "first",
+            "wikipedia",
+            "grokipedia",
+            "second"
+          ]
+        ],
+        "control_whitespace_trimmed": [
+          [
+            "first",
+            "wikipedia",
+            "grokipedia",
+            "second"
+          ]
+        ],
+        "disabled_bing_fallback": [
+          [
+            "first",
+            "wikipedia",
+            "grokipedia",
+            "second"
+          ],
+          [
+            "first",
+            "wikipedia",
+            "grokipedia",
+            "second"
+          ]
+        ],
+        "empty_invalid_fallback": [
+          [
+            "first",
+            "wikipedia",
+            "grokipedia",
+            "second"
+          ],
+          [
+            "first",
+            "wikipedia",
+            "grokipedia",
+            "second"
+          ]
+        ],
+        "explicit_duplicates": [
+          [
+            "first",
+            "wikipedia",
+            "grokipedia",
+            "second"
+          ]
+        ],
+        "explicit_trimmed": [
+          [
+            "first",
+            "wikipedia",
+            "grokipedia",
+            "second"
+          ]
+        ],
+        "explicit_with_invalid": [
+          [
+            "first",
+            "wikipedia",
+            "grokipedia",
+            "second"
+          ]
+        ],
+        "invalid_fallback": [
+          [
+            "first",
+            "wikipedia",
+            "grokipedia",
+            "second"
+          ],
+          [
+            "first",
+            "wikipedia",
+            "grokipedia",
+            "second"
+          ]
+        ],
+        "mixed_auto_invalid": [
+          [
+            "first",
+            "wikipedia",
+            "grokipedia",
+            "second"
+          ]
+        ],
+        "nontext_all": [
+          [
+            "first",
+            "second"
+          ]
+        ],
+        "uppercase_auto_fallback": [
+          [
+            "first",
+            "wikipedia",
+            "grokipedia",
+            "second"
+          ],
+          [
+            "first",
+            "wikipedia",
+            "grokipedia",
+            "second"
+          ]
+        ],
+        "zero_width_not_trimmed_fallback": [
+          [
+            "first",
+            "wikipedia",
+            "grokipedia",
+            "second"
+          ],
+          [
+            "first",
+            "wikipedia",
+            "grokipedia",
+            "second"
+          ]
+        ]
+      },
+      "uppercase_auto_fallback": [
+        {
+          "name": "wikipedia",
+          "priority": 2,
+          "provider": "wikipedia"
+        },
+        {
+          "name": "grokipedia",
+          "priority": 1.9,
+          "provider": "grokipedia"
+        },
+        {
+          "name": "second",
+          "priority": 1,
+          "provider": "second"
+        },
+        {
+          "name": "first",
+          "priority": 1,
+          "provider": "first"
+        }
+      ],
+      "zero_width_not_trimmed_fallback": [
+        {
+          "name": "wikipedia",
+          "priority": 2,
+          "provider": "wikipedia"
+        },
+        {
+          "name": "grokipedia",
+          "priority": 1.9,
+          "provider": "grokipedia"
+        },
+        {
+          "name": "second",
+          "priority": 1,
+          "provider": "second"
+        },
+        {
+          "name": "first",
+          "priority": 1,
+          "provider": "first"
+        }
+      ]
+    },
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "kind": "note",
+      "note": "fake engines only; no HTTP client is used",
+      "sequence": 1
+    }
+  ]
+}

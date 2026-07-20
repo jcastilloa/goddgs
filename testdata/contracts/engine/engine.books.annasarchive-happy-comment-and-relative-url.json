@@ -1,0 +1,99 @@
+{
+  "contract": {
+    "category": "books",
+    "engine": "annasarchive",
+    "kind": "engine",
+    "operation": "search"
+  },
+  "controls": {
+    "clock": "not used",
+    "notes": [
+      "source module-lifetime archive TLD is replaced only with a synthetic deterministic test domain"
+    ],
+    "random": "not used"
+  },
+  "fixture_id": "engine.books.annasarchive-happy-comment-and-relative-url",
+  "input": {
+    "page": 2,
+    "query": "fixture annas",
+    "region": "us-en",
+    "safesearch": "off",
+    "timelimit": "y"
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs and responses",
+      "no external request",
+      "no credentials or live session cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "field_order": [
+      [
+        "title",
+        "author",
+        "publisher",
+        "info",
+        "url",
+        "thumbnail"
+      ]
+    ],
+    "output": [
+      {
+        "author": "Fixture Author",
+        "info": "Fixture info",
+        "publisher": "Fixture Publisher",
+        "thumbnail": "/cover.jpg",
+        "title": "Fixture Anna",
+        "url": "https://annas-archive.fixture/md5/fixture"
+      }
+    ],
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "kind": "request",
+      "method": "GET",
+      "query": {
+        "page": "2",
+        "q": "fixture annas"
+      },
+      "sequence": 1,
+      "url": "https://annas-archive.fixture/search"
+    },
+    {
+      "content_hex": "0a20202020202020202020202020202020202020203c212d2d3c64697620636c6173733d227265636f72642d6c6973742d6f75746572223e3c6469763e0a202020202020202020202020202020202020202020203c6120636c6173733d22746578742d6c67223e4669787475726520416e6e613c2f613e3c613e3c7370616e20636c6173733d2275736572223e4669787475726520417574686f723c2f7370616e3e3c2f613e0a202020202020202020202020202020202020202020203c613e3c7370616e20636c6173733d22636f6d70616e79223e46697874757265205075626c69736865723c2f7370616e3e3c2f613e3c64697620636c6173733d22746578742d677261792d383030223e4669787475726520696e666f3c2f6469763e0a202020202020202020202020202020202020202020203c6120687265663d222f6d64352f66697874757265223e3c2f613e3c696d67207372633d222f636f7665722e6a706722202f3e0a20202020202020202020202020202020202020203c2f6469763e3c2f6469763e2d2d3e0a2020202020202020202020202020202020202020",
+      "kind": "response",
+      "sequence": 2,
+      "status": 200,
+      "text": "\n                    <!--<div class=\"record-list-outer\"><div>\n                      <a class=\"text-lg\">Fixture Anna</a><a><span class=\"user\">Fixture Author</span></a>\n                      <a><span class=\"company\">Fixture Publisher</span></a><div class=\"text-gray-800\">Fixture info</div>\n                      <a href=\"/md5/fixture\"></a><img src=\"/cover.jpg\" />\n                    </div></div>-->\n                    "
+    }
+  ]
+}

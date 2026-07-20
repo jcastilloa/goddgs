@@ -1,0 +1,79 @@
+{
+  "contract": {
+    "category": "news",
+    "engine": "yahoo",
+    "kind": "engine",
+    "operation": "search"
+  },
+  "controls": {
+    "clock": "not used",
+    "notes": [
+      "BaseSearchEngine.request returns no text for synthetic HTTP 503; source search returns None"
+    ],
+    "random": "not used"
+  },
+  "fixture_id": "engine.news.yahoo-non-200-none",
+  "input": {
+    "page": 1,
+    "query": "fixture status yahoo news",
+    "region": "us-en",
+    "safesearch": "moderate",
+    "timelimit": null
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs and responses",
+      "no external request",
+      "no credentials or live session cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "output": null,
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "kind": "request",
+      "method": "GET",
+      "query": {
+        "p": "fixture status yahoo news"
+      },
+      "sequence": 1,
+      "url": "https://news.search.yahoo.com/search"
+    },
+    {
+      "content_hex": "73796e746865746963206e6f6e2d323030",
+      "kind": "response",
+      "sequence": 2,
+      "status": 503,
+      "text": "synthetic non-200"
+    }
+  ]
+}

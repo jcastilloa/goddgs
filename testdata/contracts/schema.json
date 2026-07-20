@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jcastillo/goddgs/testdata/contracts/schema.json",
+  "title": "goddgs frozen DDGS differential fixture",
+  "description": "Sanitized observable behavior captured from one frozen Python DDGS source baseline.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "fixture_id",
+    "source",
+    "contract",
+    "input",
+    "controls",
+    "trace",
+    "result",
+    "redaction"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "fixture_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "source": {
+      "type": "object",
+      "required": ["commit", "package_version", "reference_environment"],
+      "properties": {
+        "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "package_version": { "type": "string" },
+        "reference_environment": { "type": "string" },
+        "python": { "type": "string" },
+        "resolved_packages": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "contract": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "enum": ["pure", "engine", "extract", "parser"] },
+        "category": { "enum": ["text", "images", "news", "videos", "books"] },
+        "engine": { "type": "string" },
+        "operation": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "pure" } } },
+          "then": { "required": ["operation"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "engine" } } },
+          "then": { "required": ["category", "engine", "operation"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "extract" } } },
+          "then": { "required": ["operation"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "parser" } } },
+          "then": { "required": ["category", "engine", "operation"] }
+        }
+      ]
+    },
+    "input": { "type": "object" },
+    "controls": {
+      "type": "object",
+      "required": ["clock", "random"],
+      "properties": {
+        "clock": { "type": "string" },
+        "random": { "type": "string" },
+        "timezone": { "type": "string" },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "trace": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["sequence", "kind"],
+        "properties": {
+          "sequence": { "type": "integer", "minimum": 1 },
+          "kind": { "enum": ["request", "response", "cookie", "random", "clock", "note"] },
+          "method": { "type": "string" },
+          "url": { "type": "string" },
+          "query": { "type": "object" },
+          "form": { "type": "object" },
+          "headers": { "type": "object", "additionalProperties": { "type": "string" } },
+          "cookies": { "type": "object", "additionalProperties": { "type": "string" } },
+          "status": { "type": "integer" },
+          "text": { "type": "string" },
+          "content_hex": { "type": "string", "pattern": "^[0-9a-f]*$" },
+          "value": {},
+          "note": { "type": "string" }
+        },
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": { "properties": { "kind": { "const": "request" } } },
+            "then": { "required": ["method", "url"] }
+          },
+          {
+            "if": { "properties": { "kind": { "const": "response" } } },
+            "then": { "required": ["status"] }
+          }
+        ]
+      }
+    },
+    "result": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["ok", "error"] },
+        "output": {},
+        "field_order": {
+          "type": "array",
+          "items": { "type": "array", "items": { "type": "string" } }
+        },
+        "error": {
+          "type": "object",
+          "required": ["type", "message"],
+          "properties": {
+            "type": { "type": "string" },
+            "message": { "type": "string" },
+            "cause_type": { "type": ["string", "null"] }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "ok" } } },
+          "then": { "required": ["output"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "error" } } },
+          "then": { "required": ["error"] }
+        }
+      ]
+    },
+    "redaction": {
+      "type": "object",
+      "required": ["sanitized", "rules"],
+      "properties": {
+        "sanitized": { "type": "boolean" },
+        "rules": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

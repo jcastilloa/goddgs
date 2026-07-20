@@ -1,0 +1,95 @@
+{
+  "contract": {
+    "category": "text",
+    "engine": "brave",
+    "kind": "parser",
+    "operation": "xpath_generic_extraction"
+  },
+  "controls": {
+    "clock": "not used",
+    "notes": [
+      "synthetic HTML; lxml parser configuration and source XPath expressions are frozen"
+    ],
+    "random": "not used"
+  },
+  "fixture_id": "parser.text.brave-generic-xpath",
+  "input": {
+    "elements_xpath": {
+      "body": ".//div[contains(@class, 'snippet')]//div[contains(@class, 'content')]//text()",
+      "href": ".//a[div[contains(@class, 'title')]]/@href",
+      "title": ".//div[(contains(@class,'title') or contains(@class,'sitename-container')) and position()=last()]//text()"
+    },
+    "html": "\n            <html><body><div data-type=\"web\" data-parser-id=\"brave\">\n              <a href=\"https://brave.example/a%20b\"><div class=\"title\">Anchor title</div></a>\n              <div class=\"title\"> First title </div>\n              <div class=\"sitename-container\"> Last <b> title </b> </div>\n              <div class=\"snippet\"><div class=\"content\"> Fixture\n <b> body </b> </div></div>\n            </div></body></html>\n            ",
+    "items_xpath": "//div[@data-type='web']",
+    "pre_process_html": "none"
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs and responses",
+      "no external request",
+      "no credentials or live session cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "output": {
+      "item_count": 1,
+      "items": [
+        {
+          "fields": {
+            "body": {
+              "joined": "Fixture body",
+              "raw": [
+                " Fixture\n ",
+                " body ",
+                " "
+              ]
+            },
+            "href": {
+              "joined": "https://brave.example/a%20b",
+              "raw": [
+                "https://brave.example/a%20b"
+              ]
+            },
+            "title": {
+              "joined": "Anchor title",
+              "raw": [
+                "Anchor title"
+              ]
+            }
+          },
+          "index": 0,
+          "marker": "brave"
+        }
+      ]
+    },
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": []
+}

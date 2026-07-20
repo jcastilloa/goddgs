@@ -1,0 +1,114 @@
+{
+  "contract": {
+    "category": "text",
+    "engine": "google",
+    "kind": "engine",
+    "operation": "search"
+  },
+  "controls": {
+    "clock": "not used",
+    "notes": [
+      "Google module-lifetime randomized User-Agent is redacted to a stable marker"
+    ],
+    "random": "not used"
+  },
+  "fixture_id": "engine.text.google-consent-and-redirect-filter",
+  "input": {
+    "page": 2,
+    "query": "fixture google redirect",
+    "region": "us-en",
+    "safesearch": "off",
+    "timelimit": "m"
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs and responses",
+      "no external request",
+      "no credentials or live session cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "field_order": [
+      [
+        "title",
+        "href",
+        "body"
+      ]
+    ],
+    "output": [
+      {
+        "body": "Fixture body",
+        "href": "https://target.example/path",
+        "title": "Fixture title"
+      }
+    ],
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "headers": {
+        "User-Agent": "<source-module-lifetime-random-google>"
+      },
+      "kind": "note",
+      "note": "headers_update",
+      "sequence": 1
+    },
+    {
+      "cookies": {
+        "CONSENT": "YES+"
+      },
+      "kind": "cookie",
+      "sequence": 2,
+      "url": "google.com"
+    },
+    {
+      "kind": "request",
+      "method": "GET",
+      "query": {
+        "cr": "countryUS",
+        "filter": "0",
+        "hl": "en-US",
+        "lr": "lang_en",
+        "q": "fixture google redirect",
+        "start": "10",
+        "tbs": "qdr:m"
+      },
+      "sequence": 3,
+      "url": "https://www.google.com/search"
+    },
+    {
+      "content_hex": "0a202020203c68746d6c3e3c626f64793e3c64697620646174612d68766569643d2266697874757265223e0a2020202020203c6120687265663d222f75726c3f713d68747470732533412532462532467461726765742e6578616d706c652532467061746826616d703b73613d55223e3c68333e46697874757265207469746c653c2f68333e3c2f613e0a2020202020203c6469763e3c6469763e4669787475726520626f64793c2f6469763e3c2f6469763e0a202020203c2f6469763e3c2f626f64793e3c2f68746d6c3e0a20202020",
+      "kind": "response",
+      "sequence": 4,
+      "status": 200,
+      "text": "\n    <html><body><div data-hveid=\"fixture\">\n      <a href=\"/url?q=https%3A%2F%2Ftarget.example%2Fpath&amp;sa=U\"><h3>Fixture title</h3></a>\n      <div><div>Fixture body</div></div>\n    </div></body></html>\n    "
+    }
+  ]
+}

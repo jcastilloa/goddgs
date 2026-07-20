@@ -1,0 +1,357 @@
+{
+  "contract": {
+    "kind": "pure",
+    "operation": "get_engines"
+  },
+  "controls": {
+    "clock": "not used",
+    "random": "shuffle patched to reverse; sort tie key is frozen function object"
+  },
+  "fixture_id": "pure.backend-frozen-registry-selection",
+  "input": {
+    "cases": [
+      {
+        "backend": "auto",
+        "category": "text",
+        "label": "text_auto"
+      },
+      {
+        "backend": "all",
+        "category": "text",
+        "label": "text_all"
+      },
+      {
+        "backend": "bing",
+        "category": "text",
+        "label": "text_disabled_bing_fallback"
+      },
+      {
+        "backend": "auto",
+        "category": "images",
+        "label": "images_auto"
+      },
+      {
+        "backend": "all",
+        "category": "news",
+        "label": "news_all"
+      },
+      {
+        "backend": "auto",
+        "category": "videos",
+        "label": "videos_auto"
+      },
+      {
+        "backend": "auto",
+        "category": "books",
+        "label": "books_auto"
+      }
+    ],
+    "registry_fixture": "pure.engine-registry-active-and-disabled",
+    "shuffle": "reverse"
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs",
+      "no external request",
+      "no credentials or cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "output": {
+      "books_auto": [
+        {
+          "name": "annasarchive",
+          "priority": 1,
+          "provider": "annasarchive"
+        }
+      ],
+      "images_auto": [
+        {
+          "name": "duckduckgo",
+          "priority": 1,
+          "provider": "bing"
+        },
+        {
+          "name": "bing",
+          "priority": 1,
+          "provider": "bing"
+        }
+      ],
+      "news_all": [
+        {
+          "name": "yahoo",
+          "priority": 1,
+          "provider": "yahoo"
+        },
+        {
+          "name": "duckduckgo",
+          "priority": 1,
+          "provider": "bing"
+        },
+        {
+          "name": "bing",
+          "priority": 1,
+          "provider": "bing"
+        }
+      ],
+      "shuffle_inputs": {
+        "books_auto": [
+          [
+            "annasarchive"
+          ]
+        ],
+        "images_auto": [
+          [
+            "bing",
+            "duckduckgo"
+          ]
+        ],
+        "news_all": [
+          [
+            "bing",
+            "duckduckgo",
+            "yahoo"
+          ]
+        ],
+        "text_all": [
+          [
+            "brave",
+            "duckduckgo",
+            "google",
+            "grokipedia",
+            "mojeek",
+            "startpage",
+            "wikipedia",
+            "yahoo",
+            "yandex"
+          ]
+        ],
+        "text_auto": [
+          [
+            "brave",
+            "duckduckgo",
+            "google",
+            "grokipedia",
+            "mojeek",
+            "startpage",
+            "wikipedia",
+            "yahoo",
+            "yandex"
+          ]
+        ],
+        "text_disabled_bing_fallback": [
+          [
+            "brave",
+            "duckduckgo",
+            "google",
+            "grokipedia",
+            "mojeek",
+            "startpage",
+            "wikipedia",
+            "yahoo",
+            "yandex"
+          ],
+          [
+            "brave",
+            "duckduckgo",
+            "google",
+            "grokipedia",
+            "mojeek",
+            "startpage",
+            "wikipedia",
+            "yahoo",
+            "yandex"
+          ]
+        ],
+        "videos_auto": [
+          [
+            "duckduckgo"
+          ]
+        ]
+      },
+      "text_all": [
+        {
+          "name": "wikipedia",
+          "priority": 2,
+          "provider": "wikipedia"
+        },
+        {
+          "name": "grokipedia",
+          "priority": 1.9,
+          "provider": "grokipedia"
+        },
+        {
+          "name": "yandex",
+          "priority": 1,
+          "provider": "yandex"
+        },
+        {
+          "name": "yahoo",
+          "priority": 1,
+          "provider": "bing"
+        },
+        {
+          "name": "startpage",
+          "priority": 1,
+          "provider": "google"
+        },
+        {
+          "name": "mojeek",
+          "priority": 1,
+          "provider": "mojeek"
+        },
+        {
+          "name": "google",
+          "priority": 1,
+          "provider": "google"
+        },
+        {
+          "name": "duckduckgo",
+          "priority": 1,
+          "provider": "bing"
+        },
+        {
+          "name": "brave",
+          "priority": 1,
+          "provider": "brave"
+        }
+      ],
+      "text_auto": [
+        {
+          "name": "wikipedia",
+          "priority": 2,
+          "provider": "wikipedia"
+        },
+        {
+          "name": "grokipedia",
+          "priority": 1.9,
+          "provider": "grokipedia"
+        },
+        {
+          "name": "yandex",
+          "priority": 1,
+          "provider": "yandex"
+        },
+        {
+          "name": "yahoo",
+          "priority": 1,
+          "provider": "bing"
+        },
+        {
+          "name": "startpage",
+          "priority": 1,
+          "provider": "google"
+        },
+        {
+          "name": "mojeek",
+          "priority": 1,
+          "provider": "mojeek"
+        },
+        {
+          "name": "google",
+          "priority": 1,
+          "provider": "google"
+        },
+        {
+          "name": "duckduckgo",
+          "priority": 1,
+          "provider": "bing"
+        },
+        {
+          "name": "brave",
+          "priority": 1,
+          "provider": "brave"
+        }
+      ],
+      "text_disabled_bing_fallback": [
+        {
+          "name": "wikipedia",
+          "priority": 2,
+          "provider": "wikipedia"
+        },
+        {
+          "name": "grokipedia",
+          "priority": 1.9,
+          "provider": "grokipedia"
+        },
+        {
+          "name": "yandex",
+          "priority": 1,
+          "provider": "yandex"
+        },
+        {
+          "name": "yahoo",
+          "priority": 1,
+          "provider": "bing"
+        },
+        {
+          "name": "startpage",
+          "priority": 1,
+          "provider": "google"
+        },
+        {
+          "name": "mojeek",
+          "priority": 1,
+          "provider": "mojeek"
+        },
+        {
+          "name": "google",
+          "priority": 1,
+          "provider": "google"
+        },
+        {
+          "name": "duckduckgo",
+          "priority": 1,
+          "provider": "bing"
+        },
+        {
+          "name": "brave",
+          "priority": 1,
+          "provider": "brave"
+        }
+      ],
+      "videos_auto": [
+        {
+          "name": "duckduckgo",
+          "priority": 1,
+          "provider": "bing"
+        }
+      ]
+    },
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "kind": "note",
+      "note": "source registry metadata copied into fake classes; no HTTP client is used",
+      "sequence": 1
+    }
+  ]
+}

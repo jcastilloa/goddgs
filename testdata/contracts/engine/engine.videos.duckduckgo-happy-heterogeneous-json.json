@@ -1,0 +1,144 @@
+{
+  "contract": {
+    "category": "videos",
+    "engine": "duckduckgo",
+    "kind": "engine",
+    "operation": "search"
+  },
+  "controls": {
+    "clock": "not used",
+    "notes": [
+      "all HTTP responses are synthetic"
+    ],
+    "random": "not used"
+  },
+  "fixture_id": "engine.videos.duckduckgo-happy-heterogeneous-json",
+  "input": {
+    "duration": "long",
+    "license_videos": "youtube",
+    "page": 2,
+    "query": "fixture video result",
+    "region": "us-en",
+    "resolution": "high",
+    "safesearch": "on",
+    "timelimit": "m"
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs and responses",
+      "no external request",
+      "no credentials or live session cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "field_order": [
+      [
+        "title",
+        "content",
+        "description",
+        "duration",
+        "embed_html",
+        "embed_url",
+        "image_token",
+        "images",
+        "provider",
+        "published",
+        "publisher",
+        "statistics",
+        "uploader"
+      ]
+    ],
+    "output": [
+      {
+        "content": null,
+        "description": "<b>Raw description</b>",
+        "duration": 12,
+        "embed_html": "<iframe></iframe>",
+        "embed_url": "https://video.example/embed%20one",
+        "image_token": "token",
+        "images": {
+          "large": "https://video.example/large"
+        },
+        "provider": "provider",
+        "published": 42,
+        "publisher": null,
+        "statistics": {
+          "views": 9
+        },
+        "title": "Fixture video",
+        "uploader": [
+          "fixture",
+          null
+        ]
+      }
+    ],
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "kind": "request",
+      "method": "GET",
+      "query": {
+        "q": "fixture video result"
+      },
+      "sequence": 1,
+      "url": "https://duckduckgo.com"
+    },
+    {
+      "content_hex": "7671643d666978747572652d76716426",
+      "kind": "response",
+      "sequence": 2,
+      "status": 200,
+      "text": ""
+    },
+    {
+      "kind": "request",
+      "method": "GET",
+      "query": {
+        "f": "publishedAfter:m,videoDefinition:high,videoDuration:long,videoLicense:youtube",
+        "l": "us-en",
+        "o": "json",
+        "p": "1",
+        "q": "fixture video result",
+        "s": "60",
+        "vqd": "fixture-vqd"
+      },
+      "sequence": 3,
+      "url": "https://duckduckgo.com/v.js"
+    },
+    {
+      "content_hex": "7b22726573756c7473223a205b7b227469746c65223a20224669787475726520766964656f222c2022636f6e74656e74223a206e756c6c2c20226465736372697074696f6e223a20223c623e526177206465736372697074696f6e3c2f623e222c20226475726174696f6e223a2031322c2022656d6265645f68746d6c223a20223c696672616d653e3c2f696672616d653e222c2022656d6265645f75726c223a202268747470733a2f2f766964656f2e6578616d706c652f656d6265642532306f6e65222c2022696d6167655f746f6b656e223a2022746f6b656e222c2022696d61676573223a207b226c61726765223a202268747470733a2f2f766964656f2e6578616d706c652f6c61726765227d2c202270726f7669646572223a202270726f7669646572222c20227075626c6973686564223a2034322c20227075626c6973686572223a206e756c6c2c202273746174697374696373223a207b227669657773223a20397d2c202275706c6f61646572223a205b2266697874757265222c206e756c6c5d7d5d7d",
+      "kind": "response",
+      "sequence": 4,
+      "status": 200,
+      "text": "{\"results\": [{\"title\": \"Fixture video\", \"content\": null, \"description\": \"<b>Raw description</b>\", \"duration\": 12, \"embed_html\": \"<iframe></iframe>\", \"embed_url\": \"https://video.example/embed%20one\", \"image_token\": \"token\", \"images\": {\"large\": \"https://video.example/large\"}, \"provider\": \"provider\", \"published\": 42, \"publisher\": null, \"statistics\": {\"views\": 9}, \"uploader\": [\"fixture\", null]}]}"
+    }
+  ]
+}

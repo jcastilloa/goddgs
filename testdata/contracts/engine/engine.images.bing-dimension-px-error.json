@@ -1,0 +1,88 @@
+{
+  "contract": {
+    "category": "images",
+    "engine": "bing",
+    "kind": "engine",
+    "operation": "search"
+  },
+  "controls": {
+    "clock": "not used",
+    "notes": [
+      "source dimension parser splits every x; a trailing px creates three pieces and raises ValueError"
+    ],
+    "random": "not used"
+  },
+  "fixture_id": "engine.images.bing-dimension-px-error",
+  "input": {
+    "max_results": "40",
+    "page": 2,
+    "query": "fixture bing images",
+    "region": "de-de",
+    "safesearch": "off",
+    "timelimit": "week"
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs and responses",
+      "no external request",
+      "no credentials or live session cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "error": {
+      "cause_type": null,
+      "message": "too many values to unpack (expected 2)",
+      "type": "ValueError"
+    },
+    "status": "error"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "kind": "request",
+      "method": "GET",
+      "query": {
+        "async": "1",
+        "count": "40",
+        "first": "41",
+        "q": "fixture bing images",
+        "qft": "filterui:age-lt10080"
+      },
+      "sequence": 1,
+      "url": "https://www.bing.com/images/async"
+    },
+    {
+      "content_hex": "3c68746d6c3e3c626f64793e3c6469763e3c64697620636c6173733d22696d677074223e3c6120636c6173733d226975736322206d3d227b2671756f743b742671756f743b3a202671756f743b466978747572652042696e6720496d6167652671756f743b2c202671756f743b6d75726c2671756f743b3a202671756f743b68747470733a2f2f62696e672d696d6167652e6578616d706c652f61253230622671756f743b2c202671756f743b7475726c2671756f743b3a202671756f743b68747470733a2f2f62696e672d696d6167652e6578616d706c652f7468756d622532306f6e652671756f743b2c202671756f743b7075726c2671756f743b3a202671756f743b68747470733a2f2f62696e672d706167652e6578616d706c652f61253230622671756f743b7d223e3c2f613e3c2f6469763e3c64697620636c6173733d22696e666f7074223e3c2f6469763e3c64697620636c6173733d22696d675f696e666f223e3c7370616e20636c6173733d226e6f77726170223e36343020c397203438302070783c2f7370616e3e3c2f6469763e3c64697620636c6173733d226c6e6b77223e3c613e4669787475726520736f757263653c2f613e3c2f6469763e3c2f6469763e3c2f626f64793e3c2f68746d6c3e",
+      "kind": "response",
+      "sequence": 2,
+      "status": 200,
+      "text": "<html><body><div><div class=\"imgpt\"><a class=\"iusc\" m=\"{&quot;t&quot;: &quot;Fixture Bing Image&quot;, &quot;murl&quot;: &quot;https://bing-image.example/a%20b&quot;, &quot;turl&quot;: &quot;https://bing-image.example/thumb%20one&quot;, &quot;purl&quot;: &quot;https://bing-page.example/a%20b&quot;}\"></a></div><div class=\"infopt\"></div><div class=\"img_info\"><span class=\"nowrap\">640 × 480 px</span></div><div class=\"lnkw\"><a>Fixture source</a></div></div></body></html>"
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "contract": {
+    "category": "text",
+    "engine": "duckduckgo",
+    "kind": "engine",
+    "operation": "search"
+  },
+  "controls": {
+    "clock": "not used",
+    "notes": [
+      "module-lifetime fake-useragent is redacted; HTTP/2/fingerprint parity is a separate transport gate"
+    ],
+    "random": "not used"
+  },
+  "fixture_id": "engine.text.duckduckgo-happy-html-and-yjs-filter",
+  "input": {
+    "page": 3,
+    "query": "fixture ddg text",
+    "region": "us-en",
+    "safesearch": "off",
+    "timelimit": "w"
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs and responses",
+      "no external request",
+      "no credentials or live session cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "field_order": [
+      [
+        "title",
+        "href",
+        "body"
+      ]
+    ],
+    "output": [
+      {
+        "body": "Fixture DDGfixture body",
+        "href": "https://ddg-target.example/a+b",
+        "title": "Fixture DDG"
+      }
+    ],
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "headers": {
+        "User-Agent": "<source-module-lifetime-random-user-agent>"
+      },
+      "kind": "note",
+      "note": "constructor headers",
+      "sequence": 1
+    },
+    {
+      "form": {
+        "b": "",
+        "df": "w",
+        "l": "us-en",
+        "q": "fixture ddg text",
+        "s": "25"
+      },
+      "kind": "request",
+      "method": "POST",
+      "sequence": 2,
+      "url": "https://html.duckduckgo.com/html/"
+    },
+    {
+      "content_hex": "0a20202020202020202020202020202020202020203c68746d6c3e3c626f64793e0a202020202020202020202020202020202020202020203c64697620636c6173733d22626f6479223e3c6120687265663d2268747470733a2f2f6475636b6475636b676f2e636f6d2f792e6a733f66697874757265223e3c68323e46696c74657265642061643c2f68323e616420626f64793c2f613e3c2f6469763e0a202020202020202020202020202020202020202020203c64697620636c6173733d22626f6479223e3c6120687265663d2268747470733a2f2f6464672d7461726765742e6578616d706c652f6125323062223e3c68323e46697874757265204444473c2f68323e6669787475726520626f64793c2f613e3c2f6469763e0a20202020202020202020202020202020202020203c2f626f64793e3c2f68746d6c3e0a2020202020202020202020202020202020202020",
+      "kind": "response",
+      "sequence": 3,
+      "status": 200,
+      "text": "\n                    <html><body>\n                      <div class=\"body\"><a href=\"https://duckduckgo.com/y.js?fixture\"><h2>Filtered ad</h2>ad body</a></div>\n                      <div class=\"body\"><a href=\"https://ddg-target.example/a%20b\"><h2>Fixture DDG</h2>fixture body</a></div>\n                    </body></html>\n                    "
+    }
+  ]
+}

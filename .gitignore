@@ -1,0 +1,26 @@
+# Go build and test output
+bin/
+coverage.out
+*.cover
+*.prof
+*.test
+
+# Local editor and environment state
+.DS_Store
+.env
+.idea/
+.vscode/*.local.json
+
+# Temporary source-comparison environments and captures
+.tmp/
+tmp/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+.uv-cache/
+
+# Local Jenkins MCP history
+jenkins_history.db

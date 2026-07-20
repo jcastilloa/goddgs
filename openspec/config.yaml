@@ -1,0 +1,26 @@
+schema: spec-driven
+
+context: |
+  Project: goddgs, an importable Go 1.26 library port of deedy5/ddgs.
+  Frozen source: /home/jcastillo/Proyectos/ddgs at
+  a12929a72429a39a0841c3d7caacb20ee17acd4d (v9.14.4-2-ga12929a).
+  Scope is library behavior only: no HTTP API, CLI, MCP, DHT/cache, Docker,
+  or executable service. Engine integration requires behavioral parity; never
+  replace source-specific HTTP, parsing, ranking, or normalization with a
+  generic approximation. Root package is ddgs; use context.Context at Go I/O
+  boundaries. Read AGENTS.md, MEMORY.md, and docs/source-audit.md first.
+
+rules:
+  proposal:
+    - "State source baseline and exclusions."
+    - "Name parity verification as a first-class capability."
+  design:
+    - "Distinguish proven source behavior from proposed Go adaptation."
+    - "Resolve transport/TLS, parser/XPath, result-shape, concurrency, and extraction gates explicitly."
+    - "Do not invent a service architecture."
+  specs:
+    - "Write observable SHALL requirements with deterministic fixture evidence."
+    - "Cover source discrepancies such as disabled text Bing."
+  tasks:
+    - "Order work by evidence: capture/contracts before implementation, then engines."
+    - "Include RED/GREEN/REFACTOR, race verification, and tagged integration tasks."

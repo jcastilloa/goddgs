@@ -1,0 +1,76 @@
+## 1. Governance, source baseline, and library scaffold
+
+- [x] 1.1 Create Go 1.26 module scaffold with root `ddgs` package, internal library boundaries, Makefile, testdata locations, and no service/CLI/MCP entrypoint.
+- [x] 1.2 Freeze source at `a12929a72429a39a0841c3d7caacb20ee17acd4d`; document source/README discrepancies, scope, license, engine matrix, dependencies, and blockers.
+- [x] 1.3 Create AGENTS.md and MEMORY.md requiring source-first parity, local Go/TDD/OpenSpec skills, differential evidence, and race-safe transport/concurrency work.
+- [x] 1.4 Create proposal, design, capability specs, and this task plan for `port-ddgs-python-library`.
+- [ ] 1.5 Confirm final Git remote and Go module import path before any public release; update module and public documentation in one reviewed change.
+
+## 2. Reference harness and fixture corpus
+
+- [x] 2.1 Build isolated Python reference environment from frozen source with exact runtime dependencies; source has no lockfile, so record resolved versions (and preferably wheel hashes) without committing environment directories. Evidence: `docs/reference-environment.md` (2026-07-20); no external engine requests.
+- [x] 2.2 Define sanitized fixture schema for inputs, random/clock controls, request sequence, method/URL/query/body, relevant headers/cookies, response/error, normalized raw output, and source SHA. Evidence: `testdata/contracts/schema.json`, `docs/fixture-schema.md`, and generated fixture provenance/redaction validation (2026-07-20).
+- [x] 2.3 Create Python capture adapters for pure normalizers, result aggregation, ranker, backend selection, scheduler quirks, and error classification. Evidence: `tools/reference_capture.py`; 129 deterministic synthetic/offline fixtures under `testdata/contracts/pure/`, regenerated and checked with frozen Python environment (2026-07-20).
+- [x] 2.4 Create capture adapters for engine-visible behavior: VQD bootstrap, Startpage `sc`, Wikipedia enrichment, cookies, redirects, and randomized request inputs. Evidence: `tools/reference_capture.py` patches `ddgs.base.HttpClient` only with an in-process synthetic double and emits 9 sanitized fixtures under `testdata/contracts/engine/`: DDG image/news/video VQD bootstrap; Startpage repeat-`sc`; Wikipedia OpenSearch/extract; Brave/Google cookies; Google/Yahoo redirect cleanup; Yahoo/Yandex request-time randomness (2026-07-20). No external engine request, parser, TLS, or fingerprint claim.
+- [x] 2.5 Capture and sanitize happy path, empty/malformed, failure, pagination, filters, region, safe-search, and time-limit fixtures for every active engine. Evidence: `tools/reference_capture.py` emits 79 sanitized synthetic engine fixtures for all 16 active category/engine pairs. Frozen-registry guard requires each pair to retain option-bearing success, 200-empty, 200-malformed, and 503/`None` paths; category filters, Bing Images `max_results`, cookies, bootstraps, redirects, and request-time random seams remain captured. No live request, parser, TLS, or fingerprint claim (2026-07-20).
+- [x] 2.6 Capture extraction fixtures for raw bytes/text and representative Markdown/plain/rich HTML, including unknown format fallback and non-200 behavior. Evidence: 9 fixtures under `testdata/contracts/extract/` use an ephemeral loopback-only server with synthetic HTML/bytes; they record raw bytes/text, Markdown/plain/rich rendering, unknown-format Markdown fallback, non-200 `DDGSException`, selected response property, and non-UTF-8 byte behavior. Loopback URLs are rewritten to `https://extract.fixture/page`; this captures frozen `primp` output but does not select a Go renderer (2026-07-20).
+- [x] 2.7 Review fixture contents for credentials, cookies, private URLs, and copyright-sensitive payloads; redact or replace before committing. Evidence: corpus audit found no URL userinfo, unapproved loopback, local path, credential, private URL, live response, or third-party page payload. `tools/reference_capture.py` now rejects userinfo URLs, local paths, unapproved loopback URLs, authentication headers, and secret/session/token-like cookie names before output; remaining public endpoints, static source cookies, and all payloads are synthetic (2026-07-20).
+
+## 3. Public API and pure source-compatible core (RED → GREEN → REFACTOR)
+
+- [x] 3.1 Write failing public API contract tests for client construction, cancellation, raw heterogeneous results, extraction content kinds, proxy resolution, timeout, TLS verification/custom PEM, and classifyable errors. Evidence: constructor/API fixture tests were RED before implementation; focused, full, and race suites passed on 2026-07-20.
+- [x] 3.2 Implement minimal public `DDGS` façade and option model distinguishing omitted defaults from explicit source values, including zero/unlimited max-results and unvalidated numeric edge behavior; make API tests green. Evidence: `ddgs.go`, `api.go`, constructor/search-call fixtures, public coverage 96.4%, and acceptance commands recorded in `MEMORY.md` (2026-07-20). No real engine executor is claimed by this task.
+- [x] 3.3 Write failing differential tests for text/URL/date normalization, VQD extraction, and proxy `tb` alias using frozen fixtures. Evidence: `internal/normalize/normalize_test.go` against frozen offline fixtures; RED failures recorded before implementation (2026-07-20).
+- [x] 3.4 Implement minimal normalization and utility behavior; refactor only with all differentials green. Evidence: `internal/normalize`; 91.7% package coverage; text/URL/date/VQD/proxy fixtures, full/race acceptance, and frozen oracle check passed on 2026-07-20.
+- [x] 3.5 Write failing tests for result field shapes, aggregation cache-key selection, occurrence ordering, longer-body replacement, and heterogeneous video values. Evidence: `internal/search/results_test.go` was RED before `results.go`; 90 frozen offline fixtures cover default/category/dynamic field ordering, `json.Number`, cache-key field order, blank/falsy cache values, Unicode body length, source `len()` errors, stable ties, descending occurrence counts, and nested video values (2026-07-20).
+- [x] 3.6 Implement minimal lossless result/aggregation behavior; run coverage and refactor with fixtures green. Evidence: `internal/search/results.go` retains ordered fields through construction and aggregation, converts to maps only at the boundary, preserves source normalization/type behavior, and passes focused 84.7% coverage plus full/race/fixture/OpenSpec acceptance (2026-07-20).
+- [x] 3.7 Write failing tests for simple filter ranking, category-page removal, token boundaries, Wikipedia priority, and max-result semantics. Evidence: `internal/search/ranker_test.go` and scheduler final-slice fixtures were RED before ranker/scheduler behavior; frozen raw-type, Unicode, category, Wikipedia, and positive/zero/nil/negative max-result cases pass (2026-07-20).
+- [x] 3.8 Implement minimal ranker/backend behavior; test invalid fallback, frozen stable-shuffle equal-priority order, provider submit/seen timing, and disabled text Bing. Evidence: `internal/search/ranker.go`, `backend.go`, and scheduler contract tests pass frozen selection/provider timing/error fixtures (2026-07-20).
+- [x] 3.9 Implement audited static registry metadata and contract tests for every active engine/category/provider/priority plus disabled Bing. Evidence: `internal/engine/registry.go` and `registry_test.go` validate frozen active categories, provider labels, priorities, defensive copies, and inactive text Bing (2026-07-20).
+
+## 4. Parser/XPath compatibility gate
+
+- [ ] 4.1 Evaluate Go HTML/XPath candidates against frozen lxml fixtures; document version, license, maintenance, semantic differences, and acceptance/rejection evidence.
+- [ ] 4.2 Write failing table-driven parser tests for every source XPath expression, malformed HTML recovery, unions, attributes, whitespace, and Anna's Archive comment removal.
+- [ ] 4.3 Implement/select parser adapter only after evidence; make XPath fixtures green without selector rewrites merely to fit implementation.
+- [ ] 4.4 Add JSON extraction tests preserving absent/null/nested/mixed behavior for Grokipedia, Bing Images metadata, and DuckDuckGo media/video responses.
+- [ ] 4.5 Run parser contracts under race detection and benchmark representative fixtures; record intentional limits before proceeding.
+
+## 5. Transport compatibility gate
+
+- [ ] 5.1 Define internal transport interfaces and failing tests for request construction, body closure, cookies, redirects, HTTP(S)/SOCKS proxies, timeout, verification off, custom PEM, compression, and cancellation.
+- [ ] 5.2 Research/review Go transport candidates for browser/TLS/HTTP2 parity; document version, license, cgo status, maintenance, supply-chain risk, and per-engine evidence.
+- [ ] 5.3 Implement minimal reviewed base transport; make proxy/TLS/cancellation/resource tests green and run race/leak checks.
+- [ ] 5.4 Implement DuckDuckGo text-specific HTTP/2/user-agent capability with request-local state; prove no global patch/data race and source-compatible request shape.
+- [ ] 5.5 Gate each `primp`-dependent engine on captured transport evidence and controlled tagged live observation; leave unproven engine explicitly incomplete.
+
+## 6. Engine adapters (each: fixture RED → minimal GREEN → refactor → race)
+
+- [ ] 6.1 Implement Grokipedia and Wikipedia text adapters: JSON shape, Wikipedia second extract request, language state, disambiguation filter.
+- [ ] 6.2 Implement DuckDuckGo text adapter: approved special transport, POST payload, page/time mapping, `y.js` filter.
+- [ ] 6.3 Implement Brave, Google, Mojeek text adapters: source cookies, filters/paging, Google UA/consent, redirect filter.
+- [ ] 6.4 Implement Startpage, Yahoo, Yandex text adapters: bootstrap `sc`, random path/search-id seams, paging, Yahoo URL decode.
+- [ ] 6.5 Implement Bing Images and DuckDuckGo Images: embedded metadata, VQD, filters, dimensions, provider collision, public max-results data-flow quirk, and source timelimit mismatch.
+- [ ] 6.6 Implement Bing News, DuckDuckGo News, Yahoo News: VQD, injected-clock dates, URL/image/source cleanup, source failure behavior.
+- [ ] 6.7 Implement DuckDuckGo Videos preserving nested/dynamic JSON and filters/pagination.
+- [ ] 6.8 Implement Anna's Archive books: randomized domain seam, comment removal, pagination, relative URL repair.
+- [ ] 6.9 Add disabled text Bing metadata/selection regression tests; never expose active adapter unless source baseline changes.
+- [ ] 6.10 Run category differentials for explicit/comma backends, `auto`, `all`, invalid fallback, provider de-duplication, timeout/no-result errors, and maximum-result behavior.
+
+## 7. Scheduler, extraction, concurrency completion
+
+- [x] 7.1 Write failing scheduler tests for unique-provider worker formula, thread-limit mapping, `FIRST_EXCEPTION` batching, provider submit/seen timing, cancellation, partial results, and stable-shuffle random seam. Evidence: `internal/search/scheduler_test.go` had behavioral RED cases before `scheduler.go`; it covers frozen worker/float-boundary, batching, timeout, provider, slicing, cancellation, request ownership, and selection seams (2026-07-20).
+- [x] 7.2 Implement scheduler preserving source outcomes without cancel-on-first-engine-error; make tests green and run race/leak checks. Evidence: bounded worker-pool coordinator in `internal/search/scheduler.go`; `go test -race -count=100` scheduler stress and `testing/synctest` cooperative-cancellation lifecycle check passed. This is an isolated core: public client timeout/category kwargs/real engines are not wired yet (2026-07-20).
+- [ ] 7.3 Write failing extract tests for 200/non-200, raw text/bytes, rendered formats, unknown-format Markdown fallback, proxy/TLS, and cancellation.
+- [ ] 7.4 Evaluate/approve renderer against frozen extraction corpus; document dependency/license evidence and unresolved differences.
+- [ ] 7.5 Implement extract only after renderer gate passes; make extraction differentials/resource-closure tests green.
+- [ ] 7.6 Refactor completed packages with clean-code/simplification rules while all fixture, API, race, and leak tests stay green.
+
+## 8. Integration, quality gates, release readiness
+
+- [ ] 8.1 Add serialized, rate-limited `//go:build integration` smoke tests for every source category and documented engine availability expectations.
+- [ ] 8.2 Verify default tests make zero external requests; integration tests require opt-in and never persist credentials/cookies.
+- [ ] 8.3 Run/record `gofmt`, `go vet ./...`, `go test ./...`, `go test -race ./...`, coverage, and relevant benchmarks; investigate failures before completion.
+- [ ] 8.4 Review exported API, docs, README examples, attribution, NOTICE, dependency licenses, and module path for release correctness.
+- [ ] 8.5 Update MEMORY.md/source audit with exact completed-engine evidence, unresolved gates, verification results, and baseline status.
+- [ ] 8.6 Obtain explicit review that all active engines, parser, transport, extraction, and differential requirements are proven before claiming 1:1 port or archiving change.

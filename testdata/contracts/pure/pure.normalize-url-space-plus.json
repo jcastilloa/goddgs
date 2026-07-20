@@ -1,0 +1,53 @@
+{
+  "contract": {
+    "kind": "pure",
+    "operation": "normalize_url"
+  },
+  "controls": {
+    "clock": "not used",
+    "random": "not used"
+  },
+  "fixture_id": "pure.normalize-url-space-plus",
+  "input": {
+    "value": "https://example.test/a%20b+c"
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs",
+      "no external request",
+      "no credentials or cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "output": "https://example.test/a+b+c",
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": []
+}

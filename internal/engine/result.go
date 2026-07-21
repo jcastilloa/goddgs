@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/jcastillo/goddgs/internal/normalize"
+	"github.com/jcastillo/goddgs/internal/parser"
 )
 
 // ErrUnknownResultCategory reports a category absent from the frozen source
@@ -205,6 +206,9 @@ func sourceText(name string, value any) (string, error) {
 func sourceTruthy(value any) bool {
 	if value == nil {
 		return false
+	}
+	if object, ok := value.(*parser.OrderedObject); ok {
+		return len(object.Fields()) != 0
 	}
 	if number, ok := value.(json.Number); ok {
 		parsed, err := strconv.ParseFloat(number.String(), 64)

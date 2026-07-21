@@ -350,7 +350,10 @@ def _validate_fixture(fixture: Fixture) -> None:
     expected_redaction = PURE_REDACTION if kind == "pure" else ENGINE_REDACTION
     if fixture["redaction"] != expected_redaction:
         raise ValueError("fixture redaction policy drift")
-    if kind in {"engine", "extract", "transport"} and not any(entry.get("kind") == "request" for entry in fixture["trace"]):
+    requires_request_trace = kind in {"extract", "transport"} or (
+        kind == "engine" and result["status"] != "error"
+    )
+    if requires_request_trace and not any(entry.get("kind") == "request" for entry in fixture["trace"]):
         raise ValueError(f"{kind} fixture has no request trace")
     json.dumps(fixture, ensure_ascii=False, allow_nan=False)
 
@@ -3834,6 +3837,431 @@ def _json_engine_matrix_fixtures() -> list[Fixture]:
     return fixtures
 
 
+def _grokipedia_wikipedia_edge_fixtures() -> list[Fixture]:
+    """Capture source-only JSON adapter edges before their Go ports."""
+    grokipedia_input = {
+        "query": "fixture grokipedia first result",
+        "region": "US-en",
+        "safesearch": "strict",
+        "timelimit": "",
+        "page": 0,
+    }
+    wikipedia_quote_input = {
+        "query": "Café / fixture?x=1",
+        "region": "US-de",
+        "safesearch": "strict",
+        "timelimit": "",
+        "page": 0,
+    }
+    wikipedia_status_input = {
+        "query": "fixture wiki second status",
+        "region": "de-de",
+        "safesearch": "moderate",
+        "timelimit": None,
+        "page": 1,
+    }
+    wikipedia_case_input = {
+        "query": "fixture wiki case",
+        "region": "de-de",
+        "safesearch": "moderate",
+        "timelimit": None,
+        "page": 1,
+    }
+    wikipedia_invalid_region_input = {
+        "query": "fixture wiki invalid region",
+        "region": "us",
+        "safesearch": "moderate",
+        "timelimit": None,
+        "page": 1,
+    }
+    wikipedia_too_many_region_input = {
+        "query": "fixture wiki too many region parts",
+        "region": "us-en-extra",
+        "safesearch": "moderate",
+        "timelimit": None,
+        "page": 1,
+    }
+
+    return [
+        _synthetic_search_fixture(
+            "engine.text.grokipedia-first-result-and-snippet-tail",
+            "text",
+            "grokipedia",
+            grokipedia_input,
+            Grokipedia,
+            [
+                _SyntheticResponse(
+                    text=json.dumps(
+                        {
+                            "results": [
+                                {
+                                    "title": "___First Grokipedia___",
+                                    "snippet": "intro\n\nkept <b>tail</b>",
+                                    "slug": "first-page",
+                                },
+                                {"title": "ignored", "snippet": "ignored", "slug": "ignored-page"},
+                            ]
+                        }
+                    )
+                )
+            ],
+            notes=["source uses only results[0], strips edge underscores, and keeps the snippet tail after the first real double newline"],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.grokipedia-null-results-json",
+            "text",
+            "grokipedia",
+            grokipedia_input,
+            Grokipedia,
+            [_SyntheticResponse(text=json.dumps({"results": None}))],
+            notes=["Grokipedia uses dict.get results followed by Python falsiness, so JSON null yields an empty list."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.grokipedia-empty-object-results-json",
+            "text",
+            "grokipedia",
+            grokipedia_input,
+            Grokipedia,
+            [_SyntheticResponse(text=json.dumps({"results": {}}))],
+            notes=["Grokipedia applies Python falsiness to results; an empty JSON object is false and returns an empty list."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.grokipedia-blank-200-none",
+            "text",
+            "grokipedia",
+            grokipedia_input,
+            Grokipedia,
+            [_SyntheticResponse(text="")],
+            notes=["BaseSearchEngine returns None before JSON parsing when a 200 Grokipedia response has empty text."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.grokipedia-missing-title-default-empty",
+            "text",
+            "grokipedia",
+            grokipedia_input,
+            Grokipedia,
+            [_SyntheticResponse(text=json.dumps({"results": [{"slug": "fixture-page"}]}))],
+            notes=["Grokipedia dict.get title default applies only when the key is absent."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.grokipedia-null-title-error",
+            "text",
+            "grokipedia",
+            grokipedia_input,
+            Grokipedia,
+            [_SyntheticResponse(text=json.dumps({"results": [{"title": None, "slug": "fixture-page"}]}))],
+            notes=["An explicit JSON null title reaches Python None.strip rather than the dict.get default."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.grokipedia-float-title-error",
+            "text",
+            "grokipedia",
+            grokipedia_input,
+            Grokipedia,
+            [_SyntheticResponse(text='{"results":[{"title":1.5,"slug":"fixture-page"}]}')],
+            notes=["A JSON float title reaches float.strip; its source error type is distinct from an integer title."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.grokipedia-nonfinite-title-error",
+            "text",
+            "grokipedia",
+            grokipedia_input,
+            Grokipedia,
+            [_SyntheticResponse(text='{"results":[{"title":NaN,"slug":"fixture-page"}]}')],
+            notes=["Python json.loads accepts NaN and the resulting float still reaches float.strip in Grokipedia."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.grokipedia-null-snippet-error",
+            "text",
+            "grokipedia",
+            grokipedia_input,
+            Grokipedia,
+            [_SyntheticResponse(text=json.dumps({"results": [{"title": "fixture", "snippet": None, "slug": "fixture-page"}]}))],
+            notes=["An explicit JSON null snippet fails Python substring membership before result normalization."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.grokipedia-null-slug-python-string",
+            "text",
+            "grokipedia",
+            grokipedia_input,
+            Grokipedia,
+            [_SyntheticResponse(text=json.dumps({"results": [{"title": "fixture", "slug": None}]}))],
+            notes=["The slug is interpolated with a Python f-string, so JSON null becomes the literal None path segment."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.grokipedia-number-slug-python-string",
+            "text",
+            "grokipedia",
+            grokipedia_input,
+            Grokipedia,
+            [_SyntheticResponse(text=json.dumps({"results": [{"title": "fixture", "slug": 7}]}))],
+            notes=["The slug is interpolated with a Python f-string, so a JSON integer keeps its decimal source representation."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.grokipedia-list-slug-python-string",
+            "text",
+            "grokipedia",
+            grokipedia_input,
+            Grokipedia,
+            [_SyntheticResponse(text=json.dumps({"results": [{"title": "fixture", "slug": ["a", None, 2]}]}))],
+            notes=["The slug f-string applies Python list str before href normalization; list element representation remains source-visible."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.grokipedia-object-slug-input-order",
+            "text",
+            "grokipedia",
+            grokipedia_input,
+            Grokipedia,
+            [
+                _SyntheticResponse(
+                    text=json.dumps(
+                        {"results": [{"title": "fixture", "slug": {"z": "x", "a": 1}}]}
+                    )
+                )
+            ],
+            notes=["The slug f-string uses Python dict str in JSON input order; Go must not iterate a map for this path."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.grokipedia-float-slug-python-string",
+            "text",
+            "grokipedia",
+            grokipedia_input,
+            Grokipedia,
+            [
+                _SyntheticResponse(
+                    text=(
+                        '{"results":[{"title":"fixture","slug":'
+                        '[-0,-0.0,1.0,1e3,1e-5,1e20]}]}'
+                    )
+                )
+            ],
+            notes=["json.loads converts integer and float spellings before the slug f-string; signed zero, integral floats, and exponent thresholds remain observable."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.grokipedia-nonfinite-slug-python-string",
+            "text",
+            "grokipedia",
+            grokipedia_input,
+            Grokipedia,
+            [
+                _SyntheticResponse(
+                    text='{"results":[{"title":"fixture","slug":[NaN,Infinity,-Infinity,1e400,-1e400]}]}'
+                )
+            ],
+            notes=[
+                "Python json.loads accepts the non-standard NaN and Infinity literals; the slug f-string renders their Python float spellings.",
+                "The Go JSON boundary must accept these literals only outside JSON strings and preserve source error offsets for all other syntax.",
+            ],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.grokipedia-nested-slug-python-repr",
+            "text",
+            "grokipedia",
+            grokipedia_input,
+            Grokipedia,
+            [
+                _SyntheticResponse(
+                    text=json.dumps(
+                        {
+                            "results": [
+                                {
+                                    "title": "fixture",
+                                    "slug": ["a'b", 'a"b', "back\\slash", "line\nnext", "\a", {"z'y": "é"}],
+                                }
+                            ]
+                        }
+                    )
+                )
+            ],
+            notes=["Nested JSON slug f-string follows Python str/repr quoting, control escapes, and input object order before URL normalization."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.wikipedia-quote-and-first-page-order",
+            "text",
+            "wikipedia",
+            wikipedia_quote_input,
+            Wikipedia,
+            [
+                _SyntheticResponse(
+                    text=json.dumps(
+                        [
+                            wikipedia_quote_input["query"],
+                            ["Café / First"],
+                            [""],
+                            ["https://de.wikipedia.org/wiki/Caf%C3%A9_First"],
+                        ]
+                    )
+                ),
+                _SyntheticResponse(
+                    text=json.dumps(
+                        {
+                            "query": {
+                                "pages": {
+                                    "second-in-source-order": {"extract": "First ordered page"},
+                                    "first-by-name": {"extract": "Must not be selected"},
+                                }
+                            }
+                        }
+                    )
+                ),
+            ],
+            notes=["urllib.quote preserves slash but encodes non-ASCII and query punctuation; source selects the first pages object entry, not lexical key order"],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.wikipedia-second-non-200-keeps-empty-body",
+            "text",
+            "wikipedia",
+            wikipedia_status_input,
+            Wikipedia,
+            [
+                _SyntheticResponse(
+                    text=json.dumps(
+                        [
+                            wikipedia_status_input["query"],
+                            ["Fixture no extract"],
+                            [""],
+                            ["https://de.wikipedia.org/wiki/Fixture_no_extract"],
+                        ]
+                    )
+                ),
+                _SyntheticResponse(text="synthetic unavailable", status_code=503),
+            ],
+            notes=["source leaves TextResult.body at its declared empty default when the enrichment request is non-200"],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.wikipedia-disambiguation-case-sensitive",
+            "text",
+            "wikipedia",
+            wikipedia_case_input,
+            Wikipedia,
+            [
+                _SyntheticResponse(
+                    text=json.dumps(
+                        [
+                            wikipedia_case_input["query"],
+                            ["Fixture case"],
+                            [""],
+                            ["https://de.wikipedia.org/wiki/Fixture_case"],
+                        ]
+                    )
+                ),
+                _SyntheticResponse(
+                    text=json.dumps({"query": {"pages": {"1": {"extract": "May refer to: remains"}}}})
+                ),
+            ],
+            notes=["source filters only the exact lowercase substring may refer to:"],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.wikipedia-invalid-region-error",
+            "text",
+            "wikipedia",
+            wikipedia_invalid_region_input,
+            Wikipedia,
+            [],
+            notes=["Wikipedia unpacks region.lower().split('-') before making a request; an invalid region propagates ValueError."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.wikipedia-too-many-region-parts-error",
+            "text",
+            "wikipedia",
+            wikipedia_too_many_region_input,
+            Wikipedia,
+            [],
+            notes=["Wikipedia also propagates Python unpacking ValueError when region.lower().split('-') has more than two parts."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.wikipedia-blank-200-none",
+            "text",
+            "wikipedia",
+            wikipedia_status_input,
+            Wikipedia,
+            [_SyntheticResponse(text="")],
+            notes=["BaseSearchEngine returns None before OpenSearch parsing when a 200 Wikipedia response has empty text."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.wikipedia-null-titles-empty-list",
+            "text",
+            "wikipedia",
+            wikipedia_status_input,
+            Wikipedia,
+            [_SyntheticResponse(text=json.dumps([wikipedia_status_input["query"], None, [], []]))],
+            notes=["Wikipedia checks Python falsiness on json_data[1], so JSON null yields an empty result list."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.wikipedia-null-hrefs-error",
+            "text",
+            "wikipedia",
+            wikipedia_status_input,
+            Wikipedia,
+            [_SyntheticResponse(text=json.dumps([wikipedia_status_input["query"], ["Fixture"], [], None]))],
+            notes=["Wikipedia indexes json_data[3][0]; JSON null raises Python TypeError rather than producing an empty result."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.wikipedia-null-extract-error",
+            "text",
+            "wikipedia",
+            wikipedia_status_input,
+            Wikipedia,
+            [
+                _SyntheticResponse(
+                    text=json.dumps(
+                        [
+                            wikipedia_status_input["query"],
+                            ["Fixture"],
+                            [""],
+                            ["https://de.wikipedia.org/wiki/Fixture"],
+                        ]
+                    )
+                ),
+                _SyntheticResponse(text=json.dumps({"query": {"pages": {"1": {"extract": None}}}})),
+            ],
+            notes=["A present extract:null is assigned as None and then fails the source disambiguation substring check."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.wikipedia-missing-extract-default-empty",
+            "text",
+            "wikipedia",
+            wikipedia_status_input,
+            Wikipedia,
+            [
+                _SyntheticResponse(
+                    text=json.dumps(
+                        [
+                            wikipedia_status_input["query"],
+                            ["Fixture"],
+                            [""],
+                            ["https://de.wikipedia.org/wiki/Fixture"],
+                        ]
+                    )
+                ),
+                _SyntheticResponse(text=json.dumps({"query": {"pages": {"1": {}}}})),
+            ],
+            notes=["The page dict.get extract default applies only when extract is absent."],
+        ),
+        _synthetic_search_fixture(
+            "engine.text.wikipedia-empty-pages-stop-iteration",
+            "text",
+            "wikipedia",
+            wikipedia_status_input,
+            Wikipedia,
+            [
+                _SyntheticResponse(
+                    text=json.dumps(
+                        [
+                            wikipedia_status_input["query"],
+                            ["Fixture"],
+                            [""],
+                            ["https://de.wikipedia.org/wiki/Fixture"],
+                        ]
+                    )
+                ),
+                _SyntheticResponse(text=json.dumps({"query": {"pages": {}}})),
+            ],
+            notes=["Wikipedia calls next(iter(pages.values())) without a fallback; an empty pages object raises StopIteration."],
+        ),
+    ]
+
+
 def _html_engine_matrix_fixtures() -> list[Fixture]:
     """Capture synthetic happy paths for every HTML-backed active engine."""
     fixtures: list[Fixture] = []
@@ -4960,6 +5388,97 @@ def _parser_json_fixtures() -> list[Fixture]:
             notes=["Python json.loads rejects truncated DuckDuckGo-style JSON before an engine can inspect results."],
         )
     )
+
+    nonfinite_json = (
+        '{"values":[NaN,Infinity,-Infinity],"finite":[-0,1,1.25,1e3],'
+        '"overflow":[1e400,-1e400],'
+        '"nested":{"value":NaN,"flags":[true,false,null],"escaped":"line\\n\\u00e9"},'
+        '"literal":"NaN"}'
+    )
+    nonfinite_value = json.loads(nonfinite_json)
+    fixtures.append(
+        _parser_fixture(
+            "parser.text.grokipedia-json-nonfinite-literals",
+            "text",
+            "grokipedia",
+            "json_loads_nonfinite",
+            {"json": nonfinite_json},
+            _ok(
+                {
+                    "values": [
+                        {"type": type(value).__name__, "repr": repr(value)}
+                        for value in nonfinite_value["values"]
+                    ],
+                    "nested": {
+                        "type": type(nonfinite_value["nested"]["value"]).__name__,
+                        "repr": repr(nonfinite_value["nested"]["value"]),
+                        "flags": nonfinite_value["nested"]["flags"],
+                        "escaped": nonfinite_value["nested"]["escaped"],
+                    },
+                    "finite": [
+                        {"type": type(value).__name__, "repr": repr(value)}
+                        for value in nonfinite_value["finite"]
+                    ],
+                    "overflow": [
+                        {"type": type(value).__name__, "repr": repr(value)}
+                        for value in nonfinite_value["overflow"]
+                    ],
+                    "literal": nonfinite_value["literal"],
+                }
+            ),
+            notes=[
+                "Frozen Python json.loads accepts non-standard NaN, Infinity, and -Infinity outside JSON strings.",
+                "The fixture stores observable float type/repr rather than non-finite JSON output, which cannot itself be serialized with allow_nan=False.",
+            ],
+        )
+    )
+
+    wikipedia_pages_json = (
+        '{"query":{"pages":{"second-in-source-order":{"extract":"First ordered page",'
+        '"metadata":{"rank":1,"flags":[true,null]}},'
+        '"first-by-name":{"extract":"Must not be selected"}}}}'
+    )
+    wikipedia_pages = json.loads(wikipedia_pages_json)["query"]["pages"]
+    fixtures.append(
+        _parser_fixture(
+            "parser.text.wikipedia-json-pages-object-order",
+            "text",
+            "wikipedia",
+            "json_object_items",
+            {
+                "json": wikipedia_pages_json,
+                "path": ["query", "pages"],
+            },
+            _ok([{"name": name, "value": value} for name, value in wikipedia_pages.items()]),
+            notes=[
+                "Wikipedia selects next(iter(query.pages.values())); Python json.loads preserves source object insertion order.",
+                "The first object member is intentionally not lexically smallest.",
+            ],
+        )
+    )
+
+    duplicate_pages_json = (
+        '{"query":{"pages":{"first":{"extract":"old"},'
+        '"first":{"extract":"new"},"second":{"extract":"later"}}}}'
+    )
+    duplicate_pages = json.loads(duplicate_pages_json)["query"]["pages"]
+    fixtures.append(
+        _parser_fixture(
+            "parser.text.wikipedia-json-pages-duplicate-key-order",
+            "text",
+            "wikipedia",
+            "json_object_items",
+            {
+                "json": duplicate_pages_json,
+                "path": ["query", "pages"],
+            },
+            _ok([{"name": name, "value": value} for name, value in duplicate_pages.items()]),
+            notes=[
+                "Python json.loads replaces a duplicate object member value while retaining the first member position.",
+                "Ordered Go JSON must model Python dict iteration, not raw duplicate-token history.",
+            ],
+        )
+    )
     return fixtures
 
 
@@ -5000,6 +5519,7 @@ def build_fixtures() -> list[Fixture]:
         *_parser_json_fixtures(),
         *_engine_visible_fixtures(),
         *_json_engine_matrix_fixtures(),
+        *_grokipedia_wikipedia_edge_fixtures(),
         *_html_engine_matrix_fixtures(),
         *_engine_non_200_fixtures(),
         *_engine_empty_fixtures(),

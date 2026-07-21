@@ -283,9 +283,18 @@ func cloneTransportRequest(request transport.Request) transport.Request {
 	return transport.Request{
 		Method:  request.Method,
 		URL:     request.URL,
-		Query:   append([]transport.Field(nil), request.Query...),
-		Form:    append([]transport.Field(nil), request.Form...),
-		Headers: append([]transport.Field(nil), request.Headers...),
-		Cookies: append([]transport.Field(nil), request.Cookies...),
+		Query:   cloneTransportFields(request.Query),
+		Form:    cloneTransportFields(request.Form),
+		Headers: cloneTransportFields(request.Headers),
+		Cookies: cloneTransportFields(request.Cookies),
 	}
+}
+
+func cloneTransportFields(fields []transport.Field) []transport.Field {
+	if fields == nil {
+		return nil
+	}
+	copyOfFields := make([]transport.Field, len(fields))
+	copy(copyOfFields, fields)
+	return copyOfFields
 }

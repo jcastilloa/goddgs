@@ -283,9 +283,19 @@ JSON-backed engines decode one complete JSON value through `internal/parser`
 with `json.Decoder.UseNumber`. This preserves integer-versus-float lexical
 form for later date normalization and retains `null`, missing map keys, nested
 objects, and lists without string coercion. A second JSON value is rejected,
-as `json.loads` does. JSON object insertion order is intentionally not a
-parser contract: engine adapters must pass their frozen source field mapping
-in declaration order to the ordered result boundary.
+as `json.loads` does. Ordinary adapters map declared source fields in order to
+the ordered result boundary. When frozen source iterates JSON object values,
+the parser SHALL expose an ordered-object form: Wikipedia's
+`next(iter(query.pages.values()))` selects the first JSON input member, not a
+lexical key or Go map iteration order.
+
+Frozen Python additionally accepts non-standard `NaN`, `Infinity`, and
+`-Infinity`; exponent overflow materializes as an infinite Python float. The
+internal parser takes a narrowly isolated ordered path only when these literals
+occur outside strings, while preserving finite-number lexical `json.Number`
+form. Fixtures serialize observable float type/repr rather than non-finite
+JSON output. Adapters must apply Python float string semantics only where a
+source operation observes them, such as Grokipedia's slug f-string.
 
 ### Fixtures precede engine work; live testing is secondary
 

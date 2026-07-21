@@ -1,0 +1,104 @@
+{
+  "contract": {
+    "category": "text",
+    "engine": "wikipedia",
+    "kind": "engine",
+    "operation": "search"
+  },
+  "controls": {
+    "clock": "not used",
+    "notes": [
+      "The page dict.get extract default applies only when extract is absent."
+    ],
+    "random": "not used"
+  },
+  "fixture_id": "engine.text.wikipedia-missing-extract-default-empty",
+  "input": {
+    "page": 1,
+    "query": "fixture wiki second status",
+    "region": "de-de",
+    "safesearch": "moderate",
+    "timelimit": null
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs and responses",
+      "no external request",
+      "no credentials or live session cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "field_order": [
+      [
+        "title",
+        "href",
+        "body"
+      ]
+    ],
+    "output": [
+      {
+        "body": "",
+        "href": "https://de.wikipedia.org/wiki/Fixture",
+        "title": "Fixture"
+      }
+    ],
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "kind": "request",
+      "method": "GET",
+      "query": {},
+      "query_order": [],
+      "sequence": 1,
+      "url": "https://de.wikipedia.org/w/api.php?action=opensearch&profile=fuzzy&limit=1&search=fixture%20wiki%20second%20status"
+    },
+    {
+      "content_hex": "5b22666978747572652077696b69207365636f6e6420737461747573222c205b2246697874757265225d2c205b22225d2c205b2268747470733a2f2f64652e77696b6970656469612e6f72672f77696b692f46697874757265225d5d",
+      "kind": "response",
+      "sequence": 2,
+      "status": 200,
+      "text": "[\"fixture wiki second status\", [\"Fixture\"], [\"\"], [\"https://de.wikipedia.org/wiki/Fixture\"]]"
+    },
+    {
+      "kind": "request",
+      "method": "GET",
+      "sequence": 3,
+      "url": "https://de.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&titles=Fixture&explaintext=0&exintro=0&redirects=1"
+    },
+    {
+      "content_hex": "7b227175657279223a207b227061676573223a207b2231223a207b7d7d7d7d",
+      "kind": "response",
+      "sequence": 4,
+      "status": 200,
+      "text": "{\"query\": {\"pages\": {\"1\": {}}}}"
+    }
+  ]
+}

@@ -101,8 +101,13 @@ Las mismas fixtures incluyen operaciones `json_loads` de motores JSON:
 Grokipedia, metadata `m` de Bing Images y respuestas DuckDuckGo de imágenes,
 noticias y vídeo. Congelan claves ausentes frente a `null`, mapas/listas
 anidados, valores mixtos y errores de JSON truncado o con segundo valor. Go
-debe conservar números como `json.Number`; el orden de objetos JSON no se usa
-para resultado porque los adaptadores llevan orden declarado de campos fuente.
+debe conservar números finitos como `json.Number`. La operación separada
+`json_loads_nonfinite` congela que Python acepta `NaN`/`Infinity` y overflow
+exponencial como `float`; representa type/repr en vez de serializar valores no
+finitos dentro del fixture JSON. Los adaptadores normalmente llevan
+orden declarado de campos fuente; la operación `json_object_items` existe para
+la excepción observable Wikipedia, donde fuente itera `query.pages` y el
+primer miembro de objeto en orden de entrada decide el cuerpo.
 
 ## Ejemplo mínimo puro
 

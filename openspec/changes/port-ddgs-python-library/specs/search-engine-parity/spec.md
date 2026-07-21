@@ -39,6 +39,10 @@ request or undocumented fallback.
 - **WHEN** fixture invokes Wikipedia text search with open-search hit
 - **THEN** Go behavior SHALL make source-compatible extract request and apply source disambiguation filter
 
+#### Scenario: Wikipedia extracts the first source-ordered page
+- **WHEN** a Wikipedia extract response has multiple `query.pages` object members
+- **THEN** Go behavior SHALL select the first member in JSON input order, matching Python `next(iter(...values()))`, rather than a lexical key or Go map iteration order
+
 ### Requirement: Parser and result-processing parity
 Library SHALL parse saved engine responses using source-equivalent XPath or JSON
 behavior and SHALL apply all source engine-specific transformations before

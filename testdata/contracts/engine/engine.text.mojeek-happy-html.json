@@ -73,6 +73,10 @@
   },
   "trace": [
     {
+      "cookie_order": [
+        "arc",
+        "lb"
+      ],
       "cookies": {
         "arc": "de",
         "lb": "de"

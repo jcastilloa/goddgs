@@ -15,7 +15,8 @@ verification result.
   backend selection/static registry, isolated fixture-tested scheduler core,
   offline HTML/XPath/JSON parser adapter, isolated base transport,
   request-local DDG text standard-HTTP/2 transport, and fixture-backed
-  DuckDuckGo, Grokipedia, and Wikipedia text adapters are complete. The
+  DuckDuckGo, Grokipedia, Wikipedia, Brave, Google, and Mojeek text adapters
+  are complete. The
   adapters are not yet composed into the public client. No live search engine,
   source TLS/H2 fingerprint parity, renderer, extraction implementation, or
   public-client-to-engine composition exists yet; those internal package
@@ -23,8 +24,8 @@ verification result.
 - Tasks 2.1–2.7 are complete. The isolated Python oracle lives temporarily at
   `/tmp/goddgs-reference-a12929a`; exact resolved packages and rebuild steps
   are in `docs/reference-environment.md`. It made no external engine request.
-- Fixture corpus has 288 deterministic synthetic/offline contracts: 129 pure,
-  108 engine-visible, 9 extract, 24 parser, and 18 transport contracts under
+- Fixture corpus has 300 deterministic synthetic/offline contracts: 130 pure,
+  119 engine-visible, 9 extract, 24 parser, and 18 transport contracts under
   their
   respective `testdata/contracts/` directories. `tools/reference_capture.py --check`
   validates frozen SHA, resolved-package provenance, result/error shape, trace
@@ -208,10 +209,11 @@ resolved runtime package versions (and preferably wheel hashes) as provenance.
    never write an engine without its fixture evidence.
 3. Capture engine-visible request behavior and define the lossless per-category
    scheduler request shape; only then compose the public façade with engines.
-4. DDG text, Grokipedia, and Wikipedia adapter gates are complete. Next
-   implement Brave, Google, and Mojeek with their captured HTML/cookie/filter
-   behavior; keep every `primp`/randomized TLS-H2 fingerprint explicitly
-   incomplete pending task 5.5.
+4. DDG text, Grokipedia, Wikipedia, Brave, Google, and Mojeek adapter gates
+   are complete. Next implement Startpage, Yahoo, and Yandex with their
+   captured bootstrap/random-path/search-id/URL-decode behavior; keep every
+   `primp`/randomized TLS-H2 fingerprint explicitly incomplete pending task
+   5.5.
 
 ## Verification baseline
 
@@ -274,6 +276,7 @@ Verification recorded on 2026-07-20:
 | 2026-07-21 | Complete request-local DDG transport gate (task 5.4) | Five frozen `HttpClient2` fixtures and local TLS/H2 tests prove `DuckDuckGoTextClient` request shape, standard H2, no redirect follow, copied UA/header state, isolated jars/transports, cancellation, and no mutation of `http.DefaultTransport`. Source randomized TLS/H2 settings and browser fingerprint are deliberately not claimed and remain task 5.5. |
 | 2026-07-21 | Complete DuckDuckGo text adapter gate (task 6.2) | `internal/engine` now owns ordered source results and `DuckDuckGoText` uses the special DDG transport port. Eight frozen fixtures prove POST form order, page/time conditions, ignored safesearch, `nil` versus `[]`, HTML extraction/result normalization, and `y.js` filtering; concurrent adapter stress passes under race detection. It is still not public-client composition or fingerprint proof. |
 | 2026-07-21 | Complete Grokipedia and Wikipedia adapter gate (task 6.1) | Ordered JSON now preserves source object iteration where Wikipedia selects `next(iter(query.pages.values()))`; Grokipedia preserves Python JSON non-finite and f-string-visible slug behavior only at its source operation. Fixture RED/GREEN/REFACTOR proves missing/null/type errors, exact request sequences, `nil`/empty states, source error classes/messages, ordered pages, and case-sensitive disambiguation. Race stress, 288-fixture oracle, full tests/race, `make verify`, and OpenSpec validation pass. Browser fingerprint proof and public composition remain intentionally open. |
+| 2026-07-21 | Complete Brave, Google, and Mojeek adapter gate (task 6.3) | Ordered request/cookie fixtures prove Brave Python-dict replacement order, Google process-lifetime UA/consent/case/page/redirect behavior, and Mojeek exact safe/page/time behavior. The adapters use injected request-local ports and immutable request values; `cookie_order` is now part of fixture traces. Full tests/race, adapter race stress x50, cgo-off, `make verify`, strict OpenSpec validation, and the 300-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 
 ## Core TDD evidence — 2026-07-20
 
@@ -363,6 +366,17 @@ Verification recorded on 2026-07-20:
   clean-code, simplification, concurrency patterns, and debugger review
   applied; 56 concurrent calls and `go test -race -count=50 ./internal/engine`
   pass. No adapter owns a response body or goroutine.
+- **RED/GREEN/REFACTOR 6.3:** Brave/Google/Mojeek fixture tests were RED
+  before the adapters existed. GREEN implemented only their captured GET
+  request/cookie/XPath/result sequences. A follow-up RED required explicit
+  `cookie_order` in every trace; GREEN extended the schema/capturer and made
+  source Python dictionary replacement order observable. REFACTOR kept an
+  injected consumer-side transport port, immutable per-call field slices, and
+  a synchronized process-lifetime Google UA selector; it does not mutate a
+  global transport. `golang-pro`, hexagonal boundary review,
+  `golang-testing`, strict TDD, clean-code, simplification, concurrency
+  patterns, and debugger review applied. Adapter stress (32 calls) and
+  `go test -race -count=50` pass; adapters own no goroutine or response body.
 - **Skills assessed:** `golang-pro`, `go-clean-ddd-hexagonal` (public façade
   port), `golang-testing`, TDD RED/GREEN/REFACTOR, `clean-code`, and
   `go-code-simplification` applied. `go-concurrency-patterns` and
@@ -381,3 +395,10 @@ Verification recorded on 2026-07-20:
   `go test -race -count=100 -run '^(TestSourceWorkerCount_MatchesFrozenFixtures|TestScheduler_|TestSourceBatch)' ./internal/search`.
   Overall tested Go coverage: 91.3%; public package: 96.4%;
   `internal/normalize`: 91.7%; `internal/search`: 90.3%.
+- **Acceptance 6.3 (2026-07-21):** frozen Python `--check` verified 300
+  fixtures (130 pure, 119 engine, 9 extract, 24 parser, 18 transport);
+  `gofmt`, `git diff --check`, `go vet ./...`, `go test -count=1 ./...`,
+  `go test -race -count=1 ./...`, focused engine race stress x50,
+  `CGO_ENABLED=0 go test -count=1 ./...`, `make verify`, and strict OpenSpec
+  validation passed. Total coverage: 86.8%; `internal/engine`: 84.4%; parser:
+  83.4%; transport: 83.8%.

@@ -73,6 +73,9 @@
       }
     },
     {
+      "cookie_order": [
+        "fixture_cookie"
+      ],
       "cookies": {
         "fixture_cookie": "value"
       },

@@ -260,6 +260,16 @@ TLS versions/options, and HTTP/2 settings by temporarily monkey-patching
 settings remain an explicit task 5.5 per-engine compatibility gate, and no DDG
 adapter may claim full transport parity merely because this capability exists.
 
+Google's source User-Agent is sampled once while its Python module class is
+created, then reused by every instance/request in that process. The Go Google
+adapter therefore receives an immutable User-Agent value at construction; its
+internal synchronized source-shaped selector supplies one process-lifetime
+value, while tests inject a fixed value. Search must never sample or mutate a
+User-Agent. The adapter applies that immutable header before each source
+cookie/request sequence through its small consumer-side transport port. This
+preserves the observable lifetime rather than coupling engine calls to a
+mutable package-global transport header.
+
 **Rejected:** default `net/http` everywhere is unproven; blindly importing
 fingerprint dependency creates supply-chain/cgo risk.
 

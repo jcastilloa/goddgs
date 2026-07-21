@@ -1,24 +1,24 @@
 {
   "contract": {
     "category": "text",
-    "engine": "google",
+    "engine": "brave",
     "kind": "engine",
     "operation": "search"
   },
   "controls": {
     "clock": "not used",
     "notes": [
-      "synthetic HTTP 200 parses to an empty list; this differs from the non-200 None contract"
+      "source timelimit lookup raises KeyError after region cookies are set"
     ],
     "random": "not used"
   },
-  "fixture_id": "engine.text.google-empty-200",
+  "fixture_id": "engine.text.brave-unsupported-timelimit-key-error",
   "input": {
     "page": 1,
-    "query": "fixture empty text google",
+    "query": "fixture brave bad time",
     "region": "us-en",
     "safesearch": "moderate",
-    "timelimit": null
+    "timelimit": "invalid"
   },
   "redaction": {
     "rules": [
@@ -29,9 +29,12 @@
     "sanitized": true
   },
   "result": {
-    "field_order": [],
-    "output": [],
-    "status": "ok"
+    "error": {
+      "cause_type": null,
+      "message": "'invalid'",
+      "type": "KeyError"
+    },
+    "status": "error"
   },
   "schema_version": 1,
   "source": {
@@ -61,52 +64,17 @@
   },
   "trace": [
     {
-      "headers": {
-        "User-Agent": "<source-module-lifetime-random-google>"
-      },
-      "kind": "note",
-      "note": "headers_update",
-      "sequence": 1
-    },
-    {
       "cookie_order": [
-        "CONSENT"
+        "us",
+        "useLocation"
       ],
       "cookies": {
-        "CONSENT": "YES+"
+        "us": "us",
+        "useLocation": "0"
       },
       "kind": "cookie",
-      "sequence": 2,
-      "url": "google.com"
-    },
-    {
-      "kind": "request",
-      "method": "GET",
-      "query": {
-        "cr": "countryUS",
-        "filter": "1",
-        "hl": "en-US",
-        "lr": "lang_en",
-        "q": "fixture empty text google",
-        "start": "0"
-      },
-      "query_order": [
-        "q",
-        "filter",
-        "start",
-        "hl",
-        "lr",
-        "cr"
-      ],
-      "sequence": 3,
-      "url": "https://www.google.com/search"
-    },
-    {
-      "content_hex": "3c68746d6c3e3c626f64793e3c2f626f64793e3c2f68746d6c3e",
-      "kind": "response",
-      "sequence": 4,
-      "status": 200,
-      "text": "<html><body></body></html>"
+      "sequence": 1,
+      "url": "https://search.brave.com"
     }
   ]
 }

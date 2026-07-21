@@ -60,6 +60,11 @@
   },
   "trace": [
     {
+      "cookie_order": [
+        "de",
+        "useLocation",
+        "safesearch"
+      ],
       "cookies": {
         "de": "de",
         "safesearch": "off",

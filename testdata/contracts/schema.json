@@ -107,6 +107,10 @@
           },
           "headers": { "type": "object", "additionalProperties": { "type": "string" } },
           "cookies": { "type": "object", "additionalProperties": { "type": "string" } },
+          "cookie_order": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
           "status": { "type": "integer" },
           "text": { "type": "string" },
           "content_hex": { "type": "string", "pattern": "^[0-9a-f]*$" },
@@ -122,6 +126,10 @@
           {
             "if": { "required": ["form_order"] },
             "then": { "required": ["form"] }
+          },
+          {
+            "if": { "required": ["cookie_order"] },
+            "then": { "required": ["cookies"] }
           },
           {
             "if": { "properties": { "kind": { "const": "request" } } },

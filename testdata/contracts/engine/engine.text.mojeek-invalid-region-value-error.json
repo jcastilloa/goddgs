@@ -8,15 +8,15 @@
   "controls": {
     "clock": "not used",
     "notes": [
-      "synthetic HTTP 200 carries malformed source-format content; output/error is frozen source behavior"
+      "source region split raises before a cookie or request"
     ],
     "random": "not used"
   },
-  "fixture_id": "engine.text.mojeek-malformed-response",
+  "fixture_id": "engine.text.mojeek-invalid-region-value-error",
   "input": {
     "page": 1,
-    "query": "fixture malformed text mojeek",
-    "region": "us-en",
+    "query": "fixture mojeek bad region",
+    "region": "us",
     "safesearch": "moderate",
     "timelimit": null
   },
@@ -29,9 +29,12 @@
     "sanitized": true
   },
   "result": {
-    "field_order": [],
-    "output": [],
-    "status": "ok"
+    "error": {
+      "cause_type": null,
+      "message": "not enough values to unpack (expected 2, got 1)",
+      "type": "ValueError"
+    },
+    "status": "error"
   },
   "schema_version": 1,
   "source": {
@@ -59,38 +62,5 @@
       "typing-extensions": "4.16.0"
     }
   },
-  "trace": [
-    {
-      "cookie_order": [
-        "arc",
-        "lb"
-      ],
-      "cookies": {
-        "arc": "us",
-        "lb": "en"
-      },
-      "kind": "cookie",
-      "sequence": 1,
-      "url": "https://www.mojeek.com"
-    },
-    {
-      "kind": "request",
-      "method": "GET",
-      "query": {
-        "q": "fixture malformed text mojeek"
-      },
-      "query_order": [
-        "q"
-      ],
-      "sequence": 2,
-      "url": "https://www.mojeek.com/search"
-    },
-    {
-      "content_hex": "3c",
-      "kind": "response",
-      "sequence": 3,
-      "status": 200,
-      "text": "<"
-    }
-  ]
+  "trace": []
 }

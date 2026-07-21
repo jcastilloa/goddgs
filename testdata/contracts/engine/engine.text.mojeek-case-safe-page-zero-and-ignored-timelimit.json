@@ -1,24 +1,24 @@
 {
   "contract": {
     "category": "text",
-    "engine": "google",
+    "engine": "mojeek",
     "kind": "engine",
     "operation": "search"
   },
   "controls": {
     "clock": "not used",
     "notes": [
-      "synthetic HTTP 200 parses to an empty list; this differs from the non-200 None contract"
+      "Mojeek accepts only exact safesearch on; timelimit is ignored"
     ],
     "random": "not used"
   },
-  "fixture_id": "engine.text.google-empty-200",
+  "fixture_id": "engine.text.mojeek-case-safe-page-zero-and-ignored-timelimit",
   "input": {
-    "page": 1,
-    "query": "fixture empty text google",
-    "region": "us-en",
-    "safesearch": "moderate",
-    "timelimit": null
+    "page": 0,
+    "query": "fixture mojeek exact safe",
+    "region": "DE-de",
+    "safesearch": "ON",
+    "timelimit": "invalid"
   },
   "redaction": {
     "rules": [
@@ -61,50 +61,34 @@
   },
   "trace": [
     {
-      "headers": {
-        "User-Agent": "<source-module-lifetime-random-google>"
-      },
-      "kind": "note",
-      "note": "headers_update",
-      "sequence": 1
-    },
-    {
       "cookie_order": [
-        "CONSENT"
+        "arc",
+        "lb"
       ],
       "cookies": {
-        "CONSENT": "YES+"
+        "arc": "de",
+        "lb": "de"
       },
       "kind": "cookie",
-      "sequence": 2,
-      "url": "google.com"
+      "sequence": 1,
+      "url": "https://www.mojeek.com"
     },
     {
       "kind": "request",
       "method": "GET",
       "query": {
-        "cr": "countryUS",
-        "filter": "1",
-        "hl": "en-US",
-        "lr": "lang_en",
-        "q": "fixture empty text google",
-        "start": "0"
+        "q": "fixture mojeek exact safe"
       },
       "query_order": [
-        "q",
-        "filter",
-        "start",
-        "hl",
-        "lr",
-        "cr"
+        "q"
       ],
-      "sequence": 3,
-      "url": "https://www.google.com/search"
+      "sequence": 2,
+      "url": "https://www.mojeek.com/search"
     },
     {
       "content_hex": "3c68746d6c3e3c626f64793e3c2f626f64793e3c2f68746d6c3e",
       "kind": "response",
-      "sequence": 4,
+      "sequence": 3,
       "status": 200,
       "text": "<html><body></body></html>"
     }

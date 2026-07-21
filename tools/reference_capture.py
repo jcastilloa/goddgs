@@ -338,7 +338,11 @@ def _validate_fixture(fixture: Fixture) -> None:
                 bytes.fromhex(content_hex)
             except ValueError as exc:
                 raise ValueError("trace content hex is invalid") from exc
-        for order_key, values_key in (("query_order", "query"), ("form_order", "form")):
+        for order_key, values_key in (
+            ("query_order", "query"),
+            ("form_order", "form"),
+            ("cookie_order", "cookies"),
+        ):
             if order_key not in entry:
                 continue
             order = entry[order_key]
@@ -474,7 +478,14 @@ def _capture_synthetic_engine(
                 events.append({"kind": "note", "note": "headers_update", "headers": _trace_headers(headers)})
 
         def set_cookies(self, domain: str, cookies: Any) -> None:
-            events.append({"kind": "cookie", "url": domain, "cookies": dict(cookies)})
+            events.append(
+                {
+                    "kind": "cookie",
+                    "url": domain,
+                    "cookies": dict(cookies),
+                    "cookie_order": list(cookies),
+                }
+            )
 
         def request(self, method: str, url: str, **kwargs: Any) -> _SyntheticResponse:
             entry: dict[str, Any] = {"kind": "request", "method": method, "url": url}
@@ -2531,6 +2542,7 @@ def _capture_http_client_constructor(
                 event["query"] = dict(kwargs["params"])
             if "cookies" in kwargs:
                 event["cookies"] = dict(kwargs["cookies"])
+                event["cookie_order"] = list(kwargs["cookies"])
             events.append(event)
             if failure == "timeout":
                 raise http_client.primp.TimeoutError("fixture timed out")
@@ -2788,6 +2800,7 @@ def _capture_loopback_transport(case: str) -> tuple[dict[str, Any], list[dict[st
                         "kind": "cookie",
                         "url": actual_base + self.path,
                         "cookies": {"fixture_cookie": cookie_value.removeprefix("fixture_cookie=")},
+                        "cookie_order": ["fixture_cookie"],
                     }
                 )
                 self._send(200, cookie_value.encode())
@@ -4614,6 +4627,232 @@ def _html_engine_matrix_fixtures() -> list[Fixture]:
     return fixtures
 
 
+def _brave_google_mojeek_edge_fixtures() -> list[Fixture]:
+    """Capture source-only HTML text edge behavior before Go adapter work."""
+    fixtures: list[Fixture] = []
+
+    fixtures.extend(
+        [
+            _synthetic_search_fixture(
+                "engine.text.brave-empty-text-200-none",
+                "text",
+                "brave",
+                {
+                    "query": "fixture empty body brave",
+                    "region": "us-en",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                Brave,
+                [_SyntheticResponse(text="")],
+                notes=["source BaseSearchEngine treats exactly empty HTTP-200 text as None"],
+            ),
+            _synthetic_search_fixture(
+                "engine.text.google-empty-text-200-none",
+                "text",
+                "google",
+                {
+                    "query": "fixture empty body google",
+                    "region": "us-en",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                Google,
+                [_SyntheticResponse(text="")],
+                notes=["source BaseSearchEngine treats exactly empty HTTP-200 text as None"],
+            ),
+            _synthetic_search_fixture(
+                "engine.text.mojeek-empty-text-200-none",
+                "text",
+                "mojeek",
+                {
+                    "query": "fixture empty body mojeek",
+                    "region": "us-en",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                Mojeek,
+                [_SyntheticResponse(text="")],
+                notes=["source BaseSearchEngine treats exactly empty HTTP-200 text as None"],
+            ),
+            _synthetic_search_fixture(
+                "engine.text.brave-unsupported-timelimit-key-error",
+                "text",
+                "brave",
+                {
+                    "query": "fixture brave bad time",
+                    "region": "us-en",
+                    "safesearch": "moderate",
+                    "timelimit": "invalid",
+                    "page": 1,
+                },
+                Brave,
+                [],
+                notes=["source timelimit lookup raises KeyError after region cookies are set"],
+            ),
+            _synthetic_search_fixture(
+                "engine.text.brave-invalid-region-value-error",
+                "text",
+                "brave",
+                {
+                    "query": "fixture brave bad region",
+                    "region": "us",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                Brave,
+                [],
+                notes=["source region split raises before a cookie or request"],
+            ),
+            _synthetic_search_fixture(
+                "engine.text.brave-safesearch-cookie-key-collision",
+                "text",
+                "brave",
+                {
+                    "query": "fixture brave safesearch collision",
+                    "region": "safesearch-en",
+                    "safesearch": "on",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                Brave,
+                [_SyntheticResponse(text="<html><body></body></html>")],
+                notes=["source dict update replaces a colliding safesearch country key in place"],
+            ),
+            _synthetic_search_fixture(
+                "engine.text.google-unsupported-safesearch-key-error",
+                "text",
+                "google",
+                {
+                    "query": "fixture google bad safe",
+                    "region": "us-en",
+                    "safesearch": "strict",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                Google,
+                [],
+                notes=["source Google safesearch lookup raises KeyError after consent cookie"],
+            ),
+            _synthetic_search_fixture(
+                "engine.text.google-invalid-region-value-error",
+                "text",
+                "google",
+                {
+                    "query": "fixture google bad region",
+                    "region": "us",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                Google,
+                [],
+                notes=["source Google region split raises after consent/safesearch setup"],
+            ),
+            _synthetic_search_fixture(
+                "engine.text.mojeek-invalid-region-value-error",
+                "text",
+                "mojeek",
+                {
+                    "query": "fixture mojeek bad region",
+                    "region": "us",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                Mojeek,
+                [],
+                notes=["source region split raises before a cookie or request"],
+            ),
+        ]
+    )
+
+    google_filter_input = {
+        "query": "fixture google filters",
+        "region": "US-EN",
+        "safesearch": "ON",
+        "timelimit": "",
+        "page": 0,
+    }
+    fixtures.append(
+        _synthetic_search_fixture(
+            "engine.text.google-case-page-and-post-filter",
+            "text",
+            "google",
+            google_filter_input,
+            Google,
+            [
+                _SyntheticResponse(
+                    text="""
+                    <html><body>
+                      <div data-hveid="kept"><a href="/url?q=https%3A%2F%2Ftarget.example%2Fpath%3Fa%3D1%2526b%3D2&amp;sa=U"><h3> Kept title </h3></a><div><div>Kept body</div></div></div>
+                      <div data-hveid="non-http"><a href="/url?q=mailto%3Afixture%40example.test&amp;sa=U"><h3> Mail title </h3></a><div><div>Mail body</div></div></div>
+                      <div data-hveid="empty-title"><a href="https://empty-title.example"><h3></h3></a><div><div>Empty title body</div></div></div>
+                    </body></html>
+                    """
+                )
+            ],
+            notes=[
+                "source lowercases safesearch but preserves region part casing",
+                "source normalizes redirect href before splitting and filters non-http or titleless results",
+            ],
+        )
+    )
+    fixtures.append(
+        _synthetic_search_fixture(
+            "engine.text.mojeek-case-safe-page-zero-and-ignored-timelimit",
+            "text",
+            "mojeek",
+            {
+                "query": "fixture mojeek exact safe",
+                "region": "DE-de",
+                "safesearch": "ON",
+                "timelimit": "invalid",
+                "page": 0,
+            },
+            Mojeek,
+            [_SyntheticResponse(text="<html><body></body></html>")],
+            notes=["Mojeek accepts only exact safesearch on; timelimit is ignored"],
+        )
+    )
+
+    google_module = importlib.import_module("ddgs.engines.google")
+    old_random = google_module.random
+    events: list[dict[str, Any]] = []
+
+    class SyntheticGoogleRandom:
+        def choice(self, values: tuple[Any, ...]) -> Any:
+            value = values[0]
+            events.append({"kind": "random", "value": {"function": "choice", "index": 0}})
+            return value
+
+        def randint(self, lower: int, _upper: int) -> int:
+            events.append({"kind": "random", "value": {"function": "randint", "value": lower}})
+            return lower
+
+    google_module.random = SyntheticGoogleRandom()
+    try:
+        user_agent = google_module.get_ua()
+    finally:
+        google_module.random = old_random
+    fixtures.append(
+        _fixture(
+            "pure.google-module-lifetime-user-agent-shape",
+            "google_user_agent",
+            {"device_index": 0, "random_values": [39, 1000, 1000]},
+            _ok(user_agent),
+            trace=_sequenced_trace(events),
+            random="synthetic SystemRandom chooses first device and lower inclusive values",
+            notes=["source get_ua is evaluated for class-level headers, not per search request"],
+        )
+    )
+    return fixtures
+
+
 def _engine_non_200_fixtures() -> list[Fixture]:
     """Capture the BaseSearchEngine status-200-only path for every active engine."""
     cases: list[tuple[str, str, type[Any], dict[str, Any], str, str]] = [
@@ -5521,6 +5760,7 @@ def build_fixtures() -> list[Fixture]:
         *_json_engine_matrix_fixtures(),
         *_grokipedia_wikipedia_edge_fixtures(),
         *_html_engine_matrix_fixtures(),
+        *_brave_google_mojeek_edge_fixtures(),
         *_engine_non_200_fixtures(),
         *_engine_empty_fixtures(),
         *_engine_malformed_response_fixtures(),

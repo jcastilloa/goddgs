@@ -1,36 +1,34 @@
 {
   "contract": {
-    "category": "text",
-    "engine": "mojeek",
-    "kind": "engine",
-    "operation": "search"
+    "kind": "pure",
+    "operation": "google_user_agent"
   },
   "controls": {
     "clock": "not used",
     "notes": [
-      "synthetic HTTP 200 carries malformed source-format content; output/error is frozen source behavior"
+      "source get_ua is evaluated for class-level headers, not per search request"
     ],
-    "random": "not used"
+    "random": "synthetic SystemRandom chooses first device and lower inclusive values"
   },
-  "fixture_id": "engine.text.mojeek-malformed-response",
+  "fixture_id": "pure.google-module-lifetime-user-agent-shape",
   "input": {
-    "page": 1,
-    "query": "fixture malformed text mojeek",
-    "region": "us-en",
-    "safesearch": "moderate",
-    "timelimit": null
+    "device_index": 0,
+    "random_values": [
+      39,
+      1000,
+      1000
+    ]
   },
   "redaction": {
     "rules": [
-      "synthetic inputs and responses",
+      "synthetic inputs",
       "no external request",
-      "no credentials or live session cookies"
+      "no credentials or cookies"
     ],
     "sanitized": true
   },
   "result": {
-    "field_order": [],
-    "output": [],
+    "output": "Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.1000.1000 Mobile Safari/537.36NSTNWV",
     "status": "ok"
   },
   "schema_version": 1,
@@ -61,36 +59,36 @@
   },
   "trace": [
     {
-      "cookie_order": [
-        "arc",
-        "lb"
-      ],
-      "cookies": {
-        "arc": "us",
-        "lb": "en"
-      },
-      "kind": "cookie",
+      "kind": "random",
       "sequence": 1,
-      "url": "https://www.mojeek.com"
+      "value": {
+        "function": "choice",
+        "index": 0
+      }
     },
     {
-      "kind": "request",
-      "method": "GET",
-      "query": {
-        "q": "fixture malformed text mojeek"
-      },
-      "query_order": [
-        "q"
-      ],
+      "kind": "random",
       "sequence": 2,
-      "url": "https://www.mojeek.com/search"
+      "value": {
+        "function": "randint",
+        "value": 39
+      }
     },
     {
-      "content_hex": "3c",
-      "kind": "response",
+      "kind": "random",
       "sequence": 3,
-      "status": 200,
-      "text": "<"
+      "value": {
+        "function": "randint",
+        "value": 1000
+      }
+    },
+    {
+      "kind": "random",
+      "sequence": 4,
+      "value": {
+        "function": "randint",
+        "value": 1000
+      }
     }
   ]
 }

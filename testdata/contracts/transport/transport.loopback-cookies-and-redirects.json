@@ -89,6 +89,9 @@
       "url": "https://transport.fixture/cookie-check"
     },
     {
+      "cookie_order": [
+        "fixture_cookie"
+      ],
       "cookies": {
         "fixture_cookie": "source"
       },

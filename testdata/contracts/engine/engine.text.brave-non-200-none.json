@@ -60,6 +60,10 @@
   },
   "trace": [
     {
+      "cookie_order": [
+        "us",
+        "useLocation"
+      ],
       "cookies": {
         "us": "us",
         "useLocation": "0"

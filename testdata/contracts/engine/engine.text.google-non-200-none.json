@@ -68,6 +68,9 @@
       "sequence": 1
     },
     {
+      "cookie_order": [
+        "CONSENT"
+      ],
       "cookies": {
         "CONSENT": "YES+"
       },

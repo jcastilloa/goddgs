@@ -8,15 +8,15 @@
   "controls": {
     "clock": "not used",
     "notes": [
-      "synthetic HTTP 200 parses to an empty list; this differs from the non-200 None contract"
+      "source Google region split raises after consent/safesearch setup"
     ],
     "random": "not used"
   },
-  "fixture_id": "engine.text.google-empty-200",
+  "fixture_id": "engine.text.google-invalid-region-value-error",
   "input": {
     "page": 1,
-    "query": "fixture empty text google",
-    "region": "us-en",
+    "query": "fixture google bad region",
+    "region": "us",
     "safesearch": "moderate",
     "timelimit": null
   },
@@ -29,9 +29,12 @@
     "sanitized": true
   },
   "result": {
-    "field_order": [],
-    "output": [],
-    "status": "ok"
+    "error": {
+      "cause_type": null,
+      "message": "not enough values to unpack (expected 2, got 1)",
+      "type": "ValueError"
+    },
+    "status": "error"
   },
   "schema_version": 1,
   "source": {
@@ -78,35 +81,6 @@
       "kind": "cookie",
       "sequence": 2,
       "url": "google.com"
-    },
-    {
-      "kind": "request",
-      "method": "GET",
-      "query": {
-        "cr": "countryUS",
-        "filter": "1",
-        "hl": "en-US",
-        "lr": "lang_en",
-        "q": "fixture empty text google",
-        "start": "0"
-      },
-      "query_order": [
-        "q",
-        "filter",
-        "start",
-        "hl",
-        "lr",
-        "cr"
-      ],
-      "sequence": 3,
-      "url": "https://www.google.com/search"
-    },
-    {
-      "content_hex": "3c68746d6c3e3c626f64793e3c2f626f64793e3c2f68746d6c3e",
-      "kind": "response",
-      "sequence": 4,
-      "status": 200,
-      "text": "<html><body></body></html>"
     }
   ]
 }

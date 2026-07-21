@@ -210,6 +210,22 @@ license, maintenance, reproducibility, cgo, and fixture/live evidence review.
 `net/http` can serve only proven paths. DDG H2 settings are request-local; no
 global monkey patch.
 
+The frozen oracle writes transport contracts separately from engine contracts:
+constructor arguments are captured with a local `primp.Client` double and
+HTTP behavior is captured only through an ephemeral loopback server with
+synthetic payloads. These contracts establish observable source behavior but
+do not themselves approve a Go TLS, HTTP/2, SOCKS, or fingerprint adapter.
+
+The base transport port owns an isolated client configuration, cookie jar, and
+native response lifecycle. It accepts a context-first request value and returns
+a materialized response containing source-visible status, bytes, and text;
+the native body is read and closed before return, so engine adapters cannot
+leak it. Header/cookie updates are explicit client operations and request
+maps/slices are copied before I/O. Rendered Markdown/plain/rich output is a
+separate capability because source `Response` delegates those properties to
+`primp`; base transport completion must not claim renderer or fingerprint
+parity.
+
 **Rejected:** default `net/http` everywhere is unproven; blindly importing
 fingerprint dependency creates supply-chain/cgo risk.
 

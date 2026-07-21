@@ -9,6 +9,7 @@ mode: engine traces use synthetic in-process HTTP clients only.
 from __future__ import annotations
 
 import argparse
+import gzip
 import importlib
 import importlib.metadata
 import json
@@ -16,9 +17,11 @@ import math
 import os
 import platform
 import re
+import socket
 import subprocess
 import sys
 import threading
+import time
 from binascii import hexlify
 from collections.abc import Callable
 from concurrent.futures import FIRST_EXCEPTION, Future, wait
@@ -92,6 +95,7 @@ ENGINE_REDACTION = {
 }
 EXTRACT_REDACTION = ENGINE_REDACTION
 PARSER_REDACTION = ENGINE_REDACTION
+TRANSPORT_REDACTION = ENGINE_REDACTION
 URL_RE = re.compile(r"(?:https?|socks5h?)://[^\s\"'<>]+")
 LOCAL_HOSTS = {"127.0.0.1", "::1", "localhost"}
 ALLOWED_LOOPBACK_URLS = {"socks5h://127.0.0.1:9150"}
@@ -216,6 +220,22 @@ def _parser_fixture(
     return fixture
 
 
+def _transport_fixture(
+    fixture_id: str,
+    operation: str,
+    input_value: dict[str, Any],
+    result: dict[str, Any],
+    *,
+    trace: list[dict[str, Any]],
+    notes: list[str] | None = None,
+) -> Fixture:
+    """Record source HttpClient behavior without an external destination."""
+    fixture = _fixture(fixture_id, operation, input_value, result, trace=trace, notes=notes)
+    fixture["contract"] = {"kind": "transport", "operation": operation}
+    fixture["redaction"] = dict(TRANSPORT_REDACTION)
+    return fixture
+
+
 def _ok(output: Any, *, field_order: list[list[str]] | None = None) -> dict[str, Any]:
     result: dict[str, Any] = {"status": "ok", "output": output}
     if field_order is not None:
@@ -280,6 +300,9 @@ def _validate_fixture(fixture: Fixture) -> None:
             raise ValueError("parser fixture has invalid contract fields")
         if not all(isinstance(contract.get(key), str) for key in ("category", "engine", "operation")):
             raise ValueError("parser fixture misses category, engine, or operation")
+    elif kind == "transport":
+        if set(contract) != {"kind", "operation"} or not isinstance(contract.get("operation"), str):
+            raise ValueError("transport fixture misses operation or has extra contract fields")
     else:
         raise ValueError("offline capture emitted unsupported fixture kind")
     if fixture["result"]["status"] not in {"ok", "error"}:
@@ -315,10 +338,10 @@ def _validate_fixture(fixture: Fixture) -> None:
                 bytes.fromhex(content_hex)
             except ValueError as exc:
                 raise ValueError("trace content hex is invalid") from exc
-    expected_redaction = PURE_REDACTION if kind == "pure" else EXTRACT_REDACTION
+    expected_redaction = PURE_REDACTION if kind == "pure" else ENGINE_REDACTION
     if fixture["redaction"] != expected_redaction:
         raise ValueError("fixture redaction policy drift")
-    if kind in {"engine", "extract"} and not any(entry.get("kind") == "request" for entry in fixture["trace"]):
+    if kind in {"engine", "extract", "transport"} and not any(entry.get("kind") == "request" for entry in fixture["trace"]):
         raise ValueError(f"{kind} fixture has no request trace")
     json.dumps(fixture, ensure_ascii=False, allow_nan=False)
 
@@ -2466,6 +2489,419 @@ def _capture_loopback_extract(
     return outcome, sanitized_trace
 
 
+def _capture_http_client_constructor(
+    config: dict[str, Any],
+    *,
+    method: str = "GET",
+    failure: str | None = None,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Capture HttpClient construction and one synthetic request without I/O."""
+    http_client = importlib.import_module("ddgs.http_client")
+    events: list[dict[str, Any]] = []
+    constructor_calls: list[dict[str, Any]] = []
+
+    class SyntheticResponse:
+        status_code = 201
+        content = b"transport fixture bytes"
+        text = "transport fixture text"
+
+    class SyntheticClient:
+        def __init__(self, **kwargs: Any) -> None:
+            constructor_calls.append(kwargs)
+
+        def request(self, request_method: str, url: str, **kwargs: Any) -> SyntheticResponse:
+            event: dict[str, Any] = {"kind": "request", "method": request_method, "url": url}
+            if "params" in kwargs:
+                event["query"] = dict(kwargs["params"])
+            if "cookies" in kwargs:
+                event["cookies"] = dict(kwargs["cookies"])
+            events.append(event)
+            if failure == "timeout":
+                raise http_client.primp.TimeoutError("fixture timed out")
+            if failure == "generic":
+                raise RuntimeError("fixture failure")
+            return SyntheticResponse()
+
+    original_client = http_client.primp.Client
+    http_client.primp.Client = SyntheticClient
+    try:
+        client = http_client.HttpClient(**config)
+        if len(constructor_calls) != 1:
+            raise AssertionError(f"expected one source constructor call, got {constructor_calls!r}")
+        constructor = constructor_calls[0]
+        events.insert(
+            0,
+            {
+                "kind": "note",
+                "note": "primp.Client constructor",
+                "value": {
+                    "proxy": constructor["proxy"],
+                    "timeout": constructor["timeout"],
+                    "impersonate": constructor["impersonate"],
+                    "impersonate_os": constructor["impersonate_os"],
+                    "verify": constructor["verify"],
+                    "ca_cert_file": constructor["ca_cert_file"],
+                },
+            },
+        )
+        try:
+            response = client.request(
+                method,
+                "https://transport.fixture/request",
+                params={"q": "needle"},
+                cookies={"fixture_cookie": "value"},
+            )
+        except Exception as exc:
+            outcome = _error_from_exception(exc)
+        else:
+            events.append(
+                {
+                    "kind": "response",
+                    "status": response.status_code,
+                    "text": response.text,
+                    "content_hex": hexlify(response.content).decode(),
+                }
+            )
+            outcome = _ok(
+                {
+                    "status": response.status_code,
+                    "text": response.text,
+                    "content_hex": hexlify(response.content).decode(),
+                }
+            )
+    finally:
+        http_client.primp.Client = original_client
+    return outcome, _sequenced_trace(events)
+
+
+def _capture_loopback_transport(case: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Run frozen HttpClient against synthetic loopback endpoints only."""
+    http_client = importlib.import_module("ddgs.http_client")
+    fixture_base = "https://transport.fixture"
+    events: list[dict[str, Any]] = []
+    cookie_value = ""
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:  # noqa: N802
+            nonlocal cookie_value
+            events.append({"kind": "request", "method": "GET", "url": actual_base + self.path})
+            if self.path == "/set-cookie":
+                body = b"cookie set"
+                self._send(200, body, {"Set-Cookie": "fixture_cookie=source; Path=/"})
+                return
+            if self.path == "/cookie-check":
+                cookie_value = self.headers.get("Cookie", "")
+                events.append(
+                    {
+                        "kind": "cookie",
+                        "url": actual_base + self.path,
+                        "cookies": {"fixture_cookie": cookie_value.removeprefix("fixture_cookie=")},
+                    }
+                )
+                self._send(200, cookie_value.encode())
+                return
+            if self.path == "/redirect":
+                self._send(302, b"redirect", {"Location": "/target"})
+                return
+            if self.path == "/target":
+                self._send(200, b"redirect target")
+                return
+            if self.path == "/gzip":
+                self._send(200, gzip.compress(b"compressed fixture", mtime=0), {"Content-Encoding": "gzip"})
+                return
+            if self.path == "/status":
+                self._send(503, b"unavailable")
+                return
+            if self.path == "/slow":
+                time.sleep(0.15)
+                self._send(200, b"slow response")
+                return
+            self._send(404, b"not found")
+
+        def _send(self, status: int, body: bytes, headers: dict[str, str] | None = None) -> None:
+            response_headers = headers or {}
+            self.send_response(status)
+            self.send_header("Content-Length", str(len(body)))
+            for name, value in response_headers.items():
+                self.send_header(name, value)
+            self.end_headers()
+            events.append(
+                {
+                    "kind": "response",
+                    "status": status,
+                    "headers": response_headers,
+                    "content_hex": hexlify(body).decode(),
+                }
+            )
+            try:
+                self.wfile.write(body)
+            except BrokenPipeError:
+                pass
+
+        def log_message(self, _format: str, *_args: Any) -> None:
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    actual_base = f"http://127.0.0.1:{server.server_port}"
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    saved_environment = {name: os.environ.pop(name, None) for name in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy")}
+
+    try:
+        timeout = 0.01 if case == "timeout" else 5
+        client = http_client.HttpClient(proxy=None, timeout=timeout, verify=True)
+        try:
+            if case == "cookies-redirect":
+                set_response = client.get(actual_base + "/set-cookie")
+                cookie_response = client.get(actual_base + "/cookie-check")
+                redirect_response = client.get(actual_base + "/redirect")
+                outcome = _ok(
+                    {
+                        "set": {"status": set_response.status_code, "text": set_response.text},
+                        "cookie": {"status": cookie_response.status_code, "text": cookie_response.text},
+                        "redirect": {"status": redirect_response.status_code, "text": redirect_response.text},
+                    }
+                )
+            else:
+                path = {"gzip": "/gzip", "status": "/status", "timeout": "/slow"}[case]
+                response = client.get(actual_base + path)
+                outcome = _ok(
+                    {
+                        "status": response.status_code,
+                        "text": response.text,
+                        "content_hex": hexlify(response.content).decode(),
+                    }
+                )
+        except Exception as exc:
+            outcome = _error_from_exception(exc)
+            outcome["error"]["message"] = outcome["error"]["message"].replace(actual_base, fixture_base)
+    finally:
+        for name, value in saved_environment.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
+        server.shutdown()
+        thread.join()
+        server.server_close()
+
+    trace: list[dict[str, Any]] = []
+    for event in _sequenced_trace(events):
+        sanitized = dict(event)
+        if "url" in sanitized:
+            sanitized["url"] = sanitized["url"].replace(actual_base, fixture_base)
+        trace.append(sanitized)
+    return outcome, trace
+
+
+def _capture_socks_loopback_transport(scheme: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Capture source SOCKS5 versus SOCKS5H name-resolution behavior locally."""
+    http_client = importlib.import_module("ddgs.http_client")
+    fixture_url = "https://transport.fixture/probe"
+    actual_target = "http://localhost:43210/probe"
+    events: list[dict[str, Any]] = []
+    server_result: dict[str, Any] = {}
+    server_done = threading.Event()
+
+    def read_exact(connection: socket.socket, size: int) -> bytes:
+        value = b""
+        while len(value) < size:
+            chunk = connection.recv(size - len(value))
+            if not chunk:
+                raise EOFError(f"wanted {size} SOCKS bytes, got {len(value)}")
+            value += chunk
+        return value
+
+    listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    listener.bind(("127.0.0.1", 0))
+    listener.listen(1)
+    listener.settimeout(4)
+    actual_proxy = f"{scheme}://127.0.0.1:{listener.getsockname()[1]}"
+
+    def serve() -> None:
+        try:
+            connection, _address = listener.accept()
+            with connection:
+                connection.settimeout(3)
+                version, method_count = read_exact(connection, 2)
+                methods = read_exact(connection, method_count)
+                if version != 5 or methods != b"\x00":
+                    raise AssertionError(f"unexpected SOCKS greeting {(version, methods)!r}")
+                connection.sendall(b"\x05\x00")
+
+                version, command, reserved, address_type = read_exact(connection, 4)
+                if address_type == 1:
+                    target_host = socket.inet_ntoa(read_exact(connection, 4))
+                    address_type_name = "ipv4"
+                elif address_type == 3:
+                    target_host = read_exact(connection, read_exact(connection, 1)[0]).decode("ascii")
+                    address_type_name = "domain"
+                elif address_type == 4:
+                    target_host = socket.inet_ntop(socket.AF_INET6, read_exact(connection, 16))
+                    address_type_name = "ipv6"
+                else:
+                    raise AssertionError(f"unexpected SOCKS address type {address_type}")
+                target_port = int.from_bytes(read_exact(connection, 2), "big")
+                server_result["connect"] = {
+                    "version": version,
+                    "command": command,
+                    "reserved": reserved,
+                    "address_type": address_type_name,
+                    "host": target_host,
+                    "port": target_port,
+                }
+                connection.sendall(b"\x05\x00\x00\x01\x00\x00\x00\x00\x00\x00")
+
+                request_line = connection.recv(4096).split(b"\r\n", 1)[0].decode("ascii", "replace")
+                server_result["request_line"] = request_line
+                body = b"socks fixture"
+                connection.sendall(
+                    b"HTTP/1.1 200 OK\r\nContent-Length: "
+                    + str(len(body)).encode("ascii")
+                    + b"\r\nConnection: close\r\n\r\n"
+                    + body
+                )
+        except Exception as exc:  # source transport behavior is fixture data
+            server_result["error"] = f"{type(exc).__name__}: {exc!r}"
+        finally:
+            server_done.set()
+
+    thread = threading.Thread(target=serve, daemon=True)
+    thread.start()
+    saved_environment = {
+        name: os.environ.pop(name, None)
+        for name in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy")
+    }
+    try:
+        try:
+            response = http_client.HttpClient(proxy=actual_proxy, timeout=2).get(actual_target)
+        except Exception as exc:
+            outcome = _error_from_exception(exc)
+            outcome["error"]["message"] = outcome["error"]["message"].replace(actual_target, fixture_url)
+        else:
+            outcome = _ok(
+                {
+                    "status": response.status_code,
+                    "text": response.text,
+                    "content_hex": hexlify(response.content).decode(),
+                    "connect": server_result.get("connect"),
+                    "request_line": server_result.get("request_line"),
+                }
+            )
+    finally:
+        for name, value in saved_environment.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
+        server_done.wait(4)
+        thread.join(0.1)
+        listener.close()
+
+    if "error" in server_result:
+        raise AssertionError(f"SOCKS loopback server failed: {server_result['error']}")
+    if not server_done.is_set():
+        raise AssertionError("SOCKS loopback server did not finish")
+    if outcome["status"] != "ok":
+        raise AssertionError(f"source SOCKS request failed: {outcome!r}")
+
+    events.extend(
+        [
+            {"kind": "request", "method": "GET", "url": fixture_url},
+            {
+                "kind": "note",
+                "note": "SOCKS CONNECT target observed by synthetic proxy",
+                "value": {"scheme": scheme, **server_result["connect"]},
+            },
+            {
+                "kind": "response",
+                "status": outcome["output"]["status"],
+                "content_hex": outcome["output"]["content_hex"],
+            },
+        ]
+    )
+    return outcome, _sequenced_trace(events)
+
+
+def _transport_fixtures() -> list[Fixture]:
+    """Capture HttpClient construction and loopback-only HTTP behavior."""
+    fixtures: list[Fixture] = []
+    constructor_cases = [
+        ("transport.constructor-default-get", {}, "GET", None),
+        (
+            "transport.constructor-http-proxy-verify-off-post",
+            {"proxy": "http://proxy.fixture:8080", "timeout": 7, "verify": False},
+            "POST",
+            None,
+        ),
+        (
+            "transport.constructor-https-proxy-pem",
+            {"proxy": "https://proxy.fixture:8443", "timeout": None, "verify": "fixture-root.pem"},
+            "GET",
+            None,
+        ),
+        (
+            "transport.constructor-socks5-proxy",
+            {"proxy": "socks5://proxy.fixture:1080", "timeout": 5, "verify": True},
+            "GET",
+            None,
+        ),
+        (
+            "transport.constructor-socks5h-proxy",
+            {"proxy": "socks5h://proxy.fixture:1080", "timeout": 5, "verify": True},
+            "GET",
+            None,
+        ),
+        ("transport.timeout-error-classification", {}, "GET", "timeout"),
+        ("transport.generic-error-classification", {}, "GET", "generic"),
+    ]
+    for fixture_id, config, method, failure in constructor_cases:
+        outcome, trace = _capture_http_client_constructor(config, method=method, failure=failure)
+        fixtures.append(
+            _transport_fixture(
+                fixture_id,
+                "http_client_request",
+                {"constructor": config, "method": method, "failure": failure},
+                outcome,
+                trace=trace,
+                notes=["local primp.Client double; no socket or proxy connection"],
+            )
+        )
+
+    for case, fixture_id in (
+        ("cookies-redirect", "transport.loopback-cookies-and-redirects"),
+        ("gzip", "transport.loopback-gzip-decompression"),
+        ("status", "transport.loopback-non-200-preserved"),
+        ("timeout", "transport.loopback-timeout-classification"),
+    ):
+        outcome, trace = _capture_loopback_transport(case)
+        fixtures.append(
+            _transport_fixture(
+                fixture_id,
+                "http_client_loopback",
+                {"case": case, "base_url": "https://transport.fixture"},
+                outcome,
+                trace=trace,
+                notes=["ephemeral loopback server with synthetic payload; URL rewritten before output"],
+            )
+        )
+
+    for scheme in ("socks5", "socks5h"):
+        outcome, trace = _capture_socks_loopback_transport(scheme)
+        fixtures.append(
+            _transport_fixture(
+                f"transport.loopback-{scheme}-resolution",
+                "http_client_socks_loopback",
+                {"proxy_scheme": scheme, "target_url": "https://transport.fixture/probe"},
+                outcome,
+                trace=trace,
+                notes=["ephemeral local SOCKS5 server; target and proxy URLs are rewritten before output"],
+            )
+        )
+    return fixtures
+
+
 def _extract_fixtures() -> list[Fixture]:
     """Capture source extraction selection and rendering from loopback-only HTML."""
     html_body = (
@@ -4260,6 +4696,7 @@ def _fixture_path(
     engine_output: Path,
     extract_output: Path,
     parser_output: Path,
+    transport_output: Path,
 ) -> Path:
     kind = fixture["contract"]["kind"]
     output = {
@@ -4267,6 +4704,7 @@ def _fixture_path(
         "engine": engine_output,
         "extract": extract_output,
         "parser": parser_output,
+        "transport": transport_output,
     }[kind]
     return output / f"{fixture['fixture_id']}.json"
 
@@ -4284,6 +4722,7 @@ def build_fixtures() -> list[Fixture]:
         *_scheduler_fixtures(),
         *_error_and_extract_fixtures(),
         *_extract_fixtures(),
+        *_transport_fixtures(),
         *_parser_xpath_fixtures(),
         *_parser_json_fixtures(),
         *_engine_visible_fixtures(),
@@ -4346,6 +4785,12 @@ def main() -> int:
         default=Path("testdata/contracts/parser"),
         help="synthetic lxml/XPath fixture output",
     )
+    parser.add_argument(
+        "--transport-output",
+        type=Path,
+        default=Path("testdata/contracts/transport"),
+        help="synthetic transport fixture output",
+    )
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--write", action="store_true", help="write deterministic offline fixtures")
     mode.add_argument("--check", action="store_true", help="verify generated fixtures match files")
@@ -4357,9 +4802,17 @@ def main() -> int:
     args.engine_output.mkdir(parents=True, exist_ok=True)
     args.extract_output.mkdir(parents=True, exist_ok=True)
     args.parser_output.mkdir(parents=True, exist_ok=True)
+    args.transport_output.mkdir(parents=True, exist_ok=True)
     failures: list[str] = []
     for fixture in fixtures:
-        path = _fixture_path(fixture, args.output, args.engine_output, args.extract_output, args.parser_output)
+        path = _fixture_path(
+            fixture,
+            args.output,
+            args.engine_output,
+            args.extract_output,
+            args.parser_output,
+            args.transport_output,
+        )
         rendered = _render(fixture)
         if args.write:
             path.write_text(rendered, encoding="utf-8")
@@ -4370,11 +4823,12 @@ def main() -> int:
         return 1
     counts = {
         kind: sum(fixture["contract"]["kind"] == kind for fixture in fixtures)
-        for kind in ("pure", "engine", "extract", "parser")
+        for kind in ("pure", "engine", "extract", "parser", "transport")
     }
     print(
         f"{len(fixtures)} offline frozen-source fixtures "
-        f"({counts['pure']} pure, {counts['engine']} engine, {counts['extract']} extract, {counts['parser']} parser) "
+        f"({counts['pure']} pure, {counts['engine']} engine, {counts['extract']} extract, "
+        f"{counts['parser']} parser, {counts['transport']} transport) "
         f"{'written' if args.write else 'verified'}"
     )
     return 0

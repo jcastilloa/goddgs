@@ -15,13 +15,13 @@ inventada para Go.
   versiones resueltas antes de sustituir expectativas. Cada fixture también
   guarda `source.resolved_packages` para que la procedencia quede junto al
   resultado, no sólo en documentación.
-- `contract.kind` vale `pure`, `engine`, `extract` o `parser`. Los casos de
-  motor y parser deben indicar categoría, motor y operación.
+- `contract.kind` vale `pure`, `engine`, `extract`, `parser` o `transport`.
+  Los casos de motor y parser deben indicar categoría, motor y operación.
 - Los ficheros se separan por clase: `testdata/contracts/pure/`,
-  `testdata/contracts/engine/`, `testdata/contracts/extract/` y
-  `testdata/contracts/parser/`. El capturador conserva `--output` para los
-  puros y expone `--engine-output`, `--extract-output` y `--parser-output`
-  para los otros destinos.
+  `testdata/contracts/engine/`, `testdata/contracts/extract/`,
+  `testdata/contracts/parser/` y `testdata/contracts/transport/`. El
+  capturador conserva `--output` para los puros y expone un destino explícito
+  para cada clase restante.
 - `trace` conserva secuencia, no sólo petición final: bootstrap VQD, cookies,
   Startpage `sc`, Wikipedia extract y redirects son observables.
 - Una entrada `response` sintética conserva `status`, `text` y `content_hex`.
@@ -67,6 +67,17 @@ constructor `HttpClient`, GET, status, bytes/text sintéticos y la única
 propiedad de respuesta consultada. Por eso congela la selección de formato y
 la salida del `primp` resuelto, pero no aprueba todavía un renderer o transporte
 Go.
+
+## Captura sintética de transporte
+
+Las fixtures bajo `transport/` observan el constructor fuente con una doble
+local de `primp.Client` y comportamiento HTTP con un servidor loopback efímero
+de payload sintético. Cubren configuración observable, cookies, redirects,
+compresión, estados no-200 y timeout; una doble SOCKS local también congela la
+diferencia entre resolución `socks5` local y `socks5h` remota. La URL loopback
+se reescribe antes de versionar. No contienen proxies externos ni prueban
+fingerprint de navegador, TLS/HTTP2 de `primp`, ni la elección de cliente Go:
+esas siguen siendo gates de transporte.
 
 Antes de cada escritura, el capturador rechaza URL con userinfo, loopback no
 permitido, rutas locales, headers de autenticación y nombres de cookie que

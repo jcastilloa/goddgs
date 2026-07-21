@@ -40,7 +40,7 @@
       "type": "object",
       "required": ["kind"],
       "properties": {
-        "kind": { "enum": ["pure", "engine", "extract", "parser"] },
+        "kind": { "enum": ["pure", "engine", "extract", "parser", "transport"] },
         "category": { "enum": ["text", "images", "news", "videos", "books"] },
         "engine": { "type": "string" },
         "operation": { "type": "string" },
@@ -63,6 +63,10 @@
         {
           "if": { "properties": { "kind": { "const": "parser" } } },
           "then": { "required": ["category", "engine", "operation"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "transport" } } },
+          "then": { "required": ["operation"] }
         }
       ]
     },

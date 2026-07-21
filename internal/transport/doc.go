@@ -1,3 +1,4 @@
-// Package transport owns HTTP clients, cookies, proxies, TLS settings, and
-// browser-fingerprint behavior required by search-engine compatibility.
+// Package transport owns base HTTP clients, cookies, proxies, TLS settings,
+// and response lifecycle for search-engine adapters. Browser-fingerprint
+// behavior remains an explicit capability gate.
 package transport

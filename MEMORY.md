@@ -4,7 +4,7 @@ Persistent project state. Read before changing behavior. Update after every
 material decision, completed OpenSpec task, source-baseline change, blocker, or
 verification result.
 
-## Current state — 2026-07-20
+## Current state — 2026-07-21
 
 - Target: Go library port of DDGS only. No API server, CLI, MCP, DHT, cache,
   Docker service, or executable entrypoint.
@@ -13,22 +13,25 @@ verification result.
 - Active OpenSpec change: `openspec/changes/port-ddgs-python-library/`.
 - Public façade/configuration, normalizers, ordered result aggregation, ranker,
   backend selection/static registry, isolated fixture-tested scheduler core,
-  and offline HTML/XPath/JSON parser adapter are complete. No live search
-  engine, transport, renderer, extraction implementation, or
-  public-client-to-engine composition exists yet; those internal package
-  boundaries remain intentional.
+  offline HTML/XPath/JSON parser adapter, and isolated base transport are
+  complete. No live search engine, DDG-specific HTTP/2/fingerprint transport,
+  renderer, extraction implementation, or public-client-to-engine composition
+  exists yet; those internal package boundaries remain intentional.
 - Tasks 2.1–2.7 are complete. The isolated Python oracle lives temporarily at
   `/tmp/goddgs-reference-a12929a`; exact resolved packages and rebuild steps
   are in `docs/reference-environment.md`. It made no external engine request.
-- Fixture corpus has 238 deterministic synthetic/offline contracts: 129 pure,
-  79 engine-visible, 9 extract, and 21 parser contracts under their
+- Fixture corpus has 251 deterministic synthetic/offline contracts: 129 pure,
+  79 engine-visible, 9 extract, 21 parser, and 13 transport contracts under
+  their
   respective `testdata/contracts/` directories. `tools/reference_capture.py --check`
   validates frozen SHA, resolved-package provenance, result/error shape, trace
   order, kind-specific redaction, output separation, a dynamic matrix for every
   active engine (option-bearing success, empty 200, malformed 200, 503/None),
-  and fixture sanitation. Extract capture uses only ephemeral loopback with
-  synthetic HTML/bytes and rewrites its URL before output. Neither doubles nor
-  loopback prove Go parser, renderer, TLS, or transport parity.
+  and fixture sanitation. Extract/transport capture uses only ephemeral
+  loopback with synthetic HTML/bytes and rewrites its URL before output.
+  Parser and base transport have independently consumed their relevant offline
+  fixtures; the doubles/loopback still do not prove renderer, browser
+  fingerprint, or DDG HTTP/2 parity.
 - Local target repo had no commits when work began. Existing `.codex`,
   `.claude`, `.opencode`, and `openspec` tooling belong to project setup;
   preserve them unless task explicitly changes them.
@@ -142,6 +145,12 @@ v1.3.6` is rejected for XPath-union and malformed-HTML divergence. Parser JSON
 uses `UseNumber`, rejects a second top-level value, and leaves source field
 ordering to engine adapters.
 
+Base transport imports `golang.org/x/net/proxy v0.57.0` only to preserve the
+frozen SOCKS5-local versus SOCKS5H-remote DNS distinction. It materializes and
+closes native bodies and has per-client cookie/header state. It does **not**
+establish `primp` browser fingerprint/TLS parity or DDG text HTTP/2 behavior;
+those stay gated by tasks 5.4–5.5.
+
 The frozen Python repository has no dependency lockfile; its `pyproject.toml`
 only declares lower bounds. Before fixture capture, task 2.1 must record exact
 resolved runtime package versions (and preferably wheel hashes) as provenance.
@@ -149,8 +158,9 @@ resolved runtime package versions (and preferably wheel hashes) as provenance.
 ## Open blockers / risks
 
 1. **Browser fingerprint parity — critical.** Source uses `primp` random
-   impersonation and custom HTTP/2 settings. Need a Go transport strategy,
-   proof per affected engine, and license/reproducibility review.
+   impersonation and custom HTTP/2 settings. Base `net/http`/SOCKS behavior is
+   proven offline only; DDG text and each `primp`-dependent engine still need
+   a Go strategy and controlled evidence.
 2. **Engine parser integration — high.** Internal Helium/JSON parser contracts
    are complete, but no engine adapter has consumed them with a real transport
    response or source-specific post-processing yet.
@@ -193,8 +203,9 @@ resolved runtime package versions (and preferably wheel hashes) as provenance.
    never write an engine without its fixture evidence.
 3. Capture engine-visible request behavior and define the lossless per-category
    scheduler request shape; only then compose the public façade with engines.
-4. Implement transport capability and first engine vertically; then engine
-   groups, extraction, race/live integration gates.
+4. Complete DDG text's request-local HTTP/2/UA transport gate, then implement
+   the first engine vertically; follow with engine groups, extraction,
+   race/live integration gates.
 
 ## Verification baseline
 
@@ -253,6 +264,7 @@ Verification recorded on 2026-07-20:
 | 2026-07-20 | Make fixture sanitation executable (task 2.7) | Capturer audits/rejects URL userinfo, unapproved loopback, local paths, auth headers, and secret/session/token-like cookies; manual corpus audit found only synthetic/public values and no live payload or credentials |
 | 2026-07-20 | Approve Helium for internal XPath adapter (task 4.1) | `github.com/lestrrat-go/helium v0.6.0` matched all 14 frozen lxml fixtures and upstream `html`/`xpath1` race tests; pure Go core, MIT license, no enabled cgo path. Reject htmlquery and cgo libxml2 binding; adapter remains TDD pending |
 | 2026-07-20 | Complete parser TDD gate (tasks 4.2–4.5) | `internal/parser` preserves 14 lxml XPath contracts plus 7 JSON contracts with `UseNumber`; cgo-off, race x20, concurrent-document reads, and representative 100x benchmarks pass. Parser remains an offline syntax/XPath boundary, not transport or engine proof. |
+| 2026-07-21 | Complete base transport TDD gate (tasks 5.1–5.3) | `internal/transport` uses an isolated cookie jar/header state, materializes and closes native bodies, preserves response bytes/text/status, follows source base HTTP behavior, and distinguishes SOCKS5-local from SOCKS5H-remote DNS. RED exposed bare-domain Google cookies and a first-use client-init race; both are fixture/test-proven fixed. Full race plus transport stress x50 pass; fingerprint/DDG H2 are still not claimed. |
 
 ## Core TDD evidence — 2026-07-20
 
@@ -304,6 +316,16 @@ Verification recorded on 2026-07-20:
   simplification applied. Parser code is pure/no goroutines, so concurrency and
   debugger were N/A for implementation; task 4.5 nevertheless ran shared and
   independent-document concurrent reads under `-race` x20 plus cgo-off tests.
+- **RED/GREEN/REFACTOR 5.1–5.3:** base transport tests were RED for native
+  response closure/materialization, source bare-domain cookies, HTTP/HTTPS/
+  SOCKS proxy shape, TLS verification/PEM, timeout/cancellation, gzip,
+  redirects, non-200 response preservation and first-use concurrent client
+  initialization. GREEN uses a per-client jar and header lock, a one-time
+  protected native client, copied request data, and `x/net/proxy` only for
+  SOCKS. REFACTOR keeps native HTTP types internal. `golang-pro`, hexagonal
+  boundary review, testing/TDD, clean-code and simplification applied;
+  concurrency/debugger review found and fixed the initialization race.
+  `go test -race -count=50 ./internal/transport` and lifecycle tests pass.
 - **Skills assessed:** `golang-pro`, `go-clean-ddd-hexagonal` (public façade
   port), `golang-testing`, TDD RED/GREEN/REFACTOR, `clean-code`, and
   `go-code-simplification` applied. `go-concurrency-patterns` and

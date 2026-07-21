@@ -41,3 +41,33 @@ Evidence gathered locally on 2026-07-20: isolated probe against all 14 parser
 fixtures passed with normal and `-race` execution; `go test` and
 `go test -race` for `helium/html` and `helium/xpath1` passed while pinned to
 the project Unicode baseline.
+
+## `golang.org/x/net` `v0.57.0` — approved for SOCKS only, 2026-07-21
+
+| Item | Decision |
+| --- | --- |
+| Purpose | Build the base transport's SOCKS5 dial path without leaking a third-party type. Frozen loopback fixtures distinguish `socks5` local DNS (`127.0.0.1`) from `socks5h` remote DNS (`localhost`); standard `net/http.Transport` explicitly treats both schemes alike. |
+| Imported package | `golang.org/x/net/proxy` only. The adapter resolves an IPv4 address before passing `socks5` to its dialer; it passes the original hostname for `socks5h`. |
+| Version | `v0.57.0`; exact module checksum retained through Go module tooling. |
+| Compatibility | Module declares Go `1.25.0`; project uses Go `1.26.1`. |
+| License | BSD 3-Clause, verified from cached module `LICENSE`; compatible with project/upstream MIT distribution. |
+| cgo | None in the imported proxy path. |
+| Maintenance/provenance | Official Go subrepository, tag `v0.57.0`, origin `https://go.googlesource.com/net`, module tooling reports tag hash `b8f09f6f062ceb4531b7af4bd17a5c8fe9c4b2b5`. |
+| Supply-chain risk | Adds `x/crypto`, `x/sys`, and `x/term` module dependencies declared by `x/net`; runtime transport imports only `proxy`. Review security releases before updates. |
+| Why not standard library | Go 1.26 `net/http.Transport` documents that `socks5` is treated as `socks5h`, contradicting frozen source loopback contracts. |
+| Explicit limit | This dependency proves only SOCKS connection behavior. It neither provides browser TLS fingerprinting nor source HTTP/2 settings; those remain task 5.4/5.5 gates. |
+| Update rule | Re-run both SOCKS loopback fixtures, cancellation/race tests, and inspect proxy API/license/module graph before an update. |
+
+## Browser-fingerprint candidates — not approved, 2026-07-21
+
+| Candidate | Assessment | Decision |
+| --- | --- | --- |
+| `github.com/refraction-networking/utls v1.8.2` | Go `1.24`, BSD 3-Clause, no cgo requirement in the inspected module. It can control a TLS ClientHello, but the frozen contract also needs request and HTTP/2 behavior; no differential engine evidence proves that it matches `primp` or DDG's temporary HTTP/2 client. Its module graph also adds brotli/compression and crypto dependencies. | Do not add yet. Reconsider only with controlled per-engine TLS + HTTP/2 evidence and a request-local design. |
+| `github.com/bogdanfinn/tls-client v1.15.1` | Go `1.24.1`, broad forked HTTP/QUIC/TLS dependency graph with local `replace` directives in its module metadata. Its BSD-style license contains an advertising clause requiring an acknowledgement naming an unresolved `<organization>`. | Rejected for this module. License obligation and supply-chain surface are not justified by fixture evidence. |
+
+`net/http` plus `x/net/proxy` remains approved only for the base behaviors
+covered by the transport corpus: request construction, response lifecycle,
+cookies, redirects, compression, TLS verification/PEM, HTTP(S) proxies and
+SOCKS resolution. It is **not** evidence of `primp` browser impersonation,
+TLS fingerprint parity, or DDG text HTTP/2 settings; those remain explicit
+task 5.4/5.5 gates.

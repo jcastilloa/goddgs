@@ -38,9 +38,9 @@
 
 ## 5. Transport compatibility gate
 
-- [ ] 5.1 Define internal transport interfaces and failing tests for request construction, body closure, cookies, redirects, HTTP(S)/SOCKS proxies, timeout, verification off, custom PEM, compression, and cancellation.
-- [ ] 5.2 Research/review Go transport candidates for browser/TLS/HTTP2 parity; document version, license, cgo status, maintenance, supply-chain risk, and per-engine evidence.
-- [ ] 5.3 Implement minimal reviewed base transport; make proxy/TLS/cancellation/resource tests green and run race/leak checks.
+- [x] 5.1 Define internal transport interfaces and failing tests for request construction, body closure, cookies, redirects, HTTP(S)/SOCKS proxies, timeout, verification off, custom PEM, compression, and cancellation. Evidence: `internal/transport/transport_test.go` was RED for materialization/closure, source bare-domain cookies, first-use concurrency, proxy/TLS/SOCKS, cancellation and loopback behavior before `transport.go`; 13 frozen transport fixtures cover source constructor and loopback contracts (2026-07-21).
+- [x] 5.2 Research/review Go transport candidates for browser/TLS/HTTP2 parity; document version, license, cgo status, maintenance, supply-chain risk, and per-engine evidence. Evidence: `docs/dependency-decisions.md` approves `golang.org/x/net/proxy v0.57.0` only for source-distinct SOCKS resolution, leaves `net/http` confined to proven base behavior, defers `uTLS v1.8.2` for lack of per-engine TLS/H2 evidence, and rejects `tls-client v1.15.1` for its advertising-license obligation and broad forked dependency graph (2026-07-21).
+- [x] 5.3 Implement minimal reviewed base transport; make proxy/TLS/cancellation/resource tests green and run race/leak checks. Evidence: isolated `internal/transport.Client` materializes/closes bodies, isolates jars/header state, clones caller inputs, follows redirects, decodes gzip, preserves non-200 responses, supports HTTP/HTTPS/SOCKS5/SOCKS5H proxies, timeout, verify false and PEM roots. Full `-race`, transport `-race -count=50`, and response lifecycle tests pass; browser fingerprint and DDG H2 remain explicitly unproven (2026-07-21).
 - [ ] 5.4 Implement DuckDuckGo text-specific HTTP/2/user-agent capability with request-local state; prove no global patch/data race and source-compatible request shape.
 - [ ] 5.5 Gate each `primp`-dependent engine on captured transport evidence and controlled tagged live observation; leave unproven engine explicitly incomplete.
 

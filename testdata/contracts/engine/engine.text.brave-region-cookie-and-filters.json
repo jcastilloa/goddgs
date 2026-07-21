@@ -78,6 +78,12 @@
         "source": "web",
         "tf": "pw"
       },
+      "query_order": [
+        "q",
+        "source",
+        "tf",
+        "offset"
+      ],
       "sequence": 2,
       "url": "https://search.brave.com/search"
     },

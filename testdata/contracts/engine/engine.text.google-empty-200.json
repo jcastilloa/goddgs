@@ -87,6 +87,14 @@
         "q": "fixture empty text google",
         "start": "0"
       },
+      "query_order": [
+        "q",
+        "filter",
+        "start",
+        "hl",
+        "lr",
+        "cr"
+      ],
       "sequence": 3,
       "url": "https://www.google.com/search"
     },

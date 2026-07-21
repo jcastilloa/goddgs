@@ -85,6 +85,10 @@
         "page": "2",
         "q": "fixture annas"
       },
+      "query_order": [
+        "q",
+        "page"
+      ],
       "sequence": 1,
       "url": "https://annas-archive.fixture/search"
     },

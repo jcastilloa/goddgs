@@ -88,6 +88,13 @@
         "q": "fixture ddg text",
         "s": "25"
       },
+      "form_order": [
+        "q",
+        "b",
+        "l",
+        "s",
+        "df"
+      ],
       "kind": "request",
       "method": "POST",
       "sequence": 2,

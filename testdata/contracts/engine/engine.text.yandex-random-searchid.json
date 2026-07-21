@@ -74,6 +74,12 @@
         "text": "fixture yandex",
         "web": "1"
       },
+      "query_order": [
+        "text",
+        "web",
+        "searchid",
+        "p"
+      ],
       "sequence": 2,
       "url": "https://yandex.com/search/site/"
     },

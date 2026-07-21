@@ -90,6 +90,9 @@
       "query": {
         "q": "fixture image result"
       },
+      "query_order": [
+        "q"
+      ],
       "sequence": 2,
       "url": "https://duckduckgo.com"
     },

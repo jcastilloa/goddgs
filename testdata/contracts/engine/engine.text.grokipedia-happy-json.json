@@ -79,6 +79,10 @@
         "limit": "1",
         "query": "fixture grokipedia"
       },
+      "query_order": [
+        "query",
+        "limit"
+      ],
       "sequence": 1,
       "url": "https://grokipedia.com/api/typeahead"
     },

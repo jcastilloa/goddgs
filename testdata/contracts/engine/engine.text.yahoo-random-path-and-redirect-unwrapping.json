@@ -98,6 +98,11 @@
         "btf": "y",
         "p": "fixture yahoo"
       },
+      "query_order": [
+        "p",
+        "b",
+        "btf"
+      ],
       "sequence": 3,
       "url": "https://search.yahoo.com/search;_ylt=synthetic-token-18;_ylu=synthetic-token-35"
     },

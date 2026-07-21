@@ -338,6 +338,15 @@ def _validate_fixture(fixture: Fixture) -> None:
                 bytes.fromhex(content_hex)
             except ValueError as exc:
                 raise ValueError("trace content hex is invalid") from exc
+        for order_key, values_key in (("query_order", "query"), ("form_order", "form")):
+            if order_key not in entry:
+                continue
+            order = entry[order_key]
+            values = entry.get(values_key)
+            if not isinstance(order, list) or not all(isinstance(name, str) for name in order):
+                raise ValueError(f"trace {order_key} must be a list of field names")
+            if not isinstance(values, dict) or list(values) != order:
+                raise ValueError(f"trace {order_key} must match ordered {values_key} fields")
     expected_redaction = PURE_REDACTION if kind == "pure" else ENGINE_REDACTION
     if fixture["redaction"] != expected_redaction:
         raise ValueError("fixture redaction policy drift")
@@ -467,9 +476,13 @@ def _capture_synthetic_engine(
         def request(self, method: str, url: str, **kwargs: Any) -> _SyntheticResponse:
             entry: dict[str, Any] = {"kind": "request", "method": method, "url": url}
             if "params" in kwargs:
-                entry["query"] = dict(kwargs["params"])
+                parameters = kwargs["params"]
+                entry["query"] = dict(parameters)
+                entry["query_order"] = list(parameters)
             if "data" in kwargs:
-                entry["form"] = dict(kwargs["data"])
+                form = kwargs["data"]
+                entry["form"] = dict(form)
+                entry["form_order"] = list(form)
             events.append(entry)
             if not pending_responses:
                 raise AssertionError(f"unexpected synthetic engine request: {method} {url}")
@@ -3880,6 +3893,44 @@ def _html_engine_matrix_fixtures() -> list[Fixture]:
             client_name="HttpClient2",
             notes=["module-lifetime fake-useragent is redacted; HTTP/2/fingerprint parity is a separate transport gate"],
         )
+    )
+    fixtures.extend(
+        [
+            _synthetic_search_fixture(
+                "engine.text.duckduckgo-empty-text-200-none",
+                "text",
+                "duckduckgo",
+                {
+                    "query": "fixture empty body ddg",
+                    "region": "us-en",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                Duckduckgo,
+                [_SyntheticResponse(text="")],
+                client_module="ddgs.engines.duckduckgo",
+                client_name="HttpClient2",
+                notes=["source BaseSearchEngine treats successful empty response text as None, not an empty parsed result list"],
+            ),
+            _synthetic_search_fixture(
+                "engine.text.duckduckgo-page-zero-and-empty-timelimit",
+                "text",
+                "duckduckgo",
+                {
+                    "query": "fixture zero page ddg",
+                    "region": "us-en",
+                    "safesearch": "strict",
+                    "timelimit": "",
+                    "page": 0,
+                },
+                Duckduckgo,
+                [_SyntheticResponse(text="<html><body></body></html>")],
+                client_module="ddgs.engines.duckduckgo",
+                client_name="HttpClient2",
+                notes=["source only adds s when page > 1 and df when timelimit is truthy; safesearch remains ignored"],
+            ),
+        ]
     )
 
     mojeek_input = {

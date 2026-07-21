@@ -65,6 +65,9 @@
       "query": {
         "p": "fixture status yahoo news"
       },
+      "query_order": [
+        "p"
+      ],
       "sequence": 1,
       "url": "https://news.search.yahoo.com/search"
     },

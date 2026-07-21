@@ -83,6 +83,9 @@
       "query": {
         "p": "fixture status yahoo"
       },
+      "query_order": [
+        "p"
+      ],
       "sequence": 3,
       "url": "https://search.yahoo.com/search;_ylt=synthetic-token-18;_ylu=synthetic-token-35"
     },

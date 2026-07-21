@@ -91,6 +91,12 @@
         "source": "web",
         "tf": "pm"
       },
+      "query_order": [
+        "q",
+        "source",
+        "tf",
+        "offset"
+      ],
       "sequence": 2,
       "url": "https://search.brave.com/search"
     },

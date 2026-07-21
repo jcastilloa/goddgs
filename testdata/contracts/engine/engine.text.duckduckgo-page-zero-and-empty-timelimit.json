@@ -1,24 +1,24 @@
 {
   "contract": {
     "category": "text",
-    "engine": "mojeek",
+    "engine": "duckduckgo",
     "kind": "engine",
     "operation": "search"
   },
   "controls": {
     "clock": "not used",
     "notes": [
-      "synthetic HTTP 200 carries malformed source-format content; output/error is frozen source behavior"
+      "source only adds s when page > 1 and df when timelimit is truthy; safesearch remains ignored"
     ],
     "random": "not used"
   },
-  "fixture_id": "engine.text.mojeek-malformed-response",
+  "fixture_id": "engine.text.duckduckgo-page-zero-and-empty-timelimit",
   "input": {
-    "page": 1,
-    "query": "fixture malformed text mojeek",
+    "page": 0,
+    "query": "fixture zero page ddg",
     "region": "us-en",
-    "safesearch": "moderate",
-    "timelimit": null
+    "safesearch": "strict",
+    "timelimit": ""
   },
   "redaction": {
     "rules": [
@@ -61,32 +61,35 @@
   },
   "trace": [
     {
-      "cookies": {
-        "arc": "us",
-        "lb": "en"
+      "headers": {
+        "User-Agent": "<source-module-lifetime-random-user-agent>"
       },
-      "kind": "cookie",
-      "sequence": 1,
-      "url": "https://www.mojeek.com"
+      "kind": "note",
+      "note": "constructor headers",
+      "sequence": 1
     },
     {
-      "kind": "request",
-      "method": "GET",
-      "query": {
-        "q": "fixture malformed text mojeek"
+      "form": {
+        "b": "",
+        "l": "us-en",
+        "q": "fixture zero page ddg"
       },
-      "query_order": [
-        "q"
+      "form_order": [
+        "q",
+        "b",
+        "l"
       ],
+      "kind": "request",
+      "method": "POST",
       "sequence": 2,
-      "url": "https://www.mojeek.com/search"
+      "url": "https://html.duckduckgo.com/html/"
     },
     {
-      "content_hex": "3c",
+      "content_hex": "3c68746d6c3e3c626f64793e3c2f626f64793e3c2f68746d6c3e",
       "kind": "response",
       "sequence": 3,
       "status": 200,
-      "text": "<"
+      "text": "<html><body></body></html>"
     }
   ]
 }

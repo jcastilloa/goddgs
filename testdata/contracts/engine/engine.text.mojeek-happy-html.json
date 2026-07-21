@@ -89,6 +89,11 @@
         "s": "21",
         "safe": "1"
       },
+      "query_order": [
+        "q",
+        "safe",
+        "s"
+      ],
       "sequence": 2,
       "url": "https://www.mojeek.com/search"
     },

@@ -22,7 +22,8 @@ inventada para Go.
   `testdata/contracts/parser/` y `testdata/contracts/transport/`. El
   capturador conserva `--output` para los puros y expone un destino explícito
   para cada clase restante.
-- `trace` conserva secuencia, no sólo petición final: bootstrap VQD, cookies,
+- `trace` conserva secuencia y orden de campos query/form, no sólo petición
+  final: bootstrap VQD, cookies,
   Startpage `sc`, Wikipedia extract y redirects son observables.
 - Una entrada `response` sintética conserva `status`, `text` y `content_hex`.
   Esto entrega al futuro test Go el mismo input saneado que consumió el parser

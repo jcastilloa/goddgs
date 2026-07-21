@@ -74,6 +74,9 @@
       "query": {
         "q": "fixture status mojeek"
       },
+      "query_order": [
+        "q"
+      ],
       "sequence": 2,
       "url": "https://www.mojeek.com/search"
     },

@@ -76,6 +76,10 @@
         "q": "fixture malformed text brave",
         "source": "web"
       },
+      "query_order": [
+        "q",
+        "source"
+      ],
       "sequence": 2,
       "url": "https://search.brave.com/search"
     },

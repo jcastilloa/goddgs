@@ -66,6 +66,9 @@
       "query": {
         "q": "fixture empty videos duckduckgo"
       },
+      "query_order": [
+        "q"
+      ],
       "sequence": 1,
       "url": "https://duckduckgo.com"
     },
@@ -87,6 +90,14 @@
         "q": "fixture empty videos duckduckgo",
         "vqd": "synthetic-vqd"
       },
+      "query_order": [
+        "l",
+        "o",
+        "q",
+        "vqd",
+        "f",
+        "p"
+      ],
       "sequence": 3,
       "url": "https://duckduckgo.com/v.js"
     },

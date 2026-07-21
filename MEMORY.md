@@ -13,16 +13,17 @@ verification result.
 - Active OpenSpec change: `openspec/changes/port-ddgs-python-library/`.
 - Public façade/configuration, normalizers, ordered result aggregation, ranker,
   backend selection/static registry, isolated fixture-tested scheduler core,
-  offline HTML/XPath/JSON parser adapter, isolated base transport, and
-  request-local DDG text standard-HTTP/2 transport are complete. No live
-  search engine, source TLS/H2 fingerprint parity, renderer, extraction
-  implementation, or public-client-to-engine composition exists yet; those
-  internal package boundaries remain intentional.
+  offline HTML/XPath/JSON parser adapter, isolated base transport,
+  request-local DDG text standard-HTTP/2 transport, and a fixture-backed
+  DuckDuckGo text adapter are complete. The adapter is not yet composed into
+  the public client. No live search engine, source TLS/H2 fingerprint parity,
+  renderer, extraction implementation, or public-client-to-engine composition
+  exists yet; those internal package boundaries remain intentional.
 - Tasks 2.1–2.7 are complete. The isolated Python oracle lives temporarily at
   `/tmp/goddgs-reference-a12929a`; exact resolved packages and rebuild steps
   are in `docs/reference-environment.md`. It made no external engine request.
-- Fixture corpus has 256 deterministic synthetic/offline contracts: 129 pure,
-  79 engine-visible, 9 extract, 21 parser, and 18 transport contracts under
+- Fixture corpus has 258 deterministic synthetic/offline contracts: 129 pure,
+  81 engine-visible, 9 extract, 21 parser, and 18 transport contracts under
   their
   respective `testdata/contracts/` directories. `tools/reference_capture.py --check`
   validates frozen SHA, resolved-package provenance, result/error shape, trace
@@ -206,8 +207,9 @@ resolved runtime package versions (and preferably wheel hashes) as provenance.
    never write an engine without its fixture evidence.
 3. Capture engine-visible request behavior and define the lossless per-category
    scheduler request shape; only then compose the public façade with engines.
-4. DDG text's request-local HTTP/2/UA transport gate is complete. Implement
-   the first engine vertically; keep its randomized TLS/H2 fingerprint
+4. DDG text's request-local HTTP/2/UA transport and adapter gates are complete.
+   Next implement Grokipedia/Wikipedia with their captured JSON and second
+   request behavior; keep every `primp`/randomized TLS-H2 fingerprint
    explicitly incomplete pending task 5.5.
 
 ## Verification baseline
@@ -256,7 +258,7 @@ Verification recorded on 2026-07-20:
 | 2026-07-20 | Complete normalizer TDD slice (tasks 3.3–3.4) | 72 fixture corpus proves text/URL/date/VQD/proxy parity, including malformed percent bytes, all Python HTML5 entities, Python-only `nGt;`/`nLt;`, VQD repr, and date error boundaries |
 | 2026-07-20 | Pin `golang.org/x/text` at `v0.40.0` with Go 1.26.1 minimum | Helium requires it; its `!go1.27` NFC table remains Unicode 15.0.0, while project guard continues rejecting Go 1.27+ before Unicode 17 can drift behavior |
 | 2026-07-20 | Model date normalization as `(value, error)` internally | Frozen CPython/Linux raises `ValueError`/`OSError` for out-of-range timestamps; formatting Go-only years would violate parity. Future JSON adapters must retain `json.Number` until integer/float distinction is resolved |
-| 2026-07-20 | Keep ordered internal `search.Result` fields until the public map boundary | Python aggregation selects the first eligible field in object insertion order, including dynamic fields; Go map iteration cannot carry this contract |
+| 2026-07-20 | Keep ordered internal `engine.Result` fields until the public map boundary | Python aggregation selects the first eligible field in object insertion order, including dynamic fields; adapters must own the source-shaped result before `internal/search` aggregates it; Go map iteration cannot carry this contract |
 | 2026-07-20 | Preserve raw body `len()` failures in duplicate aggregation | Frozen Python raises `TypeError` for falsy `None`/bool/numeric body values on the second duplicate; coercion or a friendly zero length would alter behavior |
 | 2026-07-20 | Preserve raw ranker membership/lower ordering | Frozen `SimpleFilterRanker` first applies membership to heterogeneous raw fields, then calls `.lower()`; fixtures cover list/dict membership and null/scalar errors so Go cannot pre-coerce documents |
 | 2026-07-20 | Complete isolated ranker/backend/registry/scheduler core | Frozen fixtures prove ranking, active/disabled metadata, backend order/fallback, bounded batch scheduling, provider timing, error classification, and final slicing; no engine/transport/public composition is implied |
@@ -269,6 +271,7 @@ Verification recorded on 2026-07-20:
 | 2026-07-20 | Complete parser TDD gate (tasks 4.2–4.5) | `internal/parser` preserves 14 lxml XPath contracts plus 7 JSON contracts with `UseNumber`; cgo-off, race x20, concurrent-document reads, and representative 100x benchmarks pass. Parser remains an offline syntax/XPath boundary, not transport or engine proof. |
 | 2026-07-21 | Complete base transport TDD gate (tasks 5.1–5.3) | `internal/transport` uses an isolated cookie jar/header state, materializes and closes native bodies, preserves response bytes/text/status, follows source base HTTP behavior, and distinguishes SOCKS5-local from SOCKS5H-remote DNS. RED exposed bare-domain Google cookies and a first-use client-init race; both are fixture/test-proven fixed. Full race plus transport stress x50 pass; fingerprint/DDG H2 are still not claimed. |
 | 2026-07-21 | Complete request-local DDG transport gate (task 5.4) | Five frozen `HttpClient2` fixtures and local TLS/H2 tests prove `DuckDuckGoTextClient` request shape, standard H2, no redirect follow, copied UA/header state, isolated jars/transports, cancellation, and no mutation of `http.DefaultTransport`. Source randomized TLS/H2 settings and browser fingerprint are deliberately not claimed and remain task 5.5. |
+| 2026-07-21 | Complete DuckDuckGo text adapter gate (task 6.2) | `internal/engine` now owns ordered source results and `DuckDuckGoText` uses the special DDG transport port. Eight frozen fixtures prove POST form order, page/time conditions, ignored safesearch, `nil` versus `[]`, HTML extraction/result normalization, and `y.js` filtering; concurrent adapter stress passes under race detection. It is still not public-client composition or fingerprint proof. |
 
 ## Core TDD evidence — 2026-07-20
 
@@ -337,6 +340,16 @@ Verification recorded on 2026-07-20:
   `ForceAttemptHTTP2`; no package-global HTTP/2 patch is recreated. REFACTOR
   retained only standard Go H2 behavior, then `-race` x100 and lifecycle tests
   passed. Randomized source TLS/H2 fingerprint remains intentionally open.
+- **RED/GREEN/REFACTOR 6.2:** DuckDuckGo text fixture tests were RED before
+  the engine port and adapter existed. GREEN parses the frozen HTML with the
+  internal parser, builds source-ordered category results, preserves POST form
+  order `q,b,l[,s][,df]`, the source `nil` versus parsed-empty distinction,
+  and filters `y.js` links. REFACTOR moved canonical ordered result ownership
+  from `internal/search` to `internal/engine`, removed mutable global selector
+  state, and added trace-order validation. `golang-pro`, hexagonal dependency
+  review, testing/TDD, clean-code, simplification, concurrency patterns, and
+  debugger review applied; 32 concurrent calls and `-race` x50 pass. The
+  adapter reads immutable request data and owns no response body or goroutine.
 - **Skills assessed:** `golang-pro`, `go-clean-ddd-hexagonal` (public façade
   port), `golang-testing`, TDD RED/GREEN/REFACTOR, `clean-code`, and
   `go-code-simplification` applied. `go-concurrency-patterns` and

@@ -86,6 +86,11 @@
         "btf": "m",
         "p": "fixture yahoo news"
       },
+      "query_order": [
+        "p",
+        "b",
+        "btf"
+      ],
       "sequence": 1,
       "url": "https://news.search.yahoo.com/search"
     },

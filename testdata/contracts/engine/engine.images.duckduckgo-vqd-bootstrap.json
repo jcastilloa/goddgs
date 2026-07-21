@@ -86,6 +86,9 @@
       "query": {
         "q": "fixture images"
       },
+      "query_order": [
+        "q"
+      ],
       "sequence": 2,
       "url": "https://duckduckgo.com"
     },
@@ -109,6 +112,16 @@
         "s": "100",
         "vqd": "fixture-vqd"
       },
+      "query_order": [
+        "o",
+        "q",
+        "l",
+        "vqd",
+        "p",
+        "ct",
+        "f",
+        "s"
+      ],
       "sequence": 4,
       "url": "https://duckduckgo.com/i.js"
     },

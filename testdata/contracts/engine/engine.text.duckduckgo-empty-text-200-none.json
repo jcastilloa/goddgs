@@ -1,6 +1,6 @@
 {
   "contract": {
-    "category": "news",
+    "category": "text",
     "engine": "duckduckgo",
     "kind": "engine",
     "operation": "search"
@@ -8,14 +8,14 @@
   "controls": {
     "clock": "not used",
     "notes": [
-      "synthetic HTTP 200 carries malformed source-format content; output/error is frozen source behavior"
+      "source BaseSearchEngine treats successful empty response text as None, not an empty parsed result list"
     ],
     "random": "not used"
   },
-  "fixture_id": "engine.news.duckduckgo-malformed-response",
+  "fixture_id": "engine.text.duckduckgo-empty-text-200-none",
   "input": {
     "page": 1,
-    "query": "fixture malformed news duckduckgo",
+    "query": "fixture empty body ddg",
     "region": "us-en",
     "safesearch": "moderate",
     "timelimit": null
@@ -29,12 +29,8 @@
     "sanitized": true
   },
   "result": {
-    "error": {
-      "cause_type": null,
-      "message": "Expecting property name enclosed in double quotes: line 1 column 2 (char 1)",
-      "type": "JSONDecodeError"
-    },
-    "status": "error"
+    "output": null,
+    "status": "ok"
   },
   "schema_version": 1,
   "source": {
@@ -64,52 +60,35 @@
   },
   "trace": [
     {
-      "kind": "request",
-      "method": "GET",
-      "query": {
-        "q": "fixture malformed news duckduckgo"
+      "headers": {
+        "User-Agent": "<source-module-lifetime-random-user-agent>"
       },
-      "query_order": [
-        "q"
-      ],
-      "sequence": 1,
-      "url": "https://duckduckgo.com"
+      "kind": "note",
+      "note": "constructor headers",
+      "sequence": 1
     },
     {
-      "content_hex": "7671643d73796e7468657469632d76716426",
-      "kind": "response",
+      "form": {
+        "b": "",
+        "l": "us-en",
+        "q": "fixture empty body ddg"
+      },
+      "form_order": [
+        "q",
+        "b",
+        "l"
+      ],
+      "kind": "request",
+      "method": "POST",
       "sequence": 2,
+      "url": "https://html.duckduckgo.com/html/"
+    },
+    {
+      "content_hex": "",
+      "kind": "response",
+      "sequence": 3,
       "status": 200,
       "text": ""
-    },
-    {
-      "kind": "request",
-      "method": "GET",
-      "query": {
-        "l": "us-en",
-        "noamp": "1",
-        "o": "json",
-        "p": "-1",
-        "q": "fixture malformed news duckduckgo",
-        "vqd": "synthetic-vqd"
-      },
-      "query_order": [
-        "l",
-        "o",
-        "noamp",
-        "q",
-        "vqd",
-        "p"
-      ],
-      "sequence": 3,
-      "url": "https://duckduckgo.com/news.js"
-    },
-    {
-      "content_hex": "7b",
-      "kind": "response",
-      "sequence": 4,
-      "status": 200,
-      "text": "{"
     }
   ]
 }

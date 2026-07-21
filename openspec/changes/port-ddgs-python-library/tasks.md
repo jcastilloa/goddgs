@@ -47,7 +47,7 @@
 ## 6. Engine adapters (each: fixture RED → minimal GREEN → refactor → race)
 
 - [ ] 6.1 Implement Grokipedia and Wikipedia text adapters: JSON shape, Wikipedia second extract request, language state, disambiguation filter.
-- [ ] 6.2 Implement DuckDuckGo text adapter: approved special transport, POST payload, page/time mapping, `y.js` filter.
+- [x] 6.2 Implement DuckDuckGo text adapter: approved special transport, POST payload, page/time mapping, `y.js` filter. Evidence: `internal/engine/DuckDuckGoText` consumes the isolated request-local `DuckDuckGoTextClient` port, preserves form order `q,b,l[,s][,df]`, page/time conditions, ignored safesearch, 200-empty-text `nil` versus parsed-empty `[]`, source result normalization/order, and `y.js` filtering. Eight frozen DDG engine fixtures, `go test -race -count=50 -run '^TestDuckDuckGoText' ./internal/engine`, full suite/race, 85.8% engine coverage, fixture oracle, and OpenSpec validation pass (2026-07-21). Randomized source TLS/H2 fingerprint remains task 5.5; public facade composition remains pending.
 - [ ] 6.3 Implement Brave, Google, Mojeek text adapters: source cookies, filters/paging, Google UA/consent, redirect filter.
 - [ ] 6.4 Implement Startpage, Yahoo, Yandex text adapters: bootstrap `sc`, random path/search-id seams, paging, Yahoo URL decode.
 - [ ] 6.5 Implement Bing Images and DuckDuckGo Images: embedded metadata, VQD, filters, dimensions, provider collision, public max-results data-flow quirk, and source timelimit mismatch.

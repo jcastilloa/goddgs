@@ -60,6 +60,7 @@ complete.
 | Q-38 | Yahoo News wraps whole post-process loop in broad `try`; one malformed item can stop later transformations and return partial cleanup. | Preserve fixture-observed partial transformation/error swallowing. |
 | Q-39 | Engine mapping lookups can raise `KeyError`/`ValueError` for unsupported region, safesearch, or timelimit. | Do not invent validation/default normalization. |
 | Q-39a | Bing Images splits dimensions after replacing `×` with `x`; a normal-looking synthetic value such as `640 × 480 px` yields three pieces and raises `ValueError: too many values to unpack (expected 2)`. | Preserve observed failure until source-baseline change; do not trim a `px` suffix proactively. |
+| Q-39b | DuckDuckGo text's generic engine path returns `None` for a 200 response whose `text` is exactly empty, while a nonempty empty or malformed HTML document parses to `[]`. Its POST form preserves insertion order `q,b,l[,s][,df]`; safesearch is ignored. | Preserve nil-versus-empty result, payload ordering, page/timelimit conditions, and `y.js` filtering; do not collapse these paths. |
 
 ## Transport behavior
 

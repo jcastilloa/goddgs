@@ -65,6 +65,9 @@
       "query": {
         "q": "fixture status ddg news"
       },
+      "query_order": [
+        "q"
+      ],
       "sequence": 1,
       "url": "https://duckduckgo.com"
     },
@@ -86,6 +89,14 @@
         "q": "fixture status ddg news",
         "vqd": "synthetic-vqd"
       },
+      "query_order": [
+        "l",
+        "o",
+        "noamp",
+        "q",
+        "vqd",
+        "p"
+      ],
       "sequence": 3,
       "url": "https://duckduckgo.com/news.js"
     },

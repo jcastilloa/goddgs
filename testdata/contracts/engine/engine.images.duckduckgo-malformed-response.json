@@ -85,6 +85,9 @@
       "query": {
         "q": "fixture malformed images duckduckgo"
       },
+      "query_order": [
+        "q"
+      ],
       "sequence": 2,
       "url": "https://duckduckgo.com"
     },
@@ -106,6 +109,14 @@
         "q": "fixture malformed images duckduckgo",
         "vqd": "synthetic-vqd"
       },
+      "query_order": [
+        "o",
+        "q",
+        "l",
+        "vqd",
+        "p",
+        "ct"
+      ],
       "sequence": 4,
       "url": "https://duckduckgo.com/i.js"
     },

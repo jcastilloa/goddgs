@@ -74,6 +74,11 @@
         "l": "us-en",
         "q": "fixture malformed text duckduckgo"
       },
+      "form_order": [
+        "q",
+        "b",
+        "l"
+      ],
       "kind": "request",
       "method": "POST",
       "sequence": 2,

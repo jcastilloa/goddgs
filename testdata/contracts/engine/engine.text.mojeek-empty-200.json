@@ -75,6 +75,9 @@
       "query": {
         "q": "fixture empty text mojeek"
       },
+      "query_order": [
+        "q"
+      ],
       "sequence": 2,
       "url": "https://www.mojeek.com/search"
     },

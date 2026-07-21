@@ -67,6 +67,7 @@
       "kind": "request",
       "method": "GET",
       "query": {},
+      "query_order": [],
       "sequence": 1,
       "url": "https://en.wikipedia.org/w/api.php?action=opensearch&profile=fuzzy&limit=1&search=fixture%20malformed%20text%20wikipedia"
     },

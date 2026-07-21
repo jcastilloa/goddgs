@@ -10,155 +10,28 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/jcastillo/goddgs/internal/normalize"
+	"github.com/jcastillo/goddgs/internal/engine"
 )
 
 var errEmptyCacheFields = errors.New("At least one cache_field must be provided")
 
-var errUnknownResultCategory = errors.New("unknown source result category")
+var errUnknownResultCategory = engine.ErrUnknownResultCategory
 
 // Field is one source result field in its declared insertion order.
-//
-// Result fields must remain ordered internally because Python's aggregator uses
-// the first eligible field it encounters, rather than cache-field set order.
-type Field struct {
-	Name  string
-	Value any
-}
+type Field = engine.Field
 
 // Result is a lossless ordered source result used before conversion to the
 // public raw map representation.
-type Result struct {
-	fields []Field
-}
+type Result = engine.Result
 
 // NewResult constructs a source result from fields in source insertion order.
-// It applies BaseResult's named-field normalization only when the value is
-// truthy, matching the frozen Python source.
 func NewResult(fields []Field) (Result, error) {
-	result := Result{fields: make([]Field, 0, len(fields))}
-	for _, field := range fields {
-		if err := result.set(field); err != nil {
-			return Result{}, err
-		}
-	}
-	return result, nil
+	return engine.NewResult(fields)
 }
 
-func (r *Result) set(field Field) error {
-	normalized, err := normalizeResultField(field)
-	if err != nil {
-		return err
-	}
-	for index := range r.fields {
-		if r.fields[index].Name == normalized.Name {
-			r.fields[index].Value = normalized.Value
-			return nil
-		}
-	}
-	r.fields = append(r.fields, normalized)
-	return nil
-}
-
-// NewCategoryResult constructs one of the frozen source category result
-// shapes. Updates replace declared defaults in place or append dynamic fields
-// in their supplied source order.
+// NewCategoryResult constructs one frozen source category result shape.
 func NewCategoryResult(category string, updates []Field) (Result, error) {
-	fields, err := categoryResultFields(category)
-	if err != nil {
-		return Result{}, err
-	}
-
-	result, err := NewResult(fields)
-	if err != nil {
-		return Result{}, err
-	}
-	for _, update := range updates {
-		if err := result.set(update); err != nil {
-			return Result{}, err
-		}
-	}
-	return result, nil
-}
-
-func categoryResultFields(category string) ([]Field, error) {
-	switch category {
-	case "text":
-		return []Field{{Name: "title", Value: ""}, {Name: "href", Value: ""}, {Name: "body", Value: ""}}, nil
-	case "images":
-		return []Field{
-			{Name: "title", Value: ""},
-			{Name: "image", Value: ""},
-			{Name: "thumbnail", Value: ""},
-			{Name: "url", Value: ""},
-			{Name: "height", Value: ""},
-			{Name: "width", Value: ""},
-			{Name: "source", Value: ""},
-		}, nil
-	case "news":
-		return []Field{
-			{Name: "date", Value: ""},
-			{Name: "title", Value: ""},
-			{Name: "body", Value: ""},
-			{Name: "url", Value: ""},
-			{Name: "image", Value: ""},
-			{Name: "source", Value: ""},
-		}, nil
-	case "videos":
-		return []Field{
-			{Name: "title", Value: ""},
-			{Name: "content", Value: ""},
-			{Name: "description", Value: ""},
-			{Name: "duration", Value: ""},
-			{Name: "embed_html", Value: ""},
-			{Name: "embed_url", Value: ""},
-			{Name: "image_token", Value: ""},
-			{Name: "images", Value: map[string]any{}},
-			{Name: "provider", Value: ""},
-			{Name: "published", Value: ""},
-			{Name: "publisher", Value: ""},
-			{Name: "statistics", Value: map[string]any{}},
-			{Name: "uploader", Value: ""},
-		}, nil
-	case "books":
-		return []Field{
-			{Name: "title", Value: ""},
-			{Name: "author", Value: ""},
-			{Name: "publisher", Value: ""},
-			{Name: "info", Value: ""},
-			{Name: "url", Value: ""},
-			{Name: "thumbnail", Value: ""},
-		}, nil
-	default:
-		return nil, fmt.Errorf("%w: %q", errUnknownResultCategory, category)
-	}
-}
-
-// Fields returns the result fields in source insertion order.
-func (r Result) Fields() []Field {
-	fields := make([]Field, len(r.fields))
-	copy(fields, r.fields)
-	return fields
-}
-
-// Map returns the result's raw fields and values. Field ordering is retained
-// by Result for internal source-compatible operations; Go map iteration has no
-// ordering guarantee.
-func (r Result) Map() map[string]any {
-	values := make(map[string]any, len(r.fields))
-	for _, field := range r.fields {
-		values[field.Name] = field.Value
-	}
-	return values
-}
-
-func (r Result) value(name string) (any, bool) {
-	for _, field := range r.fields {
-		if field.Name == name {
-			return field.Value, true
-		}
-	}
-	return nil, false
+	return engine.NewCategoryResult(category, updates)
 }
 
 // ResultsAggregator mirrors Python ResultsAggregator for ordered raw results.
@@ -243,7 +116,7 @@ func (a *ResultsAggregator) Extract() []Result {
 }
 
 func (a *ResultsAggregator) key(result Result) (string, error) {
-	for _, field := range result.fields {
+	for _, field := range result.Fields() {
 		if _, ok := a.cacheFields[field.Name]; ok {
 			return sourceString(field.Value)
 		}
@@ -251,80 +124,8 @@ func (a *ResultsAggregator) key(result Result) (string, error) {
 	return "", fmt.Errorf("item has none of the cache fields")
 }
 
-func normalizeResultField(field Field) (Field, error) {
-	if !sourceTruthy(field.Value) {
-		return field, nil
-	}
-
-	switch field.Name {
-	case "title", "body", "author", "publisher", "info":
-		value, err := sourceText(field.Name, field.Value)
-		if err != nil {
-			return Field{}, err
-		}
-		field.Value = normalize.Text(value)
-	case "href", "url", "thumbnail", "image":
-		value, err := sourceText(field.Name, field.Value)
-		if err != nil {
-			return Field{}, err
-		}
-		field.Value = normalize.URL(value)
-	case "date":
-		value, err := normalize.Date(sourceDateValue(field.Value))
-		if err != nil {
-			return Field{}, err
-		}
-		field.Value = value
-	}
-	return field, nil
-}
-
-func sourceDateValue(value any) any {
-	number, ok := value.(json.Number)
-	if !ok {
-		return value
-	}
-	integer, err := number.Int64()
-	if err != nil {
-		return value
-	}
-	return integer
-}
-
-func sourceText(name string, value any) (string, error) {
-	text, ok := value.(string)
-	if !ok {
-		return "", fmt.Errorf("cannot normalize source field %q with %T", name, value)
-	}
-	return text, nil
-}
-
-func sourceTruthy(value any) bool {
-	if value == nil {
-		return false
-	}
-	if number, ok := value.(json.Number); ok {
-		parsed, err := strconv.ParseFloat(number.String(), 64)
-		return err != nil || parsed != 0
-	}
-	reflected := reflect.ValueOf(value)
-	switch reflected.Kind() {
-	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
-		return reflected.Len() != 0
-	case reflect.Bool:
-		return reflected.Bool()
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return reflected.Int() != 0
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		return reflected.Uint() != 0
-	case reflect.Float32, reflect.Float64:
-		return reflected.Float() != 0
-	}
-	return true
-}
-
 func resultBodyLength(result Result) (int, error) {
-	value, ok := result.value("body")
+	value, ok := result.Value("body")
 	if !ok {
 		return 0, nil
 	}

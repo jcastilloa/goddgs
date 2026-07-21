@@ -67,6 +67,10 @@
         "limit": "1",
         "query": "fixture empty text grokipedia"
       },
+      "query_order": [
+        "query",
+        "limit"
+      ],
       "sequence": 1,
       "url": "https://grokipedia.com/api/typeahead"
     },

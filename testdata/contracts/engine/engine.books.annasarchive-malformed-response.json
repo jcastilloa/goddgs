@@ -67,6 +67,10 @@
         "page": "1",
         "q": "fixture malformed books annasarchive"
       },
+      "query_order": [
+        "q",
+        "page"
+      ],
       "sequence": 1,
       "url": "https://annas-archive.fixture/search"
     },

@@ -66,6 +66,9 @@
       "query": {
         "q": "fixture empty news duckduckgo"
       },
+      "query_order": [
+        "q"
+      ],
       "sequence": 1,
       "url": "https://duckduckgo.com"
     },
@@ -87,6 +90,14 @@
         "q": "fixture empty news duckduckgo",
         "vqd": "synthetic-vqd"
       },
+      "query_order": [
+        "l",
+        "o",
+        "noamp",
+        "q",
+        "vqd",
+        "p"
+      ],
       "sequence": 3,
       "url": "https://duckduckgo.com/news.js"
     },

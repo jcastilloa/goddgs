@@ -82,6 +82,9 @@
       "query": {
         "q": "fixture empty images duckduckgo"
       },
+      "query_order": [
+        "q"
+      ],
       "sequence": 2,
       "url": "https://duckduckgo.com"
     },
@@ -103,6 +106,14 @@
         "q": "fixture empty images duckduckgo",
         "vqd": "synthetic-vqd"
       },
+      "query_order": [
+        "o",
+        "q",
+        "l",
+        "vqd",
+        "p",
+        "ct"
+      ],
       "sequence": 4,
       "url": "https://duckduckgo.com/i.js"
     },

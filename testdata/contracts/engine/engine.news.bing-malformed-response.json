@@ -71,6 +71,14 @@
         "q": "fixture malformed news bing",
         "setlang": "en"
       },
+      "query_order": [
+        "q",
+        "InfiniteScroll",
+        "first",
+        "SFX",
+        "cc",
+        "setlang"
+      ],
       "sequence": 1,
       "url": "https://www.bing.com/news/infinitescrollajax"
     },

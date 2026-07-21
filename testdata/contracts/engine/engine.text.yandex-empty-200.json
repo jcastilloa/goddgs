@@ -78,6 +78,11 @@
         "text": "fixture empty text yandex",
         "web": "1"
       },
+      "query_order": [
+        "text",
+        "web",
+        "searchid"
+      ],
       "sequence": 2,
       "url": "https://yandex.com/search/site/"
     },

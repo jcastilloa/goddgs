@@ -81,6 +81,9 @@
       "query": {
         "q": "fixture status ddg images"
       },
+      "query_order": [
+        "q"
+      ],
       "sequence": 2,
       "url": "https://duckduckgo.com"
     },
@@ -102,6 +105,14 @@
         "q": "fixture status ddg images",
         "vqd": "synthetic-vqd"
       },
+      "query_order": [
+        "o",
+        "q",
+        "l",
+        "vqd",
+        "p",
+        "ct"
+      ],
       "sequence": 4,
       "url": "https://duckduckgo.com/i.js"
     },

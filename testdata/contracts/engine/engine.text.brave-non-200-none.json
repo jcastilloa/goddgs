@@ -75,6 +75,10 @@
         "q": "fixture status brave",
         "source": "web"
       },
+      "query_order": [
+        "q",
+        "source"
+      ],
       "sequence": 2,
       "url": "https://search.brave.com/search"
     },

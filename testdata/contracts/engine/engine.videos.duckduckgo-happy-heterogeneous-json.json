@@ -108,6 +108,9 @@
       "query": {
         "q": "fixture video result"
       },
+      "query_order": [
+        "q"
+      ],
       "sequence": 1,
       "url": "https://duckduckgo.com"
     },
@@ -130,6 +133,15 @@
         "s": "60",
         "vqd": "fixture-vqd"
       },
+      "query_order": [
+        "l",
+        "o",
+        "q",
+        "vqd",
+        "f",
+        "p",
+        "s"
+      ],
       "sequence": 3,
       "url": "https://duckduckgo.com/v.js"
     },

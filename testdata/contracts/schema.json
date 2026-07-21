@@ -96,7 +96,15 @@
           "method": { "type": "string" },
           "url": { "type": "string" },
           "query": { "type": "object" },
+          "query_order": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
           "form": { "type": "object" },
+          "form_order": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
           "headers": { "type": "object", "additionalProperties": { "type": "string" } },
           "cookies": { "type": "object", "additionalProperties": { "type": "string" } },
           "status": { "type": "integer" },
@@ -107,6 +115,14 @@
         },
         "additionalProperties": false,
         "allOf": [
+          {
+            "if": { "required": ["query_order"] },
+            "then": { "required": ["query"] }
+          },
+          {
+            "if": { "required": ["form_order"] },
+            "then": { "required": ["form"] }
+          },
           {
             "if": { "properties": { "kind": { "const": "request" } } },
             "then": { "required": ["method", "url"] }

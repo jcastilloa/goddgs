@@ -87,12 +87,18 @@ can prove lossless forwarding before a real internal search adapter exists.
 
 **Ordered internal result boundary:** Python result objects retain attribute
 insertion order, including dynamically added fields; aggregation uses that
-order to select its first eligible cache field. `internal/search` therefore
-keeps an ordered field sequence through construction, mutation, normalization,
-and aggregation. It converts to `RawResult` only at the public edge. A Go map
-cannot promise iteration order, so no source order-dependent operation may
-inspect a public or decoded Go map; dynamic field values and names remain
-lossless while their source ordering is retained internally for behavior.
+order to select its first eligible cache field. Each `internal/engine` adapter
+therefore returns ordered result drafts: its source `__setattr__` assignments
+in declared selector/JSON-mapping order, without a Go map boundary.
+`internal/search` consumes those already source-shaped results, keeps the
+ordered field sequence through aggregation, ranking, and slicing, then
+converts to `RawResult` only at the public edge. The engine result constructor
+applies the category's frozen defaults and named-field normalizers exactly
+once, matching Python's result-object construction.
+A Go map cannot promise iteration order, so no source order-dependent
+operation may inspect a public or decoded Go map; dynamic field values and
+names remain lossless while their source ordering is retained internally for
+behavior.
 
 **Rejected:** `map[string]string` and fixed structs lose source data; a public
 third-party transport/parser type freezes an implementation detail; no context
@@ -115,6 +121,17 @@ ddgs public façade
 contracts; lower layers never import public/search packages. This applies
 dependency discipline without irrelevant DI containers, repositories, or
 service architecture.
+
+**Engine execution port:** `internal/engine` owns a small `SearchRequest`,
+ordered `Field`/`Result` draft, and `Searcher` contract. An adapter defines its
+transport interface at its own consumer boundary and imports only
+`internal/parser`, `internal/normalize` when source behavior needs it, and
+`internal/transport`. It must never import `internal/search`. At composition,
+`internal/search` consumes the engine result value without re-normalizing it.
+The engine result constructor owns Python dataclass defaults and generic
+named-field normalization. The boundary permits direct fixture testing of an
+engine request/parser/post-process sequence while preserving inward dependency
+direction.
 
 ### Make source normalization error-capable and freeze Unicode data
 

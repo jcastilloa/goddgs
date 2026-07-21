@@ -4853,6 +4853,333 @@ def _brave_google_mojeek_edge_fixtures() -> list[Fixture]:
     return fixtures
 
 
+def _startpage_yahoo_yandex_edge_fixtures() -> list[Fixture]:
+    """Capture source-only Startpage, Yahoo, and Yandex behavior before Go work."""
+    fixtures: list[Fixture] = []
+
+    fixtures.extend(
+        [
+            _synthetic_search_fixture(
+                "engine.text.startpage-empty-text-200-none",
+                "text",
+                "startpage",
+                {
+                    "query": "fixture empty body startpage",
+                    "region": "us-en",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                Startpage,
+                [
+                    _SyntheticResponse(text='<form id="search"><input name="sc" value="synthetic-sc"></form>'),
+                    _SyntheticResponse(text=""),
+                ],
+                notes=["source BaseSearchEngine treats exactly empty HTTP-200 search text as None after the sc bootstrap"],
+            ),
+            _synthetic_search_fixture(
+                "engine.text.startpage-missing-sc-case-page-zero",
+                "text",
+                "startpage",
+                {
+                    "query": "fixture startpage no sc",
+                    "region": "DE-de",
+                    "safesearch": "ON",
+                    "timelimit": "",
+                    "page": 0,
+                },
+                Startpage,
+                [
+                    _SyntheticResponse(text="<html><body><form id='other'></form></body></html>"),
+                    _SyntheticResponse(text="<html><body></body></html>"),
+                ],
+                notes=["source bootstrap uses an empty sc value when the search form token is absent"],
+            ),
+            _synthetic_search_fixture(
+                "engine.text.startpage-unsupported-safesearch-after-bootstrap",
+                "text",
+                "startpage",
+                {
+                    "query": "fixture startpage bad safe",
+                    "region": "us-en",
+                    "safesearch": "strict",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                Startpage,
+                [_SyntheticResponse(text='<form id="search"><input name="sc" value="synthetic-sc"></form>')],
+                notes=["source safesearch lookup happens after Startpage fetches sc and before the POST"],
+            ),
+            _synthetic_search_fixture(
+                "engine.text.startpage-invalid-region-value-error",
+                "text",
+                "startpage",
+                {
+                    "query": "fixture startpage bad region",
+                    "region": "us",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                Startpage,
+                [],
+                notes=["source region split fails before Startpage requests sc"],
+            ),
+            _synthetic_search_fixture(
+                "engine.text.startpage-bootstrap-non-200-text-is-used",
+                "text",
+                "startpage",
+                {
+                    "query": "fixture startpage bootstrap status",
+                    "region": "us-en",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                Startpage,
+                [
+                    _SyntheticResponse(
+                        text='<form id="search"><input name="sc" value="synthetic-sc-503"></form>',
+                        status_code=503,
+                    ),
+                    _SyntheticResponse(text="<html><body></body></html>"),
+                ],
+                notes=["Startpage reads raw bootstrap text even when its bootstrap HTTP status is not 200"],
+            ),
+            _synthetic_search_fixture(
+                "engine.text.startpage-empty-bootstrap-parser-error",
+                "text",
+                "startpage",
+                {
+                    "query": "fixture startpage empty bootstrap",
+                    "region": "us-en",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                Startpage,
+                [_SyntheticResponse(text="")],
+                notes=["Startpage parses raw bootstrap text and exposes the source parser error for an empty document"],
+            ),
+            _synthetic_search_fixture(
+                "engine.text.startpage-malformed-bootstrap-empty-sc",
+                "text",
+                "startpage",
+                {
+                    "query": "fixture startpage malformed bootstrap",
+                    "region": "us-en",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                Startpage,
+                [
+                    _SyntheticResponse(text="<"),
+                    _SyntheticResponse(text="<html><body></body></html>"),
+                ],
+                notes=["Startpage's frozen lxml parser accepts this malformed bootstrap body and continues with an empty sc value"],
+            ),
+        ]
+    )
+
+    def stable_search_fixture(
+        fixture_id: str,
+        engine_name: str,
+        engine_class: type[Any],
+        input_value: dict[str, Any],
+        responses: list[_SyntheticResponse],
+        notes: list[str],
+    ) -> Fixture:
+        return _synthetic_engine_fixture(
+            fixture_id,
+            "text",
+            engine_name,
+            "search",
+            input_value,
+            responses,
+            lambda events: _stable_engine_search(engine_class, input_value, events),
+            random="source request-time randomness replaced by deterministic synthetic values",
+            notes=notes,
+        )
+
+    fixtures.extend(
+        [
+            stable_search_fixture(
+                "engine.text.yahoo-empty-text-200-none",
+                "yahoo",
+                Yahoo,
+                {
+                    "query": "fixture empty body yahoo",
+                    "region": "us-en",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                [_SyntheticResponse(text="")],
+                ["source BaseSearchEngine treats exactly empty HTTP-200 text as None after Yahoo builds a random path"],
+            ),
+            stable_search_fixture(
+                "engine.text.yahoo-page-zero-empty-time-and-rs-unwrapping",
+                "yahoo",
+                Yahoo,
+                {
+                    "query": "fixture yahoo rs",
+                    "region": "ignored-region",
+                    "safesearch": "ignored-safe",
+                    "timelimit": "",
+                    "page": 0,
+                },
+                [
+                    _SyntheticResponse(
+                        text="""
+                        <html><body>
+                          <div class="relsrch"><div class="Title"><a href="https://www.bing.com/aclick?fixture"><h3>Skip Bing</h3></a></div><div class="Text">skip</div></div>
+                          <div class="relsrch"><div class="Title"><a href="https://r.search.yahoo.com/_ylt=x/RU=https%3A%2F%2Ftarget.example%2Fpath%3Fx%3Da%252Bb/RS=fixture"><h3>Keep Yahoo</h3></a></div><div class="Text">keep</div></div>
+                        </body></html>
+                        """
+                    )
+                ],
+                ["source ignores region/safesearch, only adds btf when timelimit is truthy, and unwraps /RS= links after result URL normalization"],
+            ),
+            stable_search_fixture(
+                "engine.text.yahoo-unquote-plus-and-invalid-escapes",
+                "yahoo",
+                Yahoo,
+                {
+                    "query": "fixture yahoo decode",
+                    "region": "us-en",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                [
+                    _SyntheticResponse(
+                        text="""
+                        <html><body>
+                          <div class="relsrch"><div class="Title"><a href="https://r.search.yahoo.com/x/RU=https%3A%2F%2Ftarget.example%2Fa%252Bb/RK=x"><h3>Encoded plus</h3></a></div><div class="Text">first</div></div>
+                          <div class="relsrch"><div class="Title"><a href="https://r.search.yahoo.com/x/RU=https%3A%2F%2Ftarget.example%2Fa+b/RS=x"><h3>Literal plus</h3></a></div><div class="Text">second</div></div>
+                          <div class="relsrch"><div class="Title"><a href="https://r.search.yahoo.com/x/RU=https%3A%2F%2Ftarget.example%2Fa%25ZZ/RS=x"><h3>Malformed percent</h3></a></div><div class="Text">third</div></div>
+                          <div class="relsrch"><div class="Title"><a href="https://r.search.yahoo.com/x/RU=https%3A%2F%2Ftarget.example%2Fa%25FF/RS=x"><h3>Invalid UTF8</h3></a></div><div class="Text">fourth</div></div>
+                        </body></html>
+                        """
+                    )
+                ],
+                ["Yahoo unwraps after source href normalization; unquote_plus then a second URL normalization preserves frozen plus and malformed-percent behavior"],
+            ),
+            stable_search_fixture(
+                "engine.text.yandex-empty-text-200-none",
+                "yandex",
+                Yandex,
+                {
+                    "query": "fixture empty body yandex",
+                    "region": "us-en",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                [_SyntheticResponse(text="")],
+                ["source BaseSearchEngine treats exactly empty HTTP-200 text as None after Yandex builds searchid"],
+            ),
+            stable_search_fixture(
+                "engine.text.yandex-ignores-options-page-zero",
+                "yandex",
+                Yandex,
+                {
+                    "query": "fixture yandex ignored",
+                    "region": "not-a-region",
+                    "safesearch": "strict",
+                    "timelimit": "invalid",
+                    "page": 0,
+                },
+                [_SyntheticResponse(text="<html><body></body></html>")],
+                ["source ignores region, safesearch, and timelimit; page values at most one omit p"],
+            ),
+        ]
+    )
+
+    yahoo_module = importlib.import_module("ddgs.engines.yahoo")
+    old_token_urlsafe = yahoo_module.token_urlsafe
+    yahoo_calls = [
+        {"query": "fixture yahoo first", "region": "us-en", "safesearch": "moderate", "timelimit": None, "page": 1},
+        {"query": "fixture yahoo second", "region": "us-en", "safesearch": "moderate", "timelimit": "w", "page": 2},
+    ]
+
+    def yahoo_twice_action(events: list[dict[str, Any]]) -> dict[str, Any]:
+        sequence = iter(("synthetic-token-18-one", "synthetic-token-35-one", "synthetic-token-18-two", "synthetic-token-35-two"))
+
+        def token_urlsafe(nbytes: int) -> str:
+            value = next(sequence)
+            events.append({"kind": "random", "value": {"function": "token_urlsafe", "nbytes": nbytes, "value": value}})
+            return value
+
+        yahoo_module.token_urlsafe = token_urlsafe
+        try:
+            engine = Yahoo()
+            return {"results": [_engine_result_dicts(engine.search(**call)) for call in yahoo_calls], "search_url": engine.search_url}
+        finally:
+            yahoo_module.token_urlsafe = old_token_urlsafe
+
+    yahoo_twice_output, yahoo_twice_trace = _capture_synthetic_engine(
+        [_SyntheticResponse(text="<html><body></body></html>"), _SyntheticResponse(text="<html><body></body></html>")],
+        yahoo_twice_action,
+    )
+    fixtures.append(
+        _engine_fixture(
+            "engine.text.yahoo-random-path-per-search",
+            "text",
+            "yahoo",
+            "search_twice",
+            {"calls": yahoo_calls},
+            _ok(yahoo_twice_output),
+            trace=yahoo_twice_trace,
+            random="token_urlsafe is invoked twice for each source payload build",
+            notes=["source mutates search_url per call; the final URL is the second search path"],
+        )
+    )
+
+    yandex_module = importlib.import_module("ddgs.engines.yandex")
+    old_random = yandex_module.random
+    yandex_calls = [
+        {"query": "fixture yandex first", "region": "us-en", "safesearch": "moderate", "timelimit": None, "page": 1},
+        {"query": "fixture yandex second", "region": "us-en", "safesearch": "moderate", "timelimit": None, "page": 2},
+    ]
+
+    def yandex_twice_action(events: list[dict[str, Any]]) -> dict[str, Any]:
+        values = iter((1_111_111, 2_222_222))
+
+        class SyntheticRandom:
+            def randint(self, lower: int, upper: int) -> int:
+                value = next(values)
+                events.append({"kind": "random", "value": {"function": "randint", "lower": lower, "upper": upper, "value": value}})
+                return value
+
+        yandex_module.random = SyntheticRandom()
+        try:
+            engine = Yandex()
+            return {"results": [_engine_result_dicts(engine.search(**call)) for call in yandex_calls]}
+        finally:
+            yandex_module.random = old_random
+
+    yandex_twice_output, yandex_twice_trace = _capture_synthetic_engine(
+        [_SyntheticResponse(text="<html><body></body></html>"), _SyntheticResponse(text="<html><body></body></html>")],
+        yandex_twice_action,
+    )
+    fixtures.append(
+        _engine_fixture(
+            "engine.text.yandex-searchid-per-search",
+            "text",
+            "yandex",
+            "search_twice",
+            {"calls": yandex_calls},
+            _ok(yandex_twice_output),
+            trace=yandex_twice_trace,
+            random="randint is invoked for every source payload build",
+            notes=["source Yandex searchid is request-time random rather than module-lifetime state"],
+        )
+    )
+    return fixtures
+
+
 def _engine_non_200_fixtures() -> list[Fixture]:
     """Capture the BaseSearchEngine status-200-only path for every active engine."""
     cases: list[tuple[str, str, type[Any], dict[str, Any], str, str]] = [
@@ -5761,6 +6088,7 @@ def build_fixtures() -> list[Fixture]:
         *_grokipedia_wikipedia_edge_fixtures(),
         *_html_engine_matrix_fixtures(),
         *_brave_google_mojeek_edge_fixtures(),
+        *_startpage_yahoo_yandex_edge_fixtures(),
         *_engine_non_200_fixtures(),
         *_engine_empty_fixtures(),
         *_engine_malformed_response_fixtures(),

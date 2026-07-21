@@ -18,13 +18,10 @@ import (
 
 type htmlTextEngineFixture struct {
 	FixtureID string `json:"fixture_id"`
-	Input     struct {
-		Query      string  `json:"query"`
-		Region     string  `json:"region"`
-		SafeSearch string  `json:"safesearch"`
-		TimeLimit  *string `json:"timelimit"`
-		Page       int     `json:"page"`
-	} `json:"input"`
+	Contract  struct {
+		Operation string `json:"operation"`
+	} `json:"contract"`
+	Input  htmlTextSearchInput `json:"input"`
 	Result struct {
 		Status     string          `json:"status"`
 		Output     json.RawMessage `json:"output"`
@@ -37,6 +34,14 @@ type htmlTextEngineFixture struct {
 	Trace []htmlTextEngineTrace `json:"trace"`
 }
 
+type htmlTextSearchInput struct {
+	Query      string  `json:"query"`
+	Region     string  `json:"region"`
+	SafeSearch string  `json:"safesearch"`
+	TimeLimit  *string `json:"timelimit"`
+	Page       int     `json:"page"`
+}
+
 type htmlTextEngineTrace struct {
 	Kind        string            `json:"kind"`
 	Note        string            `json:"note"`
@@ -47,6 +52,9 @@ type htmlTextEngineTrace struct {
 	URL         string            `json:"url"`
 	Query       map[string]string `json:"query"`
 	QueryOrder  []string          `json:"query_order"`
+	Form        map[string]string `json:"form"`
+	FormOrder   []string          `json:"form_order"`
+	Value       json.RawMessage   `json:"value"`
 	StatusCode  int               `json:"status"`
 	Text        string            `json:"text"`
 	ContentHex  string            `json:"content_hex"`
@@ -350,6 +358,16 @@ func TestHTMLTextAdapters_SearchIsConcurrentSafe(t *testing.T) {
 }
 
 func testHTMLTextEngineFixtures(t *testing.T, engineName string, newAdapter func(htmlTextTransport) Searcher) {
+	testHTMLTextEngineFixturesWithFixture(t, engineName, func(_ *testing.T, client htmlTextTransport, _ htmlTextEngineFixture) Searcher {
+		return newAdapter(client)
+	})
+}
+
+func testHTMLTextEngineFixturesWithFixture(
+	t *testing.T,
+	engineName string,
+	newAdapter func(*testing.T, htmlTextTransport, htmlTextEngineFixture) Searcher,
+) {
 	t.Helper()
 	paths, err := filepath.Glob("../../testdata/contracts/engine/engine.text." + engineName + "-*.json")
 	if err != nil {
@@ -361,9 +379,12 @@ func testHTMLTextEngineFixtures(t *testing.T, engineName string, newAdapter func
 
 	for _, path := range paths {
 		fixture := loadHTMLTextEngineFixture(t, path)
+		if fixture.Contract.Operation != "search" {
+			continue
+		}
 		t.Run(fixture.FixtureID, func(t *testing.T) {
 			client := scriptedHTMLTextTransportFromFixture(t, fixture)
-			results, err := newAdapter(client).Search(t.Context(), htmlTextSearchRequest(fixture))
+			results, err := newAdapter(t, client, fixture).Search(t.Context(), htmlTextSearchRequest(fixture))
 			assertHTMLTextEngineOutcome(t, results, err, fixture)
 			assertHTMLTextEngineEvents(t, client.Events(), fixture)
 		})
@@ -461,12 +482,16 @@ func (client *routingHTMLTextTransport) RequestCount() int {
 }
 
 func htmlTextSearchRequest(fixture htmlTextEngineFixture) SearchRequest {
+	return htmlTextSearchRequestFromInput(fixture.Input)
+}
+
+func htmlTextSearchRequestFromInput(input htmlTextSearchInput) SearchRequest {
 	return SearchRequest{
-		Query:      fixture.Input.Query,
-		Region:     fixture.Input.Region,
-		SafeSearch: fixture.Input.SafeSearch,
-		TimeLimit:  fixture.Input.TimeLimit,
-		Page:       fixture.Input.Page,
+		Query:      input.Query,
+		Region:     input.Region,
+		SafeSearch: input.SafeSearch,
+		TimeLimit:  input.TimeLimit,
+		Page:       input.Page,
 	}
 }
 
@@ -492,12 +517,7 @@ func assertHTMLTextEngineOutcome(t testing.TB, results []Result, err error, fixt
 		t.Fatalf("Search: %v", err)
 	}
 
-	decoder := json.NewDecoder(bytes.NewReader(fixture.Result.Output))
-	decoder.UseNumber()
-	var want []map[string]any
-	if err := decoder.Decode(&want); err != nil {
-		t.Fatalf("decode %s output: %v", fixture.FixtureID, err)
-	}
+	want := decodeHTMLTextResults(t, fixture.FixtureID, fixture.Result.Output)
 	if want == nil {
 		if results != nil {
 			t.Fatalf("results = %#v, want nil", results)
@@ -523,6 +543,28 @@ func assertHTMLTextEngineOutcome(t testing.TB, results []Result, err error, fixt
 			t.Fatalf("result %d field order = %v, want %v", index, actualOrder, fixture.Result.FieldOrder[index])
 		}
 	}
+}
+
+func decodeHTMLTextResults(t testing.TB, fixtureID string, output json.RawMessage) []map[string]any {
+	t.Helper()
+	trimmed := bytes.TrimSpace(output)
+	if len(trimmed) > 0 && trimmed[0] == '{' {
+		var container struct {
+			Results json.RawMessage `json:"results"`
+		}
+		if err := json.Unmarshal(trimmed, &container); err != nil {
+			t.Fatalf("decode %s output container: %v", fixtureID, err)
+		}
+		trimmed = container.Results
+	}
+
+	decoder := json.NewDecoder(bytes.NewReader(trimmed))
+	decoder.UseNumber()
+	var results []map[string]any
+	if err := decoder.Decode(&results); err != nil {
+		t.Fatalf("decode %s output: %v", fixtureID, err)
+	}
+	return results
 }
 
 func assertHTMLTextEngineEvents(t testing.TB, actual []htmlTextTransportEvent, fixture htmlTextEngineFixture) {
@@ -566,8 +608,12 @@ func assertHTMLTextEngineEvents(t testing.TB, actual []htmlTextTransportEvent, f
 			if !reflect.DeepEqual(actualEvent.request.Query, wantQuery) {
 				t.Fatalf("event %d query = %#v, want %#v", index, actualEvent.request.Query, wantQuery)
 			}
-			if len(actualEvent.request.Form) != 0 || len(actualEvent.request.Headers) != 0 || len(actualEvent.request.Cookies) != 0 {
-				t.Fatalf("event %d direct request fields = %#v, want none", index, actualEvent.request)
+			wantForm := orderedFixtureFields(t, fixture.FixtureID, expectedEvent.Form, expectedEvent.FormOrder)
+			if !reflect.DeepEqual(actualEvent.request.Form, wantForm) {
+				t.Fatalf("event %d form = %#v, want %#v", index, actualEvent.request.Form, wantForm)
+			}
+			if len(actualEvent.request.Headers) != 0 || len(actualEvent.request.Cookies) != 0 {
+				t.Fatalf("event %d direct request headers/cookies = %#v, want none", index, actualEvent.request)
 			}
 		default:
 			t.Fatalf("fixture %s unexpected expected event %q", fixture.FixtureID, expectedEvent.Kind)

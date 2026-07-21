@@ -1,0 +1,75 @@
+{
+  "contract": {
+    "category": "text",
+    "engine": "startpage",
+    "kind": "engine",
+    "operation": "search"
+  },
+  "controls": {
+    "clock": "not used",
+    "notes": [
+      "source region split fails before Startpage requests sc"
+    ],
+    "random": "not used"
+  },
+  "fixture_id": "engine.text.startpage-invalid-region-value-error",
+  "input": {
+    "page": 1,
+    "query": "fixture startpage bad region",
+    "region": "us",
+    "safesearch": "moderate",
+    "timelimit": null
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs and responses",
+      "no external request",
+      "no credentials or live session cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "error": {
+      "cause_type": null,
+      "message": "not enough values to unpack (expected 2, got 1)",
+      "type": "ValueError"
+    },
+    "status": "error"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "headers": {
+        "Referer": "https://www.startpage.com/"
+      },
+      "kind": "note",
+      "note": "headers_update",
+      "sequence": 1
+    }
+  ]
+}

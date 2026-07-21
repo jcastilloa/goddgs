@@ -1,0 +1,113 @@
+{
+  "contract": {
+    "category": "text",
+    "engine": "yahoo",
+    "kind": "engine",
+    "operation": "search"
+  },
+  "controls": {
+    "clock": "not used",
+    "notes": [
+      "source ignores region/safesearch, only adds btf when timelimit is truthy, and unwraps /RS= links after result URL normalization"
+    ],
+    "random": "source request-time randomness replaced by deterministic synthetic values"
+  },
+  "fixture_id": "engine.text.yahoo-page-zero-empty-time-and-rs-unwrapping",
+  "input": {
+    "page": 0,
+    "query": "fixture yahoo rs",
+    "region": "ignored-region",
+    "safesearch": "ignored-safe",
+    "timelimit": ""
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs and responses",
+      "no external request",
+      "no credentials or live session cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "field_order": [
+      [
+        "title",
+        "href",
+        "body"
+      ]
+    ],
+    "output": [
+      {
+        "body": "keep",
+        "href": "https://target.example/path?x=a+b",
+        "title": "Keep Yahoo"
+      }
+    ],
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "kind": "random",
+      "sequence": 1,
+      "value": {
+        "function": "token_urlsafe",
+        "nbytes": 18,
+        "value": "synthetic-token-18"
+      }
+    },
+    {
+      "kind": "random",
+      "sequence": 2,
+      "value": {
+        "function": "token_urlsafe",
+        "nbytes": 35,
+        "value": "synthetic-token-35"
+      }
+    },
+    {
+      "kind": "request",
+      "method": "GET",
+      "query": {
+        "p": "fixture yahoo rs"
+      },
+      "query_order": [
+        "p"
+      ],
+      "sequence": 3,
+      "url": "https://search.yahoo.com/search;_ylt=synthetic-token-18;_ylu=synthetic-token-35"
+    },
+    {
+      "content_hex": "0a2020202020202020202020202020202020202020202020203c68746d6c3e3c626f64793e0a20202020202020202020202020202020202020202020202020203c64697620636c6173733d2272656c73726368223e3c64697620636c6173733d225469746c65223e3c6120687265663d2268747470733a2f2f7777772e62696e672e636f6d2f61636c69636b3f66697874757265223e3c68333e536b69702042696e673c2f68333e3c2f613e3c2f6469763e3c64697620636c6173733d2254657874223e736b69703c2f6469763e3c2f6469763e0a20202020202020202020202020202020202020202020202020203c64697620636c6173733d2272656c73726368223e3c64697620636c6173733d225469746c65223e3c6120687265663d2268747470733a2f2f722e7365617263682e7961686f6f2e636f6d2f5f796c743d782f52553d68747470732533412532462532467461726765742e6578616d706c652532467061746825334678253344612532353242622f52533d66697874757265223e3c68333e4b656570205961686f6f3c2f68333e3c2f613e3c2f6469763e3c64697620636c6173733d2254657874223e6b6565703c2f6469763e3c2f6469763e0a2020202020202020202020202020202020202020202020203c2f626f64793e3c2f68746d6c3e0a202020202020202020202020202020202020202020202020",
+      "kind": "response",
+      "sequence": 4,
+      "status": 200,
+      "text": "\n                        <html><body>\n                          <div class=\"relsrch\"><div class=\"Title\"><a href=\"https://www.bing.com/aclick?fixture\"><h3>Skip Bing</h3></a></div><div class=\"Text\">skip</div></div>\n                          <div class=\"relsrch\"><div class=\"Title\"><a href=\"https://r.search.yahoo.com/_ylt=x/RU=https%3A%2F%2Ftarget.example%2Fpath%3Fx%3Da%252Bb/RS=fixture\"><h3>Keep Yahoo</h3></a></div><div class=\"Text\">keep</div></div>\n                        </body></html>\n                        "
+    }
+  ]
+}

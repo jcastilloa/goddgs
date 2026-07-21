@@ -31,10 +31,16 @@ type transportFixture struct {
 	Input     struct {
 		Constructor map[string]json.RawMessage `json:"constructor"`
 		Case        string                     `json:"case"`
+		Failure     string                     `json:"failure"`
+		Method      string                     `json:"method"`
 	} `json:"input"`
 	Result struct {
 		Output json.RawMessage `json:"output"`
 		Status string          `json:"status"`
+		Error  struct {
+			Message string `json:"message"`
+			Type    string `json:"type"`
+		} `json:"error"`
 	} `json:"result"`
 }
 

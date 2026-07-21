@@ -226,6 +226,23 @@ separate capability because source `Response` delegates those properties to
 `primp`; base transport completion must not claim renderer or fingerprint
 parity.
 
+DuckDuckGo text gets a distinct internal transport capability rather than a
+mutable switch on the base client. Its constructor snapshots source-compatible
+proxy, timeout, verification, and engine User-Agent/header values into an
+isolated jar, native `http.Client`, and cloned `http.Transport`. It requests
+HTTP/2 with `ForceAttemptHTTP2`, preserves the source's
+`follow_redirects=False` through `http.ErrUseLastResponse`, and copies every
+request before I/O. It never patches package-global HTTP/2/TLS state; two DDG
+clients therefore cannot share mutable header, jar, or transport configuration.
+
+This capability proves only request shape, isolated state, redirect behavior,
+context/response lifecycle, and standard-library HTTP/2 negotiation against a
+controlled local TLS server. The frozen Python client randomizes cipher suites,
+TLS versions/options, and HTTP/2 settings by temporarily monkey-patching
+`httpcore`; Go standard `net/http` cannot reproduce those fingerprints. Those
+settings remain an explicit task 5.5 per-engine compatibility gate, and no DDG
+adapter may claim full transport parity merely because this capability exists.
+
 **Rejected:** default `net/http` everywhere is unproven; blindly importing
 fingerprint dependency creates supply-chain/cgo risk.
 

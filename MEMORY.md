@@ -13,15 +13,16 @@ verification result.
 - Active OpenSpec change: `openspec/changes/port-ddgs-python-library/`.
 - Public façade/configuration, normalizers, ordered result aggregation, ranker,
   backend selection/static registry, isolated fixture-tested scheduler core,
-  offline HTML/XPath/JSON parser adapter, and isolated base transport are
-  complete. No live search engine, DDG-specific HTTP/2/fingerprint transport,
-  renderer, extraction implementation, or public-client-to-engine composition
-  exists yet; those internal package boundaries remain intentional.
+  offline HTML/XPath/JSON parser adapter, isolated base transport, and
+  request-local DDG text standard-HTTP/2 transport are complete. No live
+  search engine, source TLS/H2 fingerprint parity, renderer, extraction
+  implementation, or public-client-to-engine composition exists yet; those
+  internal package boundaries remain intentional.
 - Tasks 2.1–2.7 are complete. The isolated Python oracle lives temporarily at
   `/tmp/goddgs-reference-a12929a`; exact resolved packages and rebuild steps
   are in `docs/reference-environment.md`. It made no external engine request.
-- Fixture corpus has 251 deterministic synthetic/offline contracts: 129 pure,
-  79 engine-visible, 9 extract, 21 parser, and 13 transport contracts under
+- Fixture corpus has 256 deterministic synthetic/offline contracts: 129 pure,
+  79 engine-visible, 9 extract, 21 parser, and 18 transport contracts under
   their
   respective `testdata/contracts/` directories. `tools/reference_capture.py --check`
   validates frozen SHA, resolved-package provenance, result/error shape, trace
@@ -29,9 +30,9 @@ verification result.
   active engine (option-bearing success, empty 200, malformed 200, 503/None),
   and fixture sanitation. Extract/transport capture uses only ephemeral
   loopback with synthetic HTML/bytes and rewrites its URL before output.
-  Parser and base transport have independently consumed their relevant offline
-  fixtures; the doubles/loopback still do not prove renderer, browser
-  fingerprint, or DDG HTTP/2 parity.
+  Parser, base transport, and request-local DDG HTTP/2 transport have
+  independently consumed their relevant offline fixtures; the doubles/loopback
+  still do not prove renderer or browser/TLS-H2 fingerprint parity.
 - Local target repo had no commits when work began. Existing `.codex`,
   `.claude`, `.opencode`, and `openspec` tooling belong to project setup;
   preserve them unless task explicitly changes them.
@@ -135,7 +136,7 @@ Treat registry output as truth.
 | --- | --- | --- |
 | `primp>=1.2.3` | randomized browser impersonation, TLS/HTTP behavior, proxy/certs, HTML render properties | hard compatibility gate; `net/http` alone is not assumed sufficient |
 | `lxml>=4.9.4` | tolerant HTML parse + XPath | Helium v0.6.0 internal adapter passes 14 frozen lxml fixtures; JSON decoder preserves `json.Number`/raw mixed values |
-| `httpx[http2,socks,brotli]`, `httpcore`, `h2` | DDG text temporary client; random HTTP/2/TLS behavior | hard compatibility gate |
+| `httpx[http2,socks,brotli]`, `httpcore`, `h2` | DDG text temporary client; random HTTP/2/TLS behavior | standard request-local H2/no-redirect/header behavior fixture-tested; randomized TLS/H2 fingerprint remains hard gate |
 | `fake-useragent>=2.2.0` | DDG text random user agent | capture/preserve acceptable UA behavior |
 | Click/FastAPI/Uvicorn/MCP | CLI/service only | explicitly excluded |
 
@@ -148,8 +149,9 @@ ordering to engine adapters.
 Base transport imports `golang.org/x/net/proxy v0.57.0` only to preserve the
 frozen SOCKS5-local versus SOCKS5H-remote DNS distinction. It materializes and
 closes native bodies and has per-client cookie/header state. It does **not**
-establish `primp` browser fingerprint/TLS parity or DDG text HTTP/2 behavior;
-those stay gated by tasks 5.4–5.5.
+establish `primp` browser fingerprint/TLS parity. `DuckDuckGoTextClient`
+separately proves standard request-local H2, no-redirect, header/jar isolation,
+and lifecycle behavior; source randomized TLS/H2 settings stay gated by 5.5.
 
 The frozen Python repository has no dependency lockfile; its `pyproject.toml`
 only declares lower bounds. Before fixture capture, task 2.1 must record exact
@@ -158,9 +160,10 @@ resolved runtime package versions (and preferably wheel hashes) as provenance.
 ## Open blockers / risks
 
 1. **Browser fingerprint parity — critical.** Source uses `primp` random
-   impersonation and custom HTTP/2 settings. Base `net/http`/SOCKS behavior is
-   proven offline only; DDG text and each `primp`-dependent engine still need
-   a Go strategy and controlled evidence.
+   impersonation and custom HTTP/2 settings. Base `net/http`/SOCKS behavior
+   and DDG standard H2/no-redirect behavior are proven offline only; source
+   randomized TLS/H2 fingerprint and each `primp`-dependent engine still need
+   controlled evidence.
 2. **Engine parser integration — high.** Internal Helium/JSON parser contracts
    are complete, but no engine adapter has consumed them with a real transport
    response or source-specific post-processing yet.
@@ -203,9 +206,9 @@ resolved runtime package versions (and preferably wheel hashes) as provenance.
    never write an engine without its fixture evidence.
 3. Capture engine-visible request behavior and define the lossless per-category
    scheduler request shape; only then compose the public façade with engines.
-4. Complete DDG text's request-local HTTP/2/UA transport gate, then implement
-   the first engine vertically; follow with engine groups, extraction,
-   race/live integration gates.
+4. DDG text's request-local HTTP/2/UA transport gate is complete. Implement
+   the first engine vertically; keep its randomized TLS/H2 fingerprint
+   explicitly incomplete pending task 5.5.
 
 ## Verification baseline
 
@@ -265,6 +268,7 @@ Verification recorded on 2026-07-20:
 | 2026-07-20 | Approve Helium for internal XPath adapter (task 4.1) | `github.com/lestrrat-go/helium v0.6.0` matched all 14 frozen lxml fixtures and upstream `html`/`xpath1` race tests; pure Go core, MIT license, no enabled cgo path. Reject htmlquery and cgo libxml2 binding; adapter remains TDD pending |
 | 2026-07-20 | Complete parser TDD gate (tasks 4.2–4.5) | `internal/parser` preserves 14 lxml XPath contracts plus 7 JSON contracts with `UseNumber`; cgo-off, race x20, concurrent-document reads, and representative 100x benchmarks pass. Parser remains an offline syntax/XPath boundary, not transport or engine proof. |
 | 2026-07-21 | Complete base transport TDD gate (tasks 5.1–5.3) | `internal/transport` uses an isolated cookie jar/header state, materializes and closes native bodies, preserves response bytes/text/status, follows source base HTTP behavior, and distinguishes SOCKS5-local from SOCKS5H-remote DNS. RED exposed bare-domain Google cookies and a first-use client-init race; both are fixture/test-proven fixed. Full race plus transport stress x50 pass; fingerprint/DDG H2 are still not claimed. |
+| 2026-07-21 | Complete request-local DDG transport gate (task 5.4) | Five frozen `HttpClient2` fixtures and local TLS/H2 tests prove `DuckDuckGoTextClient` request shape, standard H2, no redirect follow, copied UA/header state, isolated jars/transports, cancellation, and no mutation of `http.DefaultTransport`. Source randomized TLS/H2 settings and browser fingerprint are deliberately not claimed and remain task 5.5. |
 
 ## Core TDD evidence — 2026-07-20
 
@@ -326,6 +330,13 @@ Verification recorded on 2026-07-20:
   boundary review, testing/TDD, clean-code and simplification applied;
   concurrency/debugger review found and fixed the initialization race.
   `go test -race -count=50 ./internal/transport` and lifecycle tests pass.
+- **RED/GREEN/REFACTOR 5.4:** DDG tests were RED for source constructor
+  request shape, disabled redirects, local TLS/H2, timeout classification,
+  request-local header state, cancellation, and no default-transport mutation.
+  GREEN adds a separate `DuckDuckGoTextClient` with a cloned transport and
+  `ForceAttemptHTTP2`; no package-global HTTP/2 patch is recreated. REFACTOR
+  retained only standard Go H2 behavior, then `-race` x100 and lifecycle tests
+  passed. Randomized source TLS/H2 fingerprint remains intentionally open.
 - **Skills assessed:** `golang-pro`, `go-clean-ddd-hexagonal` (public façade
   port), `golang-testing`, TDD RED/GREEN/REFACTOR, `clean-code`, and
   `go-code-simplification` applied. `go-concurrency-patterns` and

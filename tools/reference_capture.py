@@ -2574,6 +2574,182 @@ def _capture_http_client_constructor(
     return outcome, _sequenced_trace(events)
 
 
+def _capture_http_client2_constructor(
+    config: dict[str, Any],
+    *,
+    method: str = "GET",
+    failure: str | None = None,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Capture temporary DDG HttpClient2 setup without opening a socket."""
+    http_client = importlib.import_module("ddgs.http_client2")
+    events: list[dict[str, Any]] = []
+    constructor_calls: list[dict[str, Any]] = []
+
+    class SyntheticResponse:
+        status_code = 207
+        content = b"ddg transport fixture bytes"
+        text = content.decode()
+
+    original_send_connection_init = http_client.httpcore._sync.http2.HTTP2Connection._send_connection_init
+
+    class SyntheticClient:
+        def __init__(self, **kwargs: Any) -> None:
+            constructor_calls.append(kwargs)
+
+        def request(self, url: str, **kwargs: Any) -> SyntheticResponse:
+            events.append(
+                {
+                    "kind": "request",
+                    "method": kwargs["method"],
+                    "url": url,
+                    "form": dict(kwargs.get("data") or {}),
+                }
+            )
+            events.append(
+                {
+                    "kind": "note",
+                    "note": "source HTTP2Connection init patch active during request",
+                    "value": http_client.httpcore._sync.http2.HTTP2Connection._send_connection_init
+                    is not original_send_connection_init,
+                }
+            )
+            if failure == "timeout":
+                raise RuntimeError("fixture timed out")
+            if failure == "generic":
+                raise RuntimeError("fixture failure")
+            return SyntheticResponse()
+
+    def synthetic_ssl_context(*, verify: bool | str) -> dict[str, Any]:
+        return {"synthetic_ssl_context": verify}
+
+    original_client = http_client.httpx.Client
+    original_ssl_context = http_client._get_random_ssl_context
+    http_client.httpx.Client = SyntheticClient
+    http_client._get_random_ssl_context = synthetic_ssl_context
+    try:
+        client = http_client.HttpClient2(**config)
+        if len(constructor_calls) != 1:
+            raise AssertionError(f"expected one source constructor call, got {constructor_calls!r}")
+        constructor = constructor_calls[0]
+        events.append(
+            {
+                "kind": "note",
+                "note": "httpx.Client constructor",
+                "value": {
+                    "headers": constructor["headers"],
+                    "proxy": constructor["proxy"],
+                    "timeout": constructor["timeout"],
+                    "verify": constructor["verify"],
+                    "follow_redirects": constructor["follow_redirects"],
+                    "http2": constructor["http2"],
+                },
+            }
+        )
+        try:
+            response = client.request(
+                "https://transport.fixture/ddg",
+                method=method,
+                data={"q": "needle"},
+            )
+        except Exception as exc:
+            outcome = _error_from_exception(exc)
+        else:
+            events.append(
+                {
+                    "kind": "response",
+                    "status": response.status_code,
+                    "text": response.text,
+                    "content_hex": hexlify(response.content).decode(),
+                }
+            )
+            outcome = _ok(
+                {
+                    "status": response.status_code,
+                    "text": response.text,
+                    "content_hex": hexlify(response.content).decode(),
+                }
+            )
+        events.append(
+            {
+                "kind": "note",
+                "note": "source HTTP2Connection init patch restored after request",
+                "value": http_client.httpcore._sync.http2.HTTP2Connection._send_connection_init
+                is original_send_connection_init,
+            }
+        )
+    finally:
+        http_client.httpx.Client = original_client
+        http_client._get_random_ssl_context = original_ssl_context
+    return outcome, _sequenced_trace(events)
+
+
+def _capture_loopback_http_client2_redirect() -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Capture DDG's temporary-client redirect policy on synthetic loopback."""
+    http_client = importlib.import_module("ddgs.http_client2")
+    fixture_base = "https://transport.fixture"
+    events: list[dict[str, Any]] = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:  # noqa: N802
+            events.append({"kind": "request", "method": "GET", "url": actual_base + self.path})
+            if self.path == "/redirect":
+                self.send_response(302)
+                self.send_header("Location", "/target")
+                self.send_header("Content-Length", "8")
+                self.end_headers()
+                self.wfile.write(b"redirect")
+                events.append({"kind": "response", "status": 302, "content_hex": hexlify(b"redirect").decode()})
+                return
+            self.send_response(200)
+            self.send_header("Content-Length", "6")
+            self.end_headers()
+            self.wfile.write(b"target")
+            events.append({"kind": "response", "status": 200, "content_hex": hexlify(b"target").decode()})
+
+        def log_message(self, _format: str, *_args: Any) -> None:
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    actual_base = f"http://127.0.0.1:{server.server_port}"
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    saved_environment = {
+        name: os.environ.pop(name, None)
+        for name in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy")
+    }
+    try:
+        response = http_client.HttpClient2(headers={"User-Agent": "fixture DDG UA"}, timeout=5).request(
+            "GET", actual_base + "/redirect"
+        )
+        outcome = _ok(
+            {
+                "status": response.status_code,
+                "text": response.text,
+                "content_hex": hexlify(response.content).decode(),
+            }
+        )
+    except Exception as exc:
+        outcome = _error_from_exception(exc)
+        outcome["error"]["message"] = outcome["error"]["message"].replace(actual_base, fixture_base)
+    finally:
+        for name, value in saved_environment.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
+        server.shutdown()
+        thread.join()
+        server.server_close()
+
+    trace: list[dict[str, Any]] = []
+    for event in _sequenced_trace(events):
+        sanitized = dict(event)
+        if "url" in sanitized:
+            sanitized["url"] = sanitized["url"].replace(actual_base, fixture_base)
+        trace.append(sanitized)
+    return outcome, trace
+
+
 def _capture_loopback_transport(case: str) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Run frozen HttpClient against synthetic loopback endpoints only."""
     http_client = importlib.import_module("ddgs.http_client")
@@ -2899,6 +3075,52 @@ def _transport_fixtures() -> list[Fixture]:
                 notes=["ephemeral local SOCKS5 server; target and proxy URLs are rewritten before output"],
             )
         )
+
+    ddg_constructor_cases = [
+        (
+            "transport.ddg-http2-constructor-post",
+            {
+                "headers": {"User-Agent": "fixture DDG UA", "X-Fixture": "value"},
+                "proxy": "socks5h://proxy.fixture:1080",
+                "timeout": 7,
+                "verify": True,
+            },
+            "POST",
+            None,
+        ),
+        (
+            "transport.ddg-http2-constructor-verify-off-get",
+            {"headers": {"User-Agent": "fixture DDG UA"}, "proxy": None, "timeout": None, "verify": False},
+            "GET",
+            None,
+        ),
+        ("transport.ddg-http2-timeout-classification", {}, "GET", "timeout"),
+        ("transport.ddg-http2-generic-error-classification", {}, "GET", "generic"),
+    ]
+    for fixture_id, config, method, failure in ddg_constructor_cases:
+        outcome, trace = _capture_http_client2_constructor(config, method=method, failure=failure)
+        fixtures.append(
+            _transport_fixture(
+                fixture_id,
+                "duckduckgo_http2_request",
+                {"constructor": config, "method": method, "failure": failure},
+                outcome,
+                trace=trace,
+                notes=["local httpx.Client double; source global patch is observed but no network is opened"],
+            )
+        )
+
+    outcome, trace = _capture_loopback_http_client2_redirect()
+    fixtures.append(
+        _transport_fixture(
+            "transport.ddg-http2-loopback-redirect-not-followed",
+            "duckduckgo_http2_loopback",
+            {"base_url": "https://transport.fixture", "case": "redirect"},
+            outcome,
+            trace=trace,
+            notes=["ephemeral loopback server with synthetic redirect; source HttpClient2 follow_redirects is false"],
+        )
+    )
     return fixtures
 
 

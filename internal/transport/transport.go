@@ -115,9 +115,15 @@ type clientSettings struct {
 	pemFilePath string
 }
 
+type clientBehavior struct {
+	followRedirects bool
+	forceHTTP2      bool
+}
+
 // Client owns isolated transport configuration and native HTTP state.
 type Client struct {
 	settings clientSettings
+	behavior clientBehavior
 	jar      *cookiejar.Jar
 
 	headersMu sync.RWMutex
@@ -135,12 +141,17 @@ func NewClient(config Config) (*Client, error) {
 }
 
 func newClient(config Config, roundTripper http.RoundTripper) (*Client, error) {
+	return newClientWithBehavior(config, roundTripper, clientBehavior{followRedirects: true})
+}
+
+func newClientWithBehavior(config Config, roundTripper http.RoundTripper, behavior clientBehavior) (*Client, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, fmt.Errorf("create cookie jar: %w", err)
 	}
 	client := &Client{
 		settings: normalizeSettings(config),
+		behavior: behavior,
 		jar:      jar,
 		headers:  make(http.Header),
 	}
@@ -240,12 +251,15 @@ func normalizeSettings(config Config) clientSettings {
 
 func (client *Client) ensureHTTPClient() error {
 	client.initializeOnce.Do(func() {
-		var roundTripper http.RoundTripper
-		roundTripper, client.initializeErr = newBaseRoundTripper(client.settings)
+		transport, err := newBaseRoundTripper(client.settings)
+		client.initializeErr = err
 		if client.initializeErr != nil {
 			return
 		}
-		client.setHTTPClient(client.newHTTPClient(roundTripper))
+		if client.behavior.forceHTTP2 {
+			transport.ForceAttemptHTTP2 = true
+		}
+		client.setHTTPClient(client.newHTTPClient(transport))
 	})
 	return client.initializeErr
 }
@@ -266,6 +280,11 @@ func (client *Client) newHTTPClient(roundTripper http.RoundTripper) *http.Client
 	httpClient := &http.Client{
 		Transport: roundTripper,
 		Jar:       client.jar,
+	}
+	if !client.behavior.followRedirects {
+		httpClient.CheckRedirect = func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
 	}
 	if client.settings.timeout != nil {
 		httpClient.Timeout = *client.settings.timeout

@@ -66,7 +66,7 @@ complete.
 | ID | Frozen behavior | Port rule |
 | --- | --- | --- |
 | Q-40 | Default client uses `primp.Client` with random browser/OS impersonation. | Fingerprint must be proven per affected engine; `net/http` is not presumed equal. |
-| Q-41 | DuckDuckGo text enables HTTP/2, disables redirect follow, randomizes TLS/H2 settings, and globally monkey-patches `httpcore` H2 init around request. | Preserve external request behavior with request-local race-safe state; never recreate global patch. |
+| Q-41 | DuckDuckGo text enables HTTP/2, disables redirect follow, randomizes TLS/H2 settings, and globally monkey-patches `httpcore` H2 init around request. | `internal/transport.DuckDuckGoTextClient` proves request-local standard H2/no-redirect/header behavior and never recreates the global patch. Randomized TLS/H2 fingerprint remains unproven until task 5.5. |
 | Q-42 | `verify` bool and PEM path use different source-client branches. | Fixture default/false/PEM before Go transport selection. |
 | Q-43 | Frozen `extract()` accesses only chosen rendered property; unknown format selects Markdown. | Do not eagerly render all formats; preserve raw/fallback behavior. |
 | Q-44 | With resolved frozen `primp` 1.3.1, `extract(fmt="content")` preserves raw non-UTF-8 bytes while `extract(fmt="text")` exposes the source response decoding with replacement characters. | Preserve raw bytes without a text round trip; compare decoded raw text against extraction fixtures when selecting Go transport/renderer. |

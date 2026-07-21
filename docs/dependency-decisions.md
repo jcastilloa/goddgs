@@ -68,6 +68,8 @@ the project Unicode baseline.
 `net/http` plus `x/net/proxy` remains approved only for the base behaviors
 covered by the transport corpus: request construction, response lifecycle,
 cookies, redirects, compression, TLS verification/PEM, HTTP(S) proxies and
-SOCKS resolution. It is **not** evidence of `primp` browser impersonation,
-TLS fingerprint parity, or DDG text HTTP/2 settings; those remain explicit
-task 5.4/5.5 gates.
+SOCKS resolution. `net/http` additionally powers the isolated DDG text
+capability: `ForceAttemptHTTP2`, request-local headers/jar, and disabled
+redirect following are fixture- and loopback-proven. It is **not** evidence of
+`primp` browser impersonation or randomized TLS/H2 fingerprint parity; task
+5.5 remains open.

@@ -2,7 +2,10 @@
 
 Go library port of [deedy5/ddgs](https://github.com/deedy5/ddgs), focused only on embeddable metasearch functionality.
 
-Status: scaffold and parity epic created. No search behavior is implemented yet.
+Status: public search composition is implemented against frozen offline source
+contracts. Extraction rendering and browser TLS/HTTP2 fingerprint parity remain
+explicitly unapproved; this module must not yet be described as a complete 1:1
+port or production-ready release.
 
 ## Scope
 
@@ -56,6 +59,11 @@ make vet
 make verify
 make integration # networked tests; opt-in only
 ```
+
+`make verify` is intentionally red while the frozen extraction renderer gate is
+blocked; see [docs/dependency-decisions.md](docs/dependency-decisions.md). The
+search/parser/transport packages pass their offline unit and race suites without
+external engine requests.
 
 ## License and attribution
 

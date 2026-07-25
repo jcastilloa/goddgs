@@ -336,6 +336,7 @@ Verification recorded on 2026-07-20:
 | 2026-07-25 | Reject current Go extract renderers (task 7.4 remains blocked) | Resolved `primp 1.3.1` calls Rust `html2text 0.16.7` width 100/default/Trivial/Rich decorators. Three MIT Go candidates diverge on frozen heading/link/list output; the exact MIT Rust crate is ~11.5k lines and this environment has no cargo. No cgo/subprocess/best-effort fallback is approved. |
 | 2026-07-25 | Complete browser-fingerprint evidence gate (task 5.5) | Endpoint-explicit tagged observations show both Go transports negotiate HTTP/2 but expose the same standard Go JA3/JA4/Akamai hashes, distinct from observed source `primp` and `HttpClient2` values. `docs/fingerprint-gate.md` maps every active engine to its still-unproven source client; no dependency or parity claim was added. |
 | 2026-07-25 | Complete public composition gate (task 7.7) | Root composition selects frozen metadata lazily, eagerly constructs all selected adapters before scheduler workers, caches adapters per public client under a narrow lock, and gives every engine a fresh isolated transport. DuckDuckGo text gets its separate H2 client plus the frozen full weighted `fake-useragent 2.2.0` pool, decoded/checksummed once per Go process. Public boundary preserves ordered keyword forwarding and maps scheduler timeout/generic failures to classifiable `DDGSError` values. |
+| 2026-07-25 | Complete completed-package refactor/audit gate (task 7.6) | Applied clean-code/simplification review across every green package. No behavior-preserving production rewrite was justified against the differential corpus; corrected stale public Godoc/README that claimed search was unimplemented. Non-extract unit/race/CGO-off, oracle, vet, formatting, and OpenSpec pass. Extract is excluded only because it remains intentionally RED-only under the renderer block. |
 
 ## Core TDD evidence — 2026-07-20
 
@@ -598,3 +599,9 @@ Verification recorded on 2026-07-20:
   Full `make verify` remains intentionally blocked only by task 7.3/7.4
   extractor RED, not by composition. Live checks were skipped; fingerprint
   parity remains unapproved.
+- **Acceptance 7.6 (2026-07-25):** clean-code/simplification review found no
+  safe behavior rewrite beyond stale public documentation. `gofmt`,
+  `git diff --check`, `go vet ./...`, non-extract unit/race/CGO-off suites,
+  the 368-fixture oracle, and strict OpenSpec validation passed. The known
+  `internal/extract` RED remains intentionally excluded; it fails only because
+  no approved renderer exists.

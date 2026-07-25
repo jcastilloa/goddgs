@@ -1,0 +1,181 @@
+{
+  "contract": {
+    "category": "news",
+    "engine": "yahoo",
+    "kind": "engine",
+    "operation": "search"
+  },
+  "controls": {
+    "clock": "datetime.now(timezone.utc) patched to 2024-04-05T06:07:08.987654+00:00",
+    "notes": [
+      "Yahoo maps minute/hour/day/week/month/year to fixed source timedelta units; month is 30 days and year is 365 days."
+    ],
+    "random": "not used"
+  },
+  "fixture_id": "engine.news.yahoo-relative-date-all-units",
+  "input": {
+    "page": 1,
+    "query": "fixture yahoo all date units",
+    "region": "ignored-region",
+    "safesearch": "ignored-safe",
+    "timelimit": null
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs and responses",
+      "no external request",
+      "no credentials or live session cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "field_order": [
+      [
+        "date",
+        "title",
+        "body",
+        "url",
+        "image",
+        "source"
+      ],
+      [
+        "date",
+        "title",
+        "body",
+        "url",
+        "image",
+        "source"
+      ],
+      [
+        "date",
+        "title",
+        "body",
+        "url",
+        "image",
+        "source"
+      ],
+      [
+        "date",
+        "title",
+        "body",
+        "url",
+        "image",
+        "source"
+      ],
+      [
+        "date",
+        "title",
+        "body",
+        "url",
+        "image",
+        "source"
+      ],
+      [
+        "date",
+        "title",
+        "body",
+        "url",
+        "image",
+        "source"
+      ]
+    ],
+    "output": [
+      {
+        "body": "body",
+        "date": "2024-04-05T06:05:08+00:00",
+        "image": "minute.jpg",
+        "source": "fixture · via Yahoo",
+        "title": "minute",
+        "url": "https://date.example/minute"
+      },
+      {
+        "body": "body",
+        "date": "2024-04-05T04:07:08+00:00",
+        "image": "hour.jpg",
+        "source": "fixture · via Yahoo",
+        "title": "hour",
+        "url": "https://date.example/hour"
+      },
+      {
+        "body": "body",
+        "date": "2024-04-03T06:07:08+00:00",
+        "image": "day.jpg",
+        "source": "fixture · via Yahoo",
+        "title": "day",
+        "url": "https://date.example/day"
+      },
+      {
+        "body": "body",
+        "date": "2024-03-22T06:07:08+00:00",
+        "image": "week.jpg",
+        "source": "fixture · via Yahoo",
+        "title": "week",
+        "url": "https://date.example/week"
+      },
+      {
+        "body": "body",
+        "date": "2024-02-05T06:07:08+00:00",
+        "image": "month.jpg",
+        "source": "fixture · via Yahoo",
+        "title": "month",
+        "url": "https://date.example/month"
+      },
+      {
+        "body": "body",
+        "date": "2022-04-06T06:07:08+00:00",
+        "image": "year.jpg",
+        "source": "fixture · via Yahoo",
+        "title": "year",
+        "url": "https://date.example/year"
+      }
+    ],
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "kind": "request",
+      "method": "GET",
+      "query": {
+        "p": "fixture yahoo all date units"
+      },
+      "query_order": [
+        "p"
+      ],
+      "sequence": 1,
+      "url": "https://news.search.yahoo.com/search"
+    },
+    {
+      "content_hex": "0a2020202020202020202020202020202020202020202020203c68746d6c3e3c626f64793e3c6469762069643d22776562223e0a20202020202020202020202020202020202020202020202020203c6c693e3c613e3c7370616e20636c6173733d2274696d65223e32206d696e757465732061676f3c2f7370616e3e3c68343e3c6120687265663d2268747470733a2f2f722e7365617263682e7961686f6f2e636f6d2f52553d6874747073253341253246253246646174652e6578616d706c652532466d696e7574652f524b3d78223e6d696e7574653c2f613e3c2f68343e3c703e626f64793c2f703e3c696d67207372633d2268747470733a2f2f696d6167652e6578616d706c652f2d2f6d696e7574652e6a7067222f3e3c7370616e20636c6173733d22736f75726365223e6669787475726520c2b72020766961205961686f6f3c2f7370616e3e3c2f613e3c2f6c693e0a20202020202020202020202020202020202020202020202020203c6c693e3c613e3c7370616e20636c6173733d2274696d65223e3220686f7572732061676f3c2f7370616e3e3c68343e3c6120687265663d2268747470733a2f2f722e7365617263682e7961686f6f2e636f6d2f52553d6874747073253341253246253246646174652e6578616d706c65253246686f75722f524b3d78223e686f75723c2f613e3c2f68343e3c703e626f64793c2f703e3c696d67207372633d2268747470733a2f2f696d6167652e6578616d706c652f2d2f686f75722e6a7067222f3e3c7370616e20636c6173733d22736f75726365223e6669787475726520c2b72020766961205961686f6f3c2f7370616e3e3c2f613e3c2f6c693e0a20202020202020202020202020202020202020202020202020203c6c693e3c613e3c7370616e20636c6173733d2274696d65223e3220646179732061676f3c2f7370616e3e3c68343e3c6120687265663d2268747470733a2f2f722e7365617263682e7961686f6f2e636f6d2f52553d6874747073253341253246253246646174652e6578616d706c652532466461792f524b3d78223e6461793c2f613e3c2f68343e3c703e626f64793c2f703e3c696d67207372633d2268747470733a2f2f696d6167652e6578616d706c652f2d2f6461792e6a7067222f3e3c7370616e20636c6173733d22736f75726365223e6669787475726520c2b72020766961205961686f6f3c2f7370616e3e3c2f613e3c2f6c693e0a20202020202020202020202020202020202020202020202020203c6c693e3c613e3c7370616e20636c6173733d2274696d65223e32207765656b732061676f3c2f7370616e3e3c68343e3c6120687265663d2268747470733a2f2f722e7365617263682e7961686f6f2e636f6d2f52553d6874747073253341253246253246646174652e6578616d706c652532467765656b2f524b3d78223e7765656b3c2f613e3c2f68343e3c703e626f64793c2f703e3c696d67207372633d2268747470733a2f2f696d6167652e6578616d706c652f2d2f7765656b2e6a7067222f3e3c7370616e20636c6173733d22736f75726365223e6669787475726520c2b72020766961205961686f6f3c2f7370616e3e3c2f613e3c2f6c693e0a20202020202020202020202020202020202020202020202020203c6c693e3c613e3c7370616e20636c6173733d2274696d65223e32206d6f6e7468732061676f3c2f7370616e3e3c68343e3c6120687265663d2268747470733a2f2f722e7365617263682e7961686f6f2e636f6d2f52553d6874747073253341253246253246646174652e6578616d706c652532466d6f6e74682f524b3d78223e6d6f6e74683c2f613e3c2f68343e3c703e626f64793c2f703e3c696d67207372633d2268747470733a2f2f696d6167652e6578616d706c652f2d2f6d6f6e74682e6a7067222f3e3c7370616e20636c6173733d22736f75726365223e6669787475726520c2b72020766961205961686f6f3c2f7370616e3e3c2f613e3c2f6c693e0a20202020202020202020202020202020202020202020202020203c6c693e3c613e3c7370616e20636c6173733d2274696d65223e322079656172732061676f3c2f7370616e3e3c68343e3c6120687265663d2268747470733a2f2f722e7365617263682e7961686f6f2e636f6d2f52553d6874747073253341253246253246646174652e6578616d706c65253246796561722f524b3d78223e796561723c2f613e3c2f68343e3c703e626f64793c2f703e3c696d67207372633d2268747470733a2f2f696d6167652e6578616d706c652f2d2f796561722e6a7067222f3e3c7370616e20636c6173733d22736f75726365223e6669787475726520c2b72020766961205961686f6f3c2f7370616e3e3c2f613e3c2f6c693e0a2020202020202020202020202020202020202020202020203c2f6469763e3c2f626f64793e3c2f68746d6c3e0a202020202020202020202020202020202020202020202020",
+      "kind": "response",
+      "sequence": 2,
+      "status": 200,
+      "text": "\n                        <html><body><div id=\"web\">\n                          <li><a><span class=\"time\">2 minutes ago</span><h4><a href=\"https://r.search.yahoo.com/RU=https%3A%2F%2Fdate.example%2Fminute/RK=x\">minute</a></h4><p>body</p><img src=\"https://image.example/-/minute.jpg\"/><span class=\"source\">fixture ·  via Yahoo</span></a></li>\n                          <li><a><span class=\"time\">2 hours ago</span><h4><a href=\"https://r.search.yahoo.com/RU=https%3A%2F%2Fdate.example%2Fhour/RK=x\">hour</a></h4><p>body</p><img src=\"https://image.example/-/hour.jpg\"/><span class=\"source\">fixture ·  via Yahoo</span></a></li>\n                          <li><a><span class=\"time\">2 days ago</span><h4><a href=\"https://r.search.yahoo.com/RU=https%3A%2F%2Fdate.example%2Fday/RK=x\">day</a></h4><p>body</p><img src=\"https://image.example/-/day.jpg\"/><span class=\"source\">fixture ·  via Yahoo</span></a></li>\n                          <li><a><span class=\"time\">2 weeks ago</span><h4><a href=\"https://r.search.yahoo.com/RU=https%3A%2F%2Fdate.example%2Fweek/RK=x\">week</a></h4><p>body</p><img src=\"https://image.example/-/week.jpg\"/><span class=\"source\">fixture ·  via Yahoo</span></a></li>\n                          <li><a><span class=\"time\">2 months ago</span><h4><a href=\"https://r.search.yahoo.com/RU=https%3A%2F%2Fdate.example%2Fmonth/RK=x\">month</a></h4><p>body</p><img src=\"https://image.example/-/month.jpg\"/><span class=\"source\">fixture ·  via Yahoo</span></a></li>\n                          <li><a><span class=\"time\">2 years ago</span><h4><a href=\"https://r.search.yahoo.com/RU=https%3A%2F%2Fdate.example%2Fyear/RK=x\">year</a></h4><p>body</p><img src=\"https://image.example/-/year.jpg\"/><span class=\"source\">fixture ·  via Yahoo</span></a></li>\n                        </div></body></html>\n                        "
+    }
+  ]
+}

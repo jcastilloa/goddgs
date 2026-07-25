@@ -1,0 +1,111 @@
+{
+  "contract": {
+    "category": "news",
+    "engine": "bing",
+    "kind": "engine",
+    "operation": "search"
+  },
+  "controls": {
+    "clock": "datetime.now(timezone.utc) patched to 2024-04-05T06:07:08.987654+00:00",
+    "notes": [
+      "Bing datetime.strptime() without a timezone converts through the frozen reference process local timezone before UTC output."
+    ],
+    "random": "not used"
+  },
+  "fixture_id": "engine.news.bing-absolute-date-source-local-zone",
+  "input": {
+    "page": 1,
+    "query": "fixture bing absolute date",
+    "region": "us-en",
+    "safesearch": "moderate",
+    "timelimit": null
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs and responses",
+      "no external request",
+      "no credentials or live session cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "field_order": [
+      [
+        "date",
+        "title",
+        "body",
+        "url",
+        "image",
+        "source"
+      ]
+    ],
+    "output": [
+      {
+        "body": "Fixture body",
+        "date": "2024-04-04T22:00:00+00:00",
+        "image": "https://www.bing.com/absolute",
+        "source": "Fixture source",
+        "title": "Fixture Bing absolute",
+        "url": "https://bing-news.example/absolute"
+      }
+    ],
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "kind": "request",
+      "method": "GET",
+      "query": {
+        "InfiniteScroll": "1",
+        "SFX": "1",
+        "cc": "us",
+        "first": "11",
+        "q": "fixture bing absolute date",
+        "setlang": "en"
+      },
+      "query_order": [
+        "q",
+        "InfiniteScroll",
+        "first",
+        "SFX",
+        "cc",
+        "setlang"
+      ],
+      "sequence": 1,
+      "url": "https://www.bing.com/news/infinitescrollajax"
+    },
+    {
+      "content_hex": "0a2020202020202020202020202020202020202020202020203c68746d6c3e3c626f64793e3c64697620636c6173733d226e6577736974656d2220646174612d7469746c653d22466978747572652042696e67206162736f6c757465222075726c3d2268747470733a2f2f62696e672d6e6577732e6578616d706c652f6162736f6c7574652220646174612d617574686f723d224669787475726520736f75726365223e0a20202020202020202020202020202020202020202020202020203c7370616e20617269612d6c6162656c3d2230352e30342e32303234223e3c2f7370616e3e3c64697620636c6173733d22736e6970706574223e4669787475726520626f64793c2f6469763e0a20202020202020202020202020202020202020202020202020203c6120636c6173733d22696d61676522207372633d222f6162736f6c757465223e3c2f613e0a2020202020202020202020202020202020202020202020203c2f6469763e3c2f626f64793e3c2f68746d6c3e0a202020202020202020202020202020202020202020202020",
+      "kind": "response",
+      "sequence": 2,
+      "status": 200,
+      "text": "\n                        <html><body><div class=\"newsitem\" data-title=\"Fixture Bing absolute\" url=\"https://bing-news.example/absolute\" data-author=\"Fixture source\">\n                          <span aria-label=\"05.04.2024\"></span><div class=\"snippet\">Fixture body</div>\n                          <a class=\"image\" src=\"/absolute\"></a>\n                        </div></body></html>\n                        "
+    }
+  ]
+}

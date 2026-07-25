@@ -1,0 +1,159 @@
+{
+  "contract": {
+    "category": "news",
+    "engine": "bing",
+    "kind": "engine",
+    "operation": "search"
+  },
+  "controls": {
+    "clock": "datetime.now(timezone.utc) patched to 2024-04-05T06:07:08.987654+00:00",
+    "notes": [
+      "Bing tries three absolute date layouts in source order, then accepts localized relative-day suffixes."
+    ],
+    "random": "not used"
+  },
+  "fixture_id": "engine.news.bing-date-formats-and-relative-language",
+  "input": {
+    "page": 1,
+    "query": "fixture bing date forms",
+    "region": "us-en",
+    "safesearch": "moderate",
+    "timelimit": null
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs and responses",
+      "no external request",
+      "no credentials or live session cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "field_order": [
+      [
+        "date",
+        "title",
+        "body",
+        "url",
+        "image",
+        "source"
+      ],
+      [
+        "date",
+        "title",
+        "body",
+        "url",
+        "image",
+        "source"
+      ],
+      [
+        "date",
+        "title",
+        "body",
+        "url",
+        "image",
+        "source"
+      ],
+      [
+        "date",
+        "title",
+        "body",
+        "url",
+        "image",
+        "source"
+      ]
+    ],
+    "output": [
+      {
+        "body": "body",
+        "date": "2024-04-04T22:00:00+00:00",
+        "image": "https://www.bing.com/dot",
+        "source": "fixture",
+        "title": "dot",
+        "url": "https://bing.example/dot"
+      },
+      {
+        "body": "body",
+        "date": "2024-04-04T22:00:00+00:00",
+        "image": "https://www.bing.com/month",
+        "source": "fixture",
+        "title": "month-first",
+        "url": "https://bing.example/month"
+      },
+      {
+        "body": "body",
+        "date": "2024-05-03T22:00:00+00:00",
+        "image": "https://www.bing.com/day",
+        "source": "fixture",
+        "title": "day-first",
+        "url": "https://bing.example/day"
+      },
+      {
+        "body": "body",
+        "date": "2024-04-01T06:07:08+00:00",
+        "image": "https://www.bing.com/relative",
+        "source": "fixture",
+        "title": "french-relative",
+        "url": "https://bing.example/relative"
+      }
+    ],
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "kind": "request",
+      "method": "GET",
+      "query": {
+        "InfiniteScroll": "1",
+        "SFX": "1",
+        "cc": "us",
+        "first": "11",
+        "q": "fixture bing date forms",
+        "setlang": "en"
+      },
+      "query_order": [
+        "q",
+        "InfiniteScroll",
+        "first",
+        "SFX",
+        "cc",
+        "setlang"
+      ],
+      "sequence": 1,
+      "url": "https://www.bing.com/news/infinitescrollajax"
+    },
+    {
+      "content_hex": "0a2020202020202020202020202020202020202020202020203c68746d6c3e3c626f64793e0a20202020202020202020202020202020202020202020202020203c64697620636c6173733d226e6577736974656d2220646174612d7469746c653d22646f74222075726c3d2268747470733a2f2f62696e672e6578616d706c652f646f742220646174612d617574686f723d2266697874757265223e3c7370616e20617269612d6c6162656c3d2230352e30342e32303234223e3c2f7370616e3e3c64697620636c6173733d22736e6970706574223e626f64793c2f6469763e3c6120636c6173733d22696d61676522207372633d222f646f74223e3c2f613e3c2f6469763e0a20202020202020202020202020202020202020202020202020203c64697620636c6173733d226e6577736974656d2220646174612d7469746c653d226d6f6e74682d6669727374222075726c3d2268747470733a2f2f62696e672e6578616d706c652f6d6f6e74682220646174612d617574686f723d2266697874757265223e3c7370616e20617269612d6c6162656c3d2230342f30352f32303234223e3c2f7370616e3e3c64697620636c6173733d22736e6970706574223e626f64793c2f6469763e3c6120636c6173733d22696d61676522207372633d222f6d6f6e7468223e3c2f613e3c2f6469763e0a20202020202020202020202020202020202020202020202020203c64697620636c6173733d226e6577736974656d2220646174612d7469746c653d226461792d6669727374222075726c3d2268747470733a2f2f62696e672e6578616d706c652f6461792220646174612d617574686f723d2266697874757265223e3c7370616e20617269612d6c6162656c3d2230352f30342f32303234223e3c2f7370616e3e3c64697620636c6173733d22736e6970706574223e626f64793c2f6469763e3c6120636c6173733d22696d61676522207372633d222f646179223e3c2f613e3c2f6469763e0a20202020202020202020202020202020202020202020202020203c64697620636c6173733d226e6577736974656d2220646174612d7469746c653d226672656e63682d72656c6174697665222075726c3d2268747470733a2f2f62696e672e6578616d706c652f72656c61746976652220646174612d617574686f723d2266697874757265223e3c7370616e20617269612d6c6162656c3d2234206a6f757273223e3c2f7370616e3e3c64697620636c6173733d22736e6970706574223e626f64793c2f6469763e3c6120636c6173733d22696d61676522207372633d222f72656c6174697665223e3c2f613e3c2f6469763e0a2020202020202020202020202020202020202020202020203c2f626f64793e3c2f68746d6c3e0a202020202020202020202020202020202020202020202020",
+      "kind": "response",
+      "sequence": 2,
+      "status": 200,
+      "text": "\n                        <html><body>\n                          <div class=\"newsitem\" data-title=\"dot\" url=\"https://bing.example/dot\" data-author=\"fixture\"><span aria-label=\"05.04.2024\"></span><div class=\"snippet\">body</div><a class=\"image\" src=\"/dot\"></a></div>\n                          <div class=\"newsitem\" data-title=\"month-first\" url=\"https://bing.example/month\" data-author=\"fixture\"><span aria-label=\"04/05/2024\"></span><div class=\"snippet\">body</div><a class=\"image\" src=\"/month\"></a></div>\n                          <div class=\"newsitem\" data-title=\"day-first\" url=\"https://bing.example/day\" data-author=\"fixture\"><span aria-label=\"05/04/2024\"></span><div class=\"snippet\">body</div><a class=\"image\" src=\"/day\"></a></div>\n                          <div class=\"newsitem\" data-title=\"french-relative\" url=\"https://bing.example/relative\" data-author=\"fixture\"><span aria-label=\"4 jours\"></span><div class=\"snippet\">body</div><a class=\"image\" src=\"/relative\"></a></div>\n                        </body></html>\n                        "
+    }
+  ]
+}

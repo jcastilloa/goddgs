@@ -5136,6 +5136,421 @@ def _image_engine_edge_fixtures() -> list[Fixture]:
     return fixtures
 
 
+def _news_engine_edge_fixtures() -> list[Fixture]:
+    """Capture news-only clock, VQD, and post-processing edge behavior."""
+    fixtures: list[Fixture] = []
+
+    def fixed_clock_search(
+        fixture_id: str,
+        engine_name: str,
+        engine_class: type[Any],
+        module_name: str,
+        input_value: dict[str, Any],
+        responses: list[_SyntheticResponse],
+        *,
+        notes: list[str],
+    ) -> Fixture:
+        module = importlib.import_module(module_name)
+        original_datetime = module.datetime
+        fixed_now = original_datetime(2024, 4, 5, 6, 7, 8, 987654, tzinfo=module.timezone.utc)
+
+        class FixedDateTime(original_datetime):
+            @classmethod
+            def now(cls, tz: Any = None) -> Any:
+                return fixed_now if tz is None else fixed_now.astimezone(tz)
+
+        def action(_events: list[dict[str, Any]]) -> Any:
+            module.datetime = FixedDateTime
+            try:
+                return _engine_search_output(engine_class().search(**input_value))
+            finally:
+                module.datetime = original_datetime
+
+        return _synthetic_engine_fixture(
+            fixture_id,
+            "news",
+            engine_name,
+            "search",
+            input_value,
+            responses,
+            action,
+            clock="datetime.now(timezone.utc) patched to 2024-04-05T06:07:08.987654+00:00",
+            notes=notes,
+        )
+
+    fixtures.append(
+        fixed_clock_search(
+            "engine.news.bing-relative-date-image-truncate-page-zero",
+            "bing",
+            BingNews,
+            "ddgs.engines.bing_news",
+            {
+                "query": "fixture bing relative date",
+                "region": "US-en",
+                "safesearch": "ignored-safe",
+                "timelimit": None,
+                "page": 0,
+            },
+            [
+                _SyntheticResponse(
+                    text="""
+                    <html><body><div class="newsitem" data-title="Fixture Bing relative" url="https://bing-news.example/a%20b" data-author="Fixture source">
+                      <span aria-label="2 days ago"></span><div class="snippet">Fixture body</div>
+                      <a class="image" src="/image?fixture=1&amp;tracking=2"></a>
+                    </div></body></html>
+                    """
+                )
+            ],
+            notes=["Bing relative dates use current UTC; image prefixing truncates at the first ampersand."],
+        )
+    )
+    fixtures.extend(
+        [
+            _synthetic_search_fixture(
+                "engine.news.bing-invalid-region-value-error",
+                "news",
+                "bing",
+                {
+                    "query": "fixture bing bad region",
+                    "region": "us",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                BingNews,
+                [],
+                notes=["Bing News region split raises before a request."],
+            ),
+            _synthetic_search_fixture(
+                "engine.news.bing-invalid-timelimit-key-error",
+                "news",
+                "bing",
+                {
+                    "query": "fixture bing bad time",
+                    "region": "us-en",
+                    "safesearch": "moderate",
+                    "timelimit": "invalid",
+                    "page": 1,
+                },
+                BingNews,
+                [],
+                notes=["Bing News timelimit lookup raises before a request."],
+            ),
+        ]
+    )
+
+    fixtures.extend(
+        [
+            _synthetic_engine_fixture(
+                "engine.news.duckduckgo-invalid-safe-after-vqd-error",
+                "news",
+                "duckduckgo",
+                "search",
+                {
+                    "query": "fixture ddg news bad safe",
+                    "region": "us-en",
+                    "safesearch": "strict",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                [_SyntheticResponse(content=b"vqd=fixture-vqd&")],
+                lambda _events: _engine_search_output(
+                    DuckduckgoNews().search(
+                        "fixture ddg news bad safe",
+                        region="us-en",
+                        safesearch="strict",
+                        timelimit=None,
+                        page=1,
+                    )
+                ),
+                notes=["DuckDuckGo News fetches VQD before its safesearch mapping raises KeyError."],
+            ),
+            _synthetic_search_fixture(
+                "engine.news.duckduckgo-absent-results-empty-list",
+                "news",
+                "duckduckgo",
+                {
+                    "query": "fixture ddg news absent results",
+                    "region": "us-en",
+                    "safesearch": "on",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                DuckduckgoNews,
+                [
+                    _SyntheticResponse(content=b"vqd=fixture-vqd&"),
+                    _SyntheticResponse(text=json.dumps({})),
+                ],
+                notes=["DuckDuckGo News uses dict.get('results', []), so an absent key is an empty list."],
+            ),
+            _synthetic_engine_fixture(
+                "engine.news.duckduckgo-null-results-error",
+                "news",
+                "duckduckgo",
+                "search",
+                {
+                    "query": "fixture ddg news null results",
+                    "region": "us-en",
+                    "safesearch": "on",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                [
+                    _SyntheticResponse(content=b"vqd=fixture-vqd&"),
+                    _SyntheticResponse(text=json.dumps({"results": None})),
+                ],
+                lambda _events: _engine_search_output(
+                    DuckduckgoNews().search(
+                        "fixture ddg news null results",
+                        region="us-en",
+                        safesearch="on",
+                        timelimit=None,
+                        page=1,
+                    )
+                ),
+                notes=["DuckDuckGo News iterates explicit JSON null results and exposes the source TypeError."],
+            ),
+            _synthetic_search_fixture(
+                "engine.news.duckduckgo-empty-dict-results-empty-list",
+                "news",
+                "duckduckgo",
+                {
+                    "query": "fixture ddg news empty dict",
+                    "region": "us-en",
+                    "safesearch": "on",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                DuckduckgoNews,
+                [
+                    _SyntheticResponse(content=b"vqd=fixture-vqd&"),
+                    _SyntheticResponse(text=json.dumps({"results": {}})),
+                ],
+                notes=["DuckDuckGo News directly iterates dict.get('results', []); an empty mapping produces an empty source list."],
+            ),
+            _synthetic_search_fixture(
+                "engine.news.duckduckgo-nonempty-dict-results-attribute-error",
+                "news",
+                "duckduckgo",
+                {
+                    "query": "fixture ddg news dict result",
+                    "region": "us-en",
+                    "safesearch": "on",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                DuckduckgoNews,
+                [
+                    _SyntheticResponse(content=b"vqd=fixture-vqd&"),
+                    _SyntheticResponse(text=json.dumps({"results": {"fixture": 1}})),
+                ],
+                notes=["A nonempty mapping yields string keys, then item.get() raises AttributeError in the source loop."],
+            ),
+            _synthetic_search_fixture(
+                "engine.news.duckduckgo-string-results-iteration",
+                "news",
+                "duckduckgo",
+                {
+                    "query": "fixture ddg news string result",
+                    "region": "us-en",
+                    "safesearch": "on",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                DuckduckgoNews,
+                [
+                    _SyntheticResponse(content=b"vqd=fixture-vqd&"),
+                    _SyntheticResponse(text=json.dumps({"results": "x"})),
+                ],
+                notes=["A nonempty source string yields characters, then item.get() raises AttributeError."],
+            ),
+        ]
+    )
+
+    fixtures.extend(
+        [
+            fixed_clock_search(
+                "engine.news.bing-date-formats-and-relative-language",
+                "bing",
+                BingNews,
+                "ddgs.engines.bing_news",
+                {
+                    "query": "fixture bing date forms",
+                    "region": "us-en",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                [
+                    _SyntheticResponse(
+                        text="""
+                        <html><body>
+                          <div class="newsitem" data-title="dot" url="https://bing.example/dot" data-author="fixture"><span aria-label="05.04.2024"></span><div class="snippet">body</div><a class="image" src="/dot"></a></div>
+                          <div class="newsitem" data-title="month-first" url="https://bing.example/month" data-author="fixture"><span aria-label="04/05/2024"></span><div class="snippet">body</div><a class="image" src="/month"></a></div>
+                          <div class="newsitem" data-title="day-first" url="https://bing.example/day" data-author="fixture"><span aria-label="05/04/2024"></span><div class="snippet">body</div><a class="image" src="/day"></a></div>
+                          <div class="newsitem" data-title="french-relative" url="https://bing.example/relative" data-author="fixture"><span aria-label="4 jours"></span><div class="snippet">body</div><a class="image" src="/relative"></a></div>
+                        </body></html>
+                        """
+                    )
+                ],
+                notes=["Bing tries three absolute date layouts in source order, then accepts localized relative-day suffixes."],
+            ),
+            fixed_clock_search(
+                "engine.news.bing-absolute-date-source-local-zone",
+                "bing",
+                BingNews,
+                "ddgs.engines.bing_news",
+                {
+                    "query": "fixture bing absolute date",
+                    "region": "us-en",
+                    "safesearch": "moderate",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                [
+                    _SyntheticResponse(
+                        text="""
+                        <html><body><div class="newsitem" data-title="Fixture Bing absolute" url="https://bing-news.example/absolute" data-author="Fixture source">
+                          <span aria-label="05.04.2024"></span><div class="snippet">Fixture body</div>
+                          <a class="image" src="/absolute"></a>
+                        </div></body></html>
+                        """
+                    )
+                ],
+                notes=["Bing datetime.strptime() without a timezone converts through the frozen reference process local timezone before UTC output."],
+            ),
+            fixed_clock_search(
+                "engine.news.yahoo-relative-date-all-units",
+                "yahoo",
+                YahooNews,
+                "ddgs.engines.yahoo_news",
+                {
+                    "query": "fixture yahoo all date units",
+                    "region": "ignored-region",
+                    "safesearch": "ignored-safe",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                [
+                    _SyntheticResponse(
+                        text="""
+                        <html><body><div id="web">
+                          <li><a><span class="time">2 minutes ago</span><h4><a href="https://r.search.yahoo.com/RU=https%3A%2F%2Fdate.example%2Fminute/RK=x">minute</a></h4><p>body</p><img src="https://image.example/-/minute.jpg"/><span class="source">fixture ·  via Yahoo</span></a></li>
+                          <li><a><span class="time">2 hours ago</span><h4><a href="https://r.search.yahoo.com/RU=https%3A%2F%2Fdate.example%2Fhour/RK=x">hour</a></h4><p>body</p><img src="https://image.example/-/hour.jpg"/><span class="source">fixture ·  via Yahoo</span></a></li>
+                          <li><a><span class="time">2 days ago</span><h4><a href="https://r.search.yahoo.com/RU=https%3A%2F%2Fdate.example%2Fday/RK=x">day</a></h4><p>body</p><img src="https://image.example/-/day.jpg"/><span class="source">fixture ·  via Yahoo</span></a></li>
+                          <li><a><span class="time">2 weeks ago</span><h4><a href="https://r.search.yahoo.com/RU=https%3A%2F%2Fdate.example%2Fweek/RK=x">week</a></h4><p>body</p><img src="https://image.example/-/week.jpg"/><span class="source">fixture ·  via Yahoo</span></a></li>
+                          <li><a><span class="time">2 months ago</span><h4><a href="https://r.search.yahoo.com/RU=https%3A%2F%2Fdate.example%2Fmonth/RK=x">month</a></h4><p>body</p><img src="https://image.example/-/month.jpg"/><span class="source">fixture ·  via Yahoo</span></a></li>
+                          <li><a><span class="time">2 years ago</span><h4><a href="https://r.search.yahoo.com/RU=https%3A%2F%2Fdate.example%2Fyear/RK=x">year</a></h4><p>body</p><img src="https://image.example/-/year.jpg"/><span class="source">fixture ·  via Yahoo</span></a></li>
+                        </div></body></html>
+                        """
+                    )
+                ],
+                notes=["Yahoo maps minute/hour/day/week/month/year to fixed source timedelta units; month is 30 days and year is 365 days."],
+            ),
+            fixed_clock_search(
+                "engine.news.yahoo-relative-date-cleanup",
+                "yahoo",
+                YahooNews,
+                "ddgs.engines.yahoo_news",
+                {
+                    "query": "fixture yahoo relative date",
+                    "region": "ignored-region",
+                    "safesearch": "ignored-safe",
+                    "timelimit": None,
+                    "page": 0,
+                },
+                [
+                    _SyntheticResponse(
+                        text="""
+                        <html><body><div id="web"><li><a>
+                          <span class="time">3 hours ago</span><h4><a href="https://r.search.yahoo.com/RU=https%3A%2F%2Fyahoo-news.example%2Fa%3Fx%3D1/RK=fixture">Fixture Yahoo relative</a></h4>
+                          <p>Fixture body</p><img data-src="https://image.example/-/fixture.jpg" />
+                          <span class="source">Fixture source ·  via Yahoo</span>
+                        </a></li></div></body></html>
+                        """
+                    )
+                ],
+                notes=["Yahoo relative dates subtract from current UTC and remove microseconds before ISO formatting."],
+            ),
+            fixed_clock_search(
+                "engine.news.yahoo-double-unquote-plus-url",
+                "yahoo",
+                YahooNews,
+                "ddgs.engines.yahoo_news",
+                {
+                    "query": "fixture yahoo encoded url",
+                    "region": "ignored-region",
+                    "safesearch": "ignored-safe",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                [
+                    _SyntheticResponse(
+                        text="""
+                        <html><body><div id="web"><li><a>
+                          <span class="time">fixture date</span><h4><a href="https://r.search.yahoo.com/RU=https%3A%2F%2Ftarget.example%2Fa%2Bb%3Fx%3D1%2520two/RK=fixture">Fixture Yahoo encoded</a></h4>
+                          <p>Fixture body</p><img src="https://image.example/-/fixture.jpg" />
+                          <span class="source">Fixture source ·  via Yahoo</span>
+                        </a></li></div></body></html>
+                        """
+                    )
+                ],
+                notes=["Yahoo unquote_plus() runs before BaseResult URL normalization, so nested percent escapes are decoded twice overall."],
+            ),
+            fixed_clock_search(
+                "engine.news.yahoo-nested-percent-url",
+                "yahoo",
+                YahooNews,
+                "ddgs.engines.yahoo_news",
+                {
+                    "query": "fixture yahoo nested percent",
+                    "region": "ignored-region",
+                    "safesearch": "ignored-safe",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                [
+                    _SyntheticResponse(
+                        text="""
+                        <html><body><div id="web"><li><a>
+                          <span class="time">fixture date</span><h4><a href="https://r.search.yahoo.com/RU=https%3A%2F%2Ftarget.example%2Fa%2Bb%2520two/RK=fixture">Fixture Yahoo nested</a></h4>
+                          <p>Fixture body</p><img src="https://image.example/-/fixture.jpg" />
+                          <span class="source">Fixture source ·  via Yahoo</span>
+                        </a></li></div></body></html>
+                        """
+                    )
+                ],
+                notes=["Yahoo runs unquote_plus before its BaseResult URL normalizer; %2520 is decoded twice while literal plus follows source plus handling."],
+            ),
+            _synthetic_search_fixture(
+                "engine.news.yahoo-malformed-first-item-stops-postprocess",
+                "news",
+                "yahoo",
+                {
+                    "query": "fixture yahoo partial cleanup",
+                    "region": "ignored-region",
+                    "safesearch": "ignored-safe",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                YahooNews,
+                [
+                    _SyntheticResponse(
+                        text="""
+                        <html><body><div id="web">
+                          <li><a><span class="time">first date</span><h4><a href="https://bad.example/no-ru">First malformed</a></h4><p>first body</p><img src="https://image.example/-/first.jpg" /><span class="source">First ·  via Yahoo</span></a></li>
+                          <li><a><span class="time">second date</span><h4><a href="https://r.search.yahoo.com/RU=https%3A%2F%2Ftarget.example%2Fsecond/RK=fixture">Second untouched</a></h4><p>second body</p><img src="https://image.example/-/second.jpg" /><span class="source">Second ·  via Yahoo</span></a></li>
+                        </div></body></html>
+                        """
+                    )
+                ],
+                notes=["Yahoo News catches one broad post-process exception; the first bad URL leaves subsequent results unprocessed."],
+            ),
+        ]
+    )
+    return fixtures
+
+
 def _brave_google_mojeek_edge_fixtures() -> list[Fixture]:
     """Capture source-only HTML text edge behavior before Go adapter work."""
     fixtures: list[Fixture] = []
@@ -6597,6 +7012,7 @@ def build_fixtures() -> list[Fixture]:
         *_grokipedia_wikipedia_edge_fixtures(),
         *_html_engine_matrix_fixtures(),
         *_image_engine_edge_fixtures(),
+        *_news_engine_edge_fixtures(),
         *_brave_google_mojeek_edge_fixtures(),
         *_startpage_yahoo_yandex_edge_fixtures(),
         *_engine_non_200_fixtures(),

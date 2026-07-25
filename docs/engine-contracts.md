@@ -59,9 +59,9 @@ Detalles obligatorios de texto:
 
 | Motor / provider | Secuencia y payload | Parseo y postproceso observable |
 | --- | --- | --- |
-| Bing / `bing` | GET `https://www.bing.com/news/infinitescrollajax`; `q`, `InfiniteScroll=1`, `first=page*10+1`, `SFX=page`, `cc`, `setlang`; `qft` para d/w/m/y. | `newsitem`; fecha aria-label, title/data-title, snippet, url, image, author. Fecha local/UTC específica; image se prefija Bing y corta en `&`. |
-| DuckDuckGo / `bing` | Bootstrap VQD, luego GET `https://duckduckgo.com/news.js`; `l`, `o=json`, `noamp=1`, `q`, `vqd`, safe `1/-1/-2`; `df`; página `s=(page-1)*30`. | JSON mapea date/title/excerpt->body/url/image/source. |
-| Yahoo / `yahoo` | GET `https://news.search.yahoo.com/search`; `p`; página `b=(page-1)*10+1`; `btf`. | XPath `web`/`li`; un único `try` para todo postproceso: fecha UTC relativa, URL `/RU=`, image `-/`, source ` via Yahoo`. Un item malo deja resto parcialmente sin limpiar. |
+| Bing / `bing` | GET `https://www.bing.com/news/infinitescrollajax`; `q`, `InfiniteScroll=1`, `first=page*10+1`, `SFX=page`, `cc`, `setlang`; `qft` para d/w/m/y; región inválida/time inválido lanza antes de request. | `newsitem`; fecha aria-label, title/data-title, snippet, url, image, author. Prueba tres fechas absolutas con zona local del proceso antes de UTC, después detecta días relativos; image se prefija Bing y corta en primer `&`. |
+| DuckDuckGo / `bing` | Bootstrap VQD, luego GET `https://duckduckgo.com/news.js`; `l`, `o=json`, `noamp=1`, `q`, `vqd`, safe `1/-1/-2`; `df`; página `s=(page-1)*30`. La validación safe ocurre después del bootstrap. | JSON mapea date/title/excerpt->body/url/image/source. `dict.get("results", [])` conserva ausencia como `[]`; `null`, dict/string no vacío y sus items exponen errores de iteración/`.get` de fuente. |
+| Yahoo / `yahoo` | GET `https://news.search.yahoo.com/search`; `p`; página `b=(page-1)*10+1`; `btf`. | XPath `web`/`li`; un único `try` para todo postproceso: fecha UTC relativa con mes=30d/año=365d, URL `/RU=`+`unquote_plus`, image `-/`, source ` via Yahoo`. Un item malo deja resto parcialmente sin limpiar; la reasignación URL conserva su segunda normalización. |
 
 ## Vídeos y libros
 

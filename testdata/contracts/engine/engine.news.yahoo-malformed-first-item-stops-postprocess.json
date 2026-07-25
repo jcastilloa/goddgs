@@ -1,0 +1,117 @@
+{
+  "contract": {
+    "category": "news",
+    "engine": "yahoo",
+    "kind": "engine",
+    "operation": "search"
+  },
+  "controls": {
+    "clock": "not used",
+    "notes": [
+      "Yahoo News catches one broad post-process exception; the first bad URL leaves subsequent results unprocessed."
+    ],
+    "random": "not used"
+  },
+  "fixture_id": "engine.news.yahoo-malformed-first-item-stops-postprocess",
+  "input": {
+    "page": 1,
+    "query": "fixture yahoo partial cleanup",
+    "region": "ignored-region",
+    "safesearch": "ignored-safe",
+    "timelimit": null
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs and responses",
+      "no external request",
+      "no credentials or live session cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "field_order": [
+      [
+        "date",
+        "title",
+        "body",
+        "url",
+        "image",
+        "source"
+      ],
+      [
+        "date",
+        "title",
+        "body",
+        "url",
+        "image",
+        "source"
+      ]
+    ],
+    "output": [
+      {
+        "body": "first body",
+        "date": "first date",
+        "image": "https://image.example/-/first.jpg",
+        "source": "First · via Yahoo",
+        "title": "First malformed",
+        "url": "https://bad.example/no-ru"
+      },
+      {
+        "body": "second body",
+        "date": "second date",
+        "image": "https://image.example/-/second.jpg",
+        "source": "Second · via Yahoo",
+        "title": "Second untouched",
+        "url": "https://r.search.yahoo.com/RU=https://target.example/second/RK=fixture"
+      }
+    ],
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "kind": "request",
+      "method": "GET",
+      "query": {
+        "p": "fixture yahoo partial cleanup"
+      },
+      "query_order": [
+        "p"
+      ],
+      "sequence": 1,
+      "url": "https://news.search.yahoo.com/search"
+    },
+    {
+      "content_hex": "0a2020202020202020202020202020202020202020202020203c68746d6c3e3c626f64793e3c6469762069643d22776562223e0a20202020202020202020202020202020202020202020202020203c6c693e3c613e3c7370616e20636c6173733d2274696d65223e666972737420646174653c2f7370616e3e3c68343e3c6120687265663d2268747470733a2f2f6261642e6578616d706c652f6e6f2d7275223e4669727374206d616c666f726d65643c2f613e3c2f68343e3c703e666972737420626f64793c2f703e3c696d67207372633d2268747470733a2f2f696d6167652e6578616d706c652f2d2f66697273742e6a706722202f3e3c7370616e20636c6173733d22736f75726365223e466972737420c2b72020766961205961686f6f3c2f7370616e3e3c2f613e3c2f6c693e0a20202020202020202020202020202020202020202020202020203c6c693e3c613e3c7370616e20636c6173733d2274696d65223e7365636f6e6420646174653c2f7370616e3e3c68343e3c6120687265663d2268747470733a2f2f722e7365617263682e7961686f6f2e636f6d2f52553d68747470732533412532462532467461726765742e6578616d706c652532467365636f6e642f524b3d66697874757265223e5365636f6e6420756e746f75636865643c2f613e3c2f68343e3c703e7365636f6e6420626f64793c2f703e3c696d67207372633d2268747470733a2f2f696d6167652e6578616d706c652f2d2f7365636f6e642e6a706722202f3e3c7370616e20636c6173733d22736f75726365223e5365636f6e6420c2b72020766961205961686f6f3c2f7370616e3e3c2f613e3c2f6c693e0a2020202020202020202020202020202020202020202020203c2f6469763e3c2f626f64793e3c2f68746d6c3e0a202020202020202020202020202020202020202020202020",
+      "kind": "response",
+      "sequence": 2,
+      "status": 200,
+      "text": "\n                        <html><body><div id=\"web\">\n                          <li><a><span class=\"time\">first date</span><h4><a href=\"https://bad.example/no-ru\">First malformed</a></h4><p>first body</p><img src=\"https://image.example/-/first.jpg\" /><span class=\"source\">First ·  via Yahoo</span></a></li>\n                          <li><a><span class=\"time\">second date</span><h4><a href=\"https://r.search.yahoo.com/RU=https%3A%2F%2Ftarget.example%2Fsecond/RK=fixture\">Second untouched</a></h4><p>second body</p><img src=\"https://image.example/-/second.jpg\" /><span class=\"source\">Second ·  via Yahoo</span></a></li>\n                        </div></body></html>\n                        "
+    }
+  ]
+}

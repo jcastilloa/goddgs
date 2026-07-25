@@ -24,8 +24,8 @@ verification result.
 - Tasks 2.1–2.7 are complete. The isolated Python oracle lives temporarily at
   `/tmp/goddgs-reference-a12929a`; exact resolved packages and rebuild steps
   are in `docs/reference-environment.md`. It made no external engine request.
-- Fixture corpus has 337 deterministic synthetic/offline contracts: 131 pure,
-  155 engine-visible, 9 extract, 24 parser, and 18 transport contracts under
+- Fixture corpus has 353 deterministic synthetic/offline contracts: 131 pure,
+  171 engine-visible, 9 extract, 24 parser, and 18 transport contracts under
   their
   respective `testdata/contracts/` directories. `tools/reference_capture.py --check`
   validates frozen SHA, resolved-package provenance, result/error shape, trace
@@ -47,6 +47,13 @@ verification result.
   DuckDuckGo preserves header order, VQD/bootstrap/error order, six filter
   slots, raw image values, and result-root errors. They are not yet public-client
   composition or browser/TLS-H2 fingerprint proof.
+- Task 6.6 complete: News adapters use injected request ports and per-instance
+  UTC clock seams. Bing preserves payload mapping, source local-zone absolute
+  date conversion, localized relative dates, and image truncation; DuckDuckGo
+  preserves VQD-before-safe validation and raw dynamic `results` iteration;
+  Yahoo preserves fixed-relative-date units, URL/image/source cleanup, and its
+  broad partial postprocess failure. They are not yet public-client composition
+  or browser/TLS-H2 fingerprint proof.
 - Local target repo had no commits when work began. Existing `.codex`,
   `.claude`, `.opencode`, and `openspec` tooling belong to project setup;
   preserve them unless task explicitly changes them.
@@ -290,6 +297,7 @@ Verification recorded on 2026-07-20:
 | 2026-07-21 | Complete Brave, Google, and Mojeek adapter gate (task 6.3) | Ordered request/cookie fixtures prove Brave Python-dict replacement order, Google process-lifetime UA/consent/case/page/redirect behavior, and Mojeek exact safe/page/time behavior. The adapters use injected request-local ports and immutable request values; `cookie_order` is now part of fixture traces. Full tests/race, adapter race stress x50, cgo-off, `make verify`, strict OpenSpec validation, and the 300-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 | 2026-07-21 | Complete Startpage, Yahoo, and Yandex adapter gate (task 6.4) | Ordered request/form fixtures prove Startpage bootstrap sequencing/raw-status/empty-text behavior, Yahoo request-time token path and double URL post-processing, and Yandex request-time search-id/ignored-option branches. Adapters use injected request-local ports and immutable request values; full tests/race, adapter race stress x50, cgo-off, `make verify`, strict OpenSpec validation, and the 314-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 | 2026-07-21 | Complete Bing and DuckDuckGo image adapter gate (task 6.5) | Ordered source-parameter fixtures prove Bing engine-only `max_results`/Python `int`, long-form-only timelimit, metadata/dimension errors, and DuckDuckGo VQD/header/filter/result-root/error ordering. Public image options retain source keyword ordering while scheduler `max_results` stays outside engine kwargs. Full tests/race, adapter race stress x50, cgo-off, `make verify`, strict OpenSpec validation, and the 337-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
+| 2026-07-21 | Complete Bing, DuckDuckGo, and Yahoo News adapter gate (task 6.6) | Fixture RED/GREEN/REFACTOR proves source-ordered News payloads, VQD sequencing, nil/empty/error distinctions, Bing local-zone and relative dates/image truncation, DuckDuckGo raw dynamic `results` iteration, and Yahoo broad partial cleanup with clock-injected dates. Adapters own no goroutine or response body; injected ports and immutable per-call data pass race stress. Full tests/race, cgo-off, `make verify`, strict OpenSpec validation, and the 353-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 
 ## Core TDD evidence — 2026-07-20
 
@@ -411,6 +419,17 @@ Verification recorded on 2026-07-20:
   `golang-testing`, strict TDD, clean-code, simplification, concurrency
   patterns, and debugger review applied; adapter stress and `go test -race
   -count=50` pass. Adapters own no response body or goroutine.
+- **RED/GREEN/REFACTOR 6.6:** Bing/DuckDuckGo/Yahoo News fixture tests were
+  RED before adapters existed. GREEN adds only captured ordered GET/VQD flows,
+  XPath/JSON parsing, source result fields, clock injection, and postprocess
+  branches. Follow-up RED fixtures exposed Bing date-layout/local-zone paths,
+  all Yahoo relative units and nested URL normalization, plus DuckDuckGo's raw
+  dict/string `results` iteration. REFACTOR retains one private News HTML
+  path, immutable request fields, and per-instance clocks; it adds no retry,
+  global clock, goroutine, or response ownership. `golang-pro`, hexagonal
+  boundary review, `golang-testing`, strict TDD, clean-code, simplification,
+  concurrency patterns, and debugger review applied; 24–32 concurrent calls
+  per adapter and `go test -race -count=20` pass.
 - **Skills assessed:** `golang-pro`, `go-clean-ddd-hexagonal` (public façade
   port), `golang-testing`, TDD RED/GREEN/REFACTOR, `clean-code`, and
   `go-code-simplification` applied. `go-concurrency-patterns` and
@@ -449,4 +468,12 @@ Verification recorded on 2026-07-20:
   `CGO_ENABLED=0 go test -count=1 ./...`, `make verify`, and strict OpenSpec
   validation passed. Total coverage: 87.4%; public package: 94.7%;
   `internal/engine`: 86.7%; parser: 83.4%; transport: 83.8%. Live checks
+  skipped: no external engine request or fingerprint evidence was authorized.
+- **Acceptance 6.6 (2026-07-21):** frozen Python `--check` verified 353
+  fixtures (131 pure, 171 engine, 9 extract, 24 parser, 18 transport);
+  `gofmt`, `git diff --check`, `go vet ./...`, `go test -count=1 ./...`,
+  `go test -race -count=1 ./...`, focused News-adapter race stress x20,
+  `CGO_ENABLED=0 go test -count=1 ./...`, `make verify`, and strict OpenSpec
+  validation passed. Total coverage: 87.3%; public package: 94.7%;
+  `internal/engine`: 86.6%; parser: 83.4%; transport: 83.8%. Live checks
   skipped: no external engine request or fingerprint evidence was authorized.

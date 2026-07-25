@@ -1,0 +1,219 @@
+{
+  "contract": {
+    "kind": "pure",
+    "operation": "get_engines"
+  },
+  "controls": {
+    "clock": "not used",
+    "random": "shuffle patched to reverse; source Bing class remains outside ENGINES"
+  },
+  "fixture_id": "pure.text-bing-disabled-metadata-and-fallback",
+  "input": {
+    "backends": [
+      "auto",
+      "bing"
+    ],
+    "category": "text",
+    "registry_fixture": "pure.engine-registry-active-and-disabled",
+    "shuffle": "reverse"
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs",
+      "no external request",
+      "no credentials or cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "output": {
+      "active_text_names": [
+        "brave",
+        "duckduckgo",
+        "google",
+        "grokipedia",
+        "mojeek",
+        "startpage",
+        "wikipedia",
+        "yahoo",
+        "yandex"
+      ],
+      "disabled": {
+        "category": "text",
+        "disabled": true,
+        "name": "bing",
+        "priority": 1,
+        "provider": "bing"
+      },
+      "selections": {
+        "auto": [
+          {
+            "name": "wikipedia",
+            "priority": 2,
+            "provider": "wikipedia"
+          },
+          {
+            "name": "grokipedia",
+            "priority": 1.9,
+            "provider": "grokipedia"
+          },
+          {
+            "name": "yandex",
+            "priority": 1,
+            "provider": "yandex"
+          },
+          {
+            "name": "yahoo",
+            "priority": 1,
+            "provider": "bing"
+          },
+          {
+            "name": "startpage",
+            "priority": 1,
+            "provider": "google"
+          },
+          {
+            "name": "mojeek",
+            "priority": 1,
+            "provider": "mojeek"
+          },
+          {
+            "name": "google",
+            "priority": 1,
+            "provider": "google"
+          },
+          {
+            "name": "duckduckgo",
+            "priority": 1,
+            "provider": "bing"
+          },
+          {
+            "name": "brave",
+            "priority": 1,
+            "provider": "brave"
+          }
+        ],
+        "disabled_bing": [
+          {
+            "name": "wikipedia",
+            "priority": 2,
+            "provider": "wikipedia"
+          },
+          {
+            "name": "grokipedia",
+            "priority": 1.9,
+            "provider": "grokipedia"
+          },
+          {
+            "name": "yandex",
+            "priority": 1,
+            "provider": "yandex"
+          },
+          {
+            "name": "yahoo",
+            "priority": 1,
+            "provider": "bing"
+          },
+          {
+            "name": "startpage",
+            "priority": 1,
+            "provider": "google"
+          },
+          {
+            "name": "mojeek",
+            "priority": 1,
+            "provider": "mojeek"
+          },
+          {
+            "name": "google",
+            "priority": 1,
+            "provider": "google"
+          },
+          {
+            "name": "duckduckgo",
+            "priority": 1,
+            "provider": "bing"
+          },
+          {
+            "name": "brave",
+            "priority": 1,
+            "provider": "brave"
+          }
+        ]
+      },
+      "shuffle_inputs": {
+        "auto": [
+          [
+            "brave",
+            "duckduckgo",
+            "google",
+            "grokipedia",
+            "mojeek",
+            "startpage",
+            "wikipedia",
+            "yahoo",
+            "yandex"
+          ]
+        ],
+        "disabled_bing": [
+          [
+            "brave",
+            "duckduckgo",
+            "google",
+            "grokipedia",
+            "mojeek",
+            "startpage",
+            "wikipedia",
+            "yahoo",
+            "yandex"
+          ],
+          [
+            "brave",
+            "duckduckgo",
+            "google",
+            "grokipedia",
+            "mojeek",
+            "startpage",
+            "wikipedia",
+            "yahoo",
+            "yandex"
+          ]
+        ]
+      }
+    },
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "kind": "note",
+      "note": "fake active registry only; disabled Bing is inspected as source metadata and never constructed",
+      "sequence": 1
+    }
+  ]
+}

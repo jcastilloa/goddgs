@@ -24,7 +24,7 @@ verification result.
 - Tasks 2.1–2.7 are complete. The isolated Python oracle lives temporarily at
   `/tmp/goddgs-reference-a12929a`; exact resolved packages and rebuild steps
   are in `docs/reference-environment.md`. It made no external engine request.
-- Fixture corpus has 363 deterministic synthetic/offline contracts: 133 pure,
+- Fixture corpus has 364 deterministic synthetic/offline contracts: 134 pure,
   179 engine-visible, 9 extract, 24 parser, and 18 transport contracts under
   their
   respective `testdata/contracts/` directories. `tools/reference_capture.py --check`
@@ -66,6 +66,10 @@ verification result.
   nil-versus-empty response boundary, and the intentional base prefix on an
   already-absolute URL. It is not yet public-client composition or
   browser/TLS-H2 fingerprint proof.
+- Task 6.9 complete: disabled text Bing is captured as source metadata outside
+  the active text registry. Explicit `backend="bing"` runs the source invalid
+  backend fallback to `auto` and performs two shuffle calls; no active Go Bing
+  adapter was added.
 - Local target repo had no commits when work began. Existing `.codex`,
   `.claude`, `.opencode`, and `openspec` tooling belong to project setup;
   preserve them unless task explicitly changes them.
@@ -312,6 +316,7 @@ Verification recorded on 2026-07-20:
 | 2026-07-21 | Complete Bing, DuckDuckGo, and Yahoo News adapter gate (task 6.6) | Fixture RED/GREEN/REFACTOR proves source-ordered News payloads, VQD sequencing, nil/empty/error distinctions, Bing local-zone and relative dates/image truncation, DuckDuckGo raw dynamic `results` iteration, and Yahoo broad partial cleanup with clock-injected dates. Adapters own no goroutine or response body; injected ports and immutable per-call data pass race stress. Full tests/race, cgo-off, `make verify`, strict OpenSpec validation, and the 353-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 | 2026-07-21 | Complete DuckDuckGo Videos adapter gate (task 6.7) | Fixture RED/GREEN/REFACTOR proves public video keyword forwarding, VQD-before-safe error order, exact four-slot `f`, page stride 60, nested/dynamic result values, and raw results-root/item errors. Images, News, and Videos share only the fixture-proven JSON-iterable helper. Full tests/race, video race stress x20, cgo-off, `make verify`, strict OpenSpec validation, and the 361-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 | 2026-07-21 | Complete Anna's Archive adapter gate (task 6.8) | Fixture RED/GREEN/REFACTOR proves one process-lifetime archive TLD, immutable adapter URL, ordered `q,page` GET (including page zero), comment delimiter removal, nil/empty/malformed distinctions, and source base-prefix repair even for absolute URLs. Full tests/race, adapter race stress x50, cgo-off, `make verify`, strict OpenSpec validation, and the 363-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
+| 2026-07-21 | Complete disabled text Bing regression gate (task 6.9) | Direct frozen-source fixture proves `Bing.disabled=True` metadata, its absence from active text names, and explicit `backend="bing"` fallback to active `auto` after two shuffle calls. This task intentionally added no production code or active adapter; test-only TDD GREEN is existing behavior, with RED/GREEN production phases N/A. Focused race x20, full acceptance, and the 364-fixture oracle pass. |
 
 ## Core TDD evidence — 2026-07-20
 
@@ -464,6 +469,14 @@ Verification recorded on 2026-07-20:
   concurrency patterns, and debugger review applied; 32 concurrent calls and
   `go test -race -count=50` pass. The adapter owns no goroutine or response
   body.
+- **Regression 6.9:** a new frozen-source fixture directly combines disabled
+  Bing metadata, active text names, and `backend="bing"` fallback. The Go
+  implementation already matched this frozen behavior, so this was a
+  test-only task: production TDD RED/GREEN/REFACTOR is genuinely N/A and no
+  production code was changed. `golang-pro`, `golang-testing`, clean-code and
+  simplification reviews applied; hexagonal/API review is N/A (no boundary
+  change) and concurrency/debugger are N/A (deterministic registry/selector,
+  no goroutines or I/O). Focused `-race -count=20` and full `-race` pass.
 - **Skills assessed:** `golang-pro`, `go-clean-ddd-hexagonal` (public façade
   port), `golang-testing`, TDD RED/GREEN/REFACTOR, `clean-code`, and
   `go-code-simplification` applied. `go-concurrency-patterns` and
@@ -527,3 +540,12 @@ Verification recorded on 2026-07-20:
   validation passed. Total coverage: 87.5%; public package: 94.8%;
   `internal/engine`: 86.9%; parser: 83.4%; transport: 83.8%. Live checks
   skipped: no external engine request or fingerprint evidence was authorized.
+- **Acceptance 6.9 (2026-07-21):** frozen Python `--check` verified 364
+  fixtures (134 pure, 179 engine, 9 extract, 24 parser, 18 transport);
+  `gofmt`, `git diff --check`, `go vet ./...`, `go test -count=1 ./...`,
+  `go test -race -count=1 ./...`, focused registry/selector race x20,
+  `CGO_ENABLED=0 go test -count=1 ./...`, `make verify`, and strict OpenSpec
+  validation passed. Total coverage: 87.4%; public package: 94.8%;
+  `internal/engine`: 86.9%; `internal/search`: 91.4%; parser: 83.4%;
+  transport: 83.8%. Live checks skipped: no external engine request or
+  fingerprint evidence was authorized.

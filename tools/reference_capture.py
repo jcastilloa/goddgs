@@ -1581,6 +1581,67 @@ def _frozen_registry_backend_fixture() -> Fixture:
     )
 
 
+def _disabled_text_bing_regression_fixture() -> Fixture:
+    """Freeze the source distinction between a disabled class and active backends."""
+    noop = lambda _query, **_kwargs: []
+    engines = {
+        category: {
+            name: _engine_class(name, engine_class.provider, engine_class.priority, noop)
+            for name, engine_class in category_engines.items()
+        }
+        for category, category_engines in ENGINES.items()
+    }
+    shuffle_calls: list[list[str]] = []
+
+    def reverse(items: list[str]) -> None:
+        shuffle_calls.append(list(items))
+        items.reverse()
+
+    core, old_engines, old_shuffle, old_threads = _patched_core_engines(engines, reverse)
+    try:
+        shuffle_inputs: dict[str, list[list[str]]] = {}
+
+        def selected(label: str, backend: str) -> list[dict[str, Any]]:
+            call_offset = len(shuffle_calls)
+            selected_engines = [
+                {"name": engine.name, "provider": engine.provider, "priority": engine.priority}
+                for engine in core.DDGS()._get_engines("text", backend)
+            ]
+            shuffle_inputs[label] = shuffle_calls[call_offset:]
+            return selected_engines
+
+        output = {
+            "disabled": _engine_metadata(Bing),
+            "active_text_names": list(ENGINES["text"]),
+            "selections": {
+                "auto": selected("auto", "auto"),
+                "disabled_bing": selected("disabled_bing", "bing"),
+            },
+            "shuffle_inputs": shuffle_inputs,
+        }
+    finally:
+        _restore_core_engines(core, old_engines, old_shuffle, old_threads)
+    return _fixture(
+        "pure.text-bing-disabled-metadata-and-fallback",
+        "get_engines",
+        {
+            "category": "text",
+            "backends": ["auto", "bing"],
+            "registry_fixture": "pure.engine-registry-active-and-disabled",
+            "shuffle": "reverse",
+        },
+        _ok(output),
+        random="shuffle patched to reverse; source Bing class remains outside ENGINES",
+        trace=[
+            {
+                "sequence": 1,
+                "kind": "note",
+                "note": "fake active registry only; disabled Bing is inspected as source metadata and never constructed",
+            }
+        ],
+    )
+
+
 def _search_invocation_fixtures() -> list[Fixture]:
     def capture(arguments: dict[str, Any]) -> dict[str, Any]:
         calls: list[dict[str, Any]] = []
@@ -7207,6 +7268,7 @@ def build_fixtures() -> list[Fixture]:
         _engine_registry_fixture(),
         *_backend_fixtures(),
         _frozen_registry_backend_fixture(),
+        _disabled_text_bing_regression_fixture(),
         *_search_invocation_fixtures(),
         *_scheduler_fixtures(),
         *_error_and_extract_fixtures(),

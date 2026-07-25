@@ -51,6 +51,21 @@ type selectedEngine struct {
 	Priority float64 `json:"priority"`
 }
 
+type disabledTextBingSelectionFixture struct {
+	Input struct {
+		Category string `json:"category"`
+	} `json:"input"`
+	Result struct {
+		Output struct {
+			Selections struct {
+				Auto         []selectedEngine `json:"auto"`
+				DisabledBing []selectedEngine `json:"disabled_bing"`
+			} `json:"selections"`
+			ShuffleInputs map[string][][]string `json:"shuffle_inputs"`
+		} `json:"output"`
+	} `json:"result"`
+}
+
 func TestBackendSelector_MatchesFrozenBackendFixture(t *testing.T) {
 	fixture := loadBackendFixture(t, "../../testdata/contracts/pure/pure.backend-auto-priority-stable-shuffle.json")
 	output := decodeBackendOutput(t, fixture)
@@ -124,6 +139,45 @@ func TestBackendSelector_UsesFrozenRegistry(t *testing.T) {
 				t.Fatalf("shuffle calls = %#v, want %#v", actual, want)
 			}
 		})
+	}
+}
+
+func TestBackendSelector_DisabledTextBingFallsBackWithoutActivatingIt(t *testing.T) {
+	fixture := loadDisabledTextBingSelectionFixture(t, "../../testdata/contracts/pure/pure.text-bing-disabled-metadata-and-fallback.json")
+
+	var shuffleInputs [][]string
+	selector := NewBackendSelector(engine.FrozenRegistry().Categories(), func(keys []string) {
+		shuffleInputs = append(shuffleInputs, append([]string(nil), keys...))
+		reverseStrings(keys)
+	})
+
+	auto, err := selector.Select(fixture.Input.Category, "auto")
+	if err != nil {
+		t.Fatalf("Select(%q, auto): %v", fixture.Input.Category, err)
+	}
+	if actual := projectSelection(auto); !reflect.DeepEqual(actual, fixture.Result.Output.Selections.Auto) {
+		t.Fatalf("Select(%q, auto) = %#v, want %#v", fixture.Input.Category, actual, fixture.Result.Output.Selections.Auto)
+	}
+
+	disabledStart := len(shuffleInputs)
+	disabled, err := selector.Select(fixture.Input.Category, "bing")
+	if err != nil {
+		t.Fatalf("Select(%q, bing): %v", fixture.Input.Category, err)
+	}
+	if actual := projectSelection(disabled); !reflect.DeepEqual(actual, fixture.Result.Output.Selections.DisabledBing) {
+		t.Fatalf("Select(%q, bing) = %#v, want %#v", fixture.Input.Category, actual, fixture.Result.Output.Selections.DisabledBing)
+	}
+	for _, metadata := range disabled {
+		if metadata.Name == "bing" {
+			t.Fatalf("Select(%q, bing) activated disabled text Bing: %#v", fixture.Input.Category, metadata)
+		}
+	}
+
+	if actual := shuffleInputs[:disabledStart]; !reflect.DeepEqual(actual, fixture.Result.Output.ShuffleInputs["auto"]) {
+		t.Fatalf("auto shuffle calls = %#v, want %#v", actual, fixture.Result.Output.ShuffleInputs["auto"])
+	}
+	if actual := shuffleInputs[disabledStart:]; !reflect.DeepEqual(actual, fixture.Result.Output.ShuffleInputs["disabled_bing"]) {
+		t.Fatalf("disabled Bing shuffle calls = %#v, want %#v", actual, fixture.Result.Output.ShuffleInputs["disabled_bing"])
 	}
 }
 
@@ -201,6 +255,23 @@ func loadBackendFixture(t *testing.T, path string) backendFixture {
 	decoder.UseNumber()
 
 	var fixture backendFixture
+	if err := decoder.Decode(&fixture); err != nil {
+		t.Fatalf("decode %s: %v", path, err)
+	}
+	return fixture
+}
+
+func loadDisabledTextBingSelectionFixture(t *testing.T, path string) disabledTextBingSelectionFixture {
+	t.Helper()
+
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	decoder := json.NewDecoder(bytes.NewReader(contents))
+	decoder.UseNumber()
+
+	var fixture disabledTextBingSelectionFixture
 	if err := decoder.Decode(&fixture); err != nil {
 		t.Fatalf("decode %s: %v", path, err)
 	}

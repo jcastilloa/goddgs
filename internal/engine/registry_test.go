@@ -19,6 +19,18 @@ type registryFixtureOutput struct {
 	Disabled []Metadata `json:"disabled"`
 }
 
+type disabledTextBingFixture struct {
+	Input struct {
+		Category string `json:"category"`
+	} `json:"input"`
+	Result struct {
+		Output struct {
+			ActiveTextNames []string `json:"active_text_names"`
+			Disabled        Metadata `json:"disabled"`
+		} `json:"output"`
+	} `json:"result"`
+}
+
 func TestFrozenRegistry_MatchesFrozenSourceFixture(t *testing.T) {
 	fixture := loadRegistryFixture(t, "../../testdata/contracts/pure/pure.engine-registry-active-and-disabled.json")
 	registry := FrozenRegistry()
@@ -52,6 +64,31 @@ func TestRegistry_ReturnsIndependentMetadataCopies(t *testing.T) {
 	}
 }
 
+func TestFrozenRegistry_KeepsDisabledTextBingOutsideActiveCategory(t *testing.T) {
+	fixture := loadDisabledTextBingFixture(t, "../../testdata/contracts/pure/pure.text-bing-disabled-metadata-and-fallback.json")
+	registry := FrozenRegistry()
+
+	active, ok := registry.Active(fixture.Input.Category)
+	if !ok {
+		t.Fatalf("Active(%q) = missing category", fixture.Input.Category)
+	}
+	activeNames := make([]string, len(active))
+	for index, metadata := range active {
+		activeNames[index] = metadata.Name
+		if metadata.Name == fixture.Result.Output.Disabled.Name {
+			t.Fatalf("Active(%q) contains disabled source metadata %#v", fixture.Input.Category, metadata)
+		}
+	}
+	if !reflect.DeepEqual(activeNames, fixture.Result.Output.ActiveTextNames) {
+		t.Fatalf("Active(%q) names = %#v, want %#v", fixture.Input.Category, activeNames, fixture.Result.Output.ActiveTextNames)
+	}
+
+	disabled := registry.Disabled()
+	if !reflect.DeepEqual(disabled, []Metadata{fixture.Result.Output.Disabled}) {
+		t.Fatalf("Disabled() = %#v, want %#v", disabled, []Metadata{fixture.Result.Output.Disabled})
+	}
+}
+
 func loadRegistryFixture(t *testing.T, path string) registryFixture {
 	t.Helper()
 
@@ -63,6 +100,23 @@ func loadRegistryFixture(t *testing.T, path string) registryFixture {
 	decoder.UseNumber()
 
 	var fixture registryFixture
+	if err := decoder.Decode(&fixture); err != nil {
+		t.Fatalf("decode %s: %v", path, err)
+	}
+	return fixture
+}
+
+func loadDisabledTextBingFixture(t *testing.T, path string) disabledTextBingFixture {
+	t.Helper()
+
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	decoder := json.NewDecoder(bytes.NewReader(contents))
+	decoder.UseNumber()
+
+	var fixture disabledTextBingFixture
 	if err := decoder.Decode(&fixture); err != nil {
 		t.Fatalf("decode %s: %v", path, err)
 	}

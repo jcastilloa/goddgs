@@ -21,8 +21,10 @@ make integration
 Each category is expected to return at least one raw result. A timeout,
 transport error, or empty result is a current live-availability failure to
 record; it does not invalidate offline differential fixtures. In particular,
-the browser TLS/HTTP2 fingerprint gate remains unapproved, so an engine may
-reject the Go transport even when its fixture contract passes. See
+HTTPS base-client traffic uses a source-shaped coherent browser/OS bundle per
+client, including direct and tunnel routes. The separate DuckDuckGo temporary
+client remains non-identical. An engine may still reject the Go transport even
+when its fixture contract passes. See
 [`fingerprint-gate.md`](fingerprint-gate.md).
 
 The integration build tag alone does not authorize network access: without
@@ -34,5 +36,6 @@ go test -tags=integration -run '^$' ./...
 GODDGS_INTEGRATION=0 go test -tags=integration -run TestIntegrationSmokeCategories .
 ```
 
-No integration run claims browser-fingerprint parity. Extraction rendering uses
-the documented practical renderer exception; it is not a `primp` output claim.
+No integration run claims strict browser-fingerprint parity. Extraction
+rendering uses the documented practical renderer exception; it is not a
+`primp` output claim.

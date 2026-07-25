@@ -71,8 +71,8 @@ cookies, redirects, compression, TLS verification/PEM, HTTP(S) proxies and
 SOCKS resolution. `net/http` additionally powers the isolated DDG text
 capability: `ForceAttemptHTTP2`, request-local headers/jar, and disabled
 redirect following are fixture- and loopback-proven. It is **not** evidence of
-`primp` browser impersonation or randomized TLS/H2 fingerprint parity; task
-5.5 remains open.
+`primp` browser impersonation or randomized TLS/H2 fingerprint parity; its
+distinct temporary fingerprint remains a documented limitation.
 
 ## Browser-fingerprint gate — observed mismatch, 2026-07-25
 
@@ -84,10 +84,23 @@ standard Go JA3/JA4/Akamai hashes; those differ from separately observed frozen
 Python `primp 1.3.1` and `HttpClient2` hashes. The exact sanitized observations
 and per-active-engine matrix are in `docs/fingerprint-gate.md`.
 
-Therefore neither `net/http` client is approved as browser-fingerprint
-equivalent. This closes task 5.5 only as an evidence gate: each affected engine
-is explicitly still incomplete in that dimension. No module or cgo dependency
-was added by the observation.
+Therefore neither pre-task-5.6 `net/http` client was approved as
+browser-fingerprint equivalent. Task 5.5 closed as the evidence gate that led
+to the reviewed practical capability below; it did not add a module or cgo
+dependency.
+
+## `github.com/sardanioss/utls` `v1.10.3` — approved for frozen browser bundles, 2026-07-25
+
+| Item | Decision |
+| --- | --- |
+| Purpose | Reconstruct the frozen `primp` ClientHello for every selected browser/OS pair. The internal adapter binds it to that pair's header order and HTTP/2 SETTINGS/windows/priority/pseudo-order. |
+| Version | `v1.10.3`; Go module checksum remains in `go.sum`. |
+| License | BSD-3-Clause, verified from the cached module `LICENSE`. The local adapter additionally uses `andybalholm/brotli` (MIT) and `klauspost/compress` (Apache-2.0) to decode encodings it explicitly advertises; their notices are retained. |
+| cgo | None. The inspected dependency path is pure Go and is required to pass `CGO_ENABLED=0` tests. |
+| Maintenance / provenance | Source origin `https://github.com/sardanioss/utls`, release `v1.10.3`, Go 1.23 minimum. The adapter parses a fresh frozen source ClientHello with `Fingerprinter.RawClientHello` per connection; it does not rely on uTLS named browser profiles. `browser_profiles_source.json` pins 115 source pairs with SHA/provenance in `docs/browser-profiles.md`. |
+| Supply-chain risk | uTLS controls handshake bytes and transitively brings compression and crypto code. It is isolated behind `internal/transport`; no third-party type crosses the public API. Updates require a new license, live diagnostic, local TLS/H2 lifecycle, race, and engine-fixture review. |
+| Why selected | Loopback capture plus local wire tests prove all 115 profiles instantiate with fresh entropy, source JA3 semantics (without GREASE), matching headers and matching H2 frames. Controlled diagnostic pairs match explicit `primp` Chrome, Edge, Opera, Safari and Firefox JA3/JA4/H2 observations. |
+| Scope / limits | Applied to every HTTPS target route: direct, PEM root, disabled verification, HTTP(S) CONNECT and SOCKS5/SOCKS5H. Plain HTTP intentionally remains standard. Outer TLS to an HTTPS proxy is proxy control, not target impersonation. The distinct DDG temporary `HttpClient2` fingerprint remains unimplemented. |
 
 ## Extract renderers — practical renderer approved by scope exception, 2026-07-25
 

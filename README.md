@@ -4,8 +4,12 @@ Go library port of [deedy5/ddgs](https://github.com/deedy5/ddgs), focused only o
 
 Status: public search composition and extraction are implemented against frozen
 offline source contracts. Rendered extraction formats are a documented practical
-exception; browser TLS/HTTP2 fingerprint parity remains unproven. Do not
-describe this module as a complete 1:1 port or production-ready release.
+exception. HTTPS base-client traffic chooses one coherent browser/OS identity
+per client from the frozen `primp` 23×5 outcome space: TLS, headers and HTTP/2
+are one bundle, never independently randomized. Direct, PEM, disabled-verify,
+HTTP(S) CONNECT and SOCKS HTTPS-target routes preserve that bundle. The
+DuckDuckGo temporary client remains distinct. Do not describe rendered
+extraction or that temporary client as strict `primp` equivalence.
 
 ## Scope
 
@@ -27,8 +31,10 @@ Source code, not a stale README entry, defines runtime behavior. Read
 [docs/source-audit.md](docs/source-audit.md),
 [docs/source-quirks.md](docs/source-quirks.md),
 [docs/engine-contracts.md](docs/engine-contracts.md),
-[docs/reference-environment.md](docs/reference-environment.md), [MEMORY.md](MEMORY.md), and
-OpenSpec change [`port-ddgs-python-library`](openspec/changes/port-ddgs-python-library/).
+[docs/reference-environment.md](docs/reference-environment.md),
+[docs/browser-profiles.md](docs/browser-profiles.md), [MEMORY.md](MEMORY.md),
+and OpenSpec changes [`port-ddgs-python-library`](openspec/changes/port-ddgs-python-library/)
+and [`randomize-browser-profiles`](openspec/changes/randomize-browser-profiles/).
 
 ## Layout
 
@@ -67,7 +73,7 @@ test commands.
 
 `make verify` is fully offline and makes no external engine requests. See
 [docs/dependency-decisions.md](docs/dependency-decisions.md) for the approved
-practical extraction-rendering exception and remaining fingerprint limitation.
+practical extraction-rendering exception and browser-profile evidence.
 
 ## License and attribution
 

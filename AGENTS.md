@@ -20,7 +20,7 @@ tree unless a later OpenSpec change explicitly expands scope.
 | Frozen commit | `a12929a72429a39a0841c3d7caacb20ee17acd4d` |
 | Source describe | `v9.14.4-2-ga12929a` |
 | Python package version field | `9.14.4` |
-| Active OpenSpec change | `port-ddgs-python-library` |
+| Active OpenSpec change | `randomize-browser-profiles` |
 
 Authority order:
 
@@ -163,6 +163,13 @@ those three rendered strings are `primp`-identical.
 behavior, not replaceable with a casual `net/http.Client`. Browser TLS and
 HTTP/2 fingerprint compatibility is an explicit acceptance gate for each
 affected engine. No claim of 1:1 parity until it has evidence.
+
+- Source browser randomization is a complete, per-client identity bundle —
+  never a standalone `User-Agent` or header shuffle. Preserve the Python
+  binding's independent draw chronology (`operating system` first, then
+  browser variant) and retain the selected TLS ClientHello semantics, ALPN,
+  HTTP/2 settings/window/priority, pseudo-header order, regular-header order,
+  and default headers together for that client's lifetime.
 
 - Support HTTP(S) and SOCKS proxy behavior, `DDGS_PROXY`, `tb` alias,
   timeout, TLS verification off, and custom PEM roots according to source

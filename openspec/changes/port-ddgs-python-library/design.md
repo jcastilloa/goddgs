@@ -261,9 +261,12 @@ scheduler with copied common and ordered category keyword inputs.
 
 The executor lock protects cache creation only; no lock is held during network
 I/O or scheduler work. Constructor failures remain operation errors rather
-than changing `New`'s public no-error signature. The resulting façade remains
-explicitly unapproved for browser TLS/HTTP2 fingerprint parity as recorded by
-the transport gate.
+than changing `New`'s public no-error signature. The resulting façade uses the
+reviewed source-shaped browser-profile transport for every HTTPS base-client
+target route. The superseding `randomize-browser-profiles` change selects one
+complete frozen browser/OS bundle per isolated client and carries it through
+direct, PEM, disabled-verification, HTTP(S) CONNECT, and SOCKS target routes.
+DuckDuckGo's temporary client remains a distinct transport limitation.
 
 **Rejected:** routing through public maps loses field order; rebuilding via the
 normalizing search constructor can decode an already-normalized URL twice;
@@ -340,13 +343,42 @@ the archive URL.
 **Rejected:** default `net/http` everywhere is unproven; blindly importing
 fingerprint dependency creates supply-chain/cgo risk.
 
-**Fingerprint gate result (2026-07-25):** an opt-in, endpoint-explicit tagged
-test observes sanitized TLS/HTTP2 identifiers for both Go transports. Both
-negotiate HTTP/2, but their observed JA3/JA4/Akamai identifiers differ from the
-frozen Python `primp` and temporary `HttpClient2` observations. The complete
-per-engine matrix is `docs/fingerprint-gate.md`. Task 5.5 is therefore closed
-as a gate while every affected engine remains unapproved for browser
-fingerprint parity; no fallback or transport dependency is implied.
+**Fingerprint gate result (2026-07-25, before task 5.6):** an opt-in,
+endpoint-explicit tagged test observed the standard Go TLS/HTTP2 identifiers
+for both clients. They differed from frozen Python `primp` and temporary
+`HttpClient2` observations. That evidence selected the explicit browser-profile
+work below; the complete history and matrix is in `docs/fingerprint-gate.md`.
+
+**Browser-profile implementation decision (2026-07-25):** the completed
+superseding `randomize-browser-profiles` change replaces the initial fixed
+Chrome proof with 115 loopback-captured `primp` browser/OS bundles. It uses
+`github.com/sardanioss/utls` with a captured ClientHello specification and
+binds that specification to the same bundle's ordered HTTP/2 SETTINGS,
+connection window, pseudo-header order, priority data, regular-header order,
+and default headers. The Python binding samples operating system first and
+browser variant second; the Go client performs those two independent draws once
+at isolated-client construction and never rotates that identity per request.
+The selected bundle crosses direct, custom-PEM, disabled-verification,
+HTTP(S) CONNECT and SOCKS HTTPS-target routes. Plain HTTP deliberately keeps
+the standard transport without browser-only default headers.
+
+The browser transport must keep the existing cookie jar, redirects, timeout,
+verification/custom PEM, materialized response, cancellation, and response
+closure semantics. Its connection cache is synchronized per origin, no lock is
+held while waiting for network I/O, and `CloseIdleConnections` releases all
+browser connections. Local TLS/H2 tests shall capture the preface/SETTINGS and
+prove header order, cancellation, closure, and race safety. The tagged
+diagnostic test records the observed identifiers after implementation.
+
+**Observed implementation result (2026-07-25):** local wire tests cover every
+one of the 23×5 captured bundles and controlled diagnostics cover Chrome,
+Edge, Opera, Safari and Firefox representative pairs. All five observations
+match their explicit Python JA3/JA4/HTTP2 identifiers when rechecked against
+the same controlled endpoint. Entropy-bearing TLS values are intentionally
+fresh, so raw handshakes and GREASE values are not byte-identical. This is source-shaped browser
+impersonation evidence, not a claim that every entropy-bearing byte is fixed.
+The distinct temporary DDG `HttpClient2` fingerprint remains an explicit
+limitation.
 
 ### Parser and renderer are selected by differential corpus
 

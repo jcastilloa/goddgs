@@ -186,7 +186,7 @@ transport, TLS/fingerprint, or engine-specific post-processing parity.
 
 | Severity | Blocker | Required response |
 | --- | --- | --- |
-| critical | Browser TLS/HTTP2 fingerprint differences can cause engine blocks | design/prove a Go transport; no fake parity claim with default `net/http` |
+| practical implementation | Browser TLS/HTTP2 fingerprint | 115 frozen `primp` browser/OS bundles now cover direct, PEM, disabled-verify, HTTP(S) CONNECT and SOCKS HTTPS-target routes; local wire/JA3 semantics and controlled family diagnostics pass. DDG temporary `HttpClient2` remains distinct. |
 | accepted exception | `primp` rendered markdown/plain/rich differs from Go output | preserve source fetch/bytes/text/error behavior; use documented practical renderer and never claim its strings are source-identical |
 | critical | lxml XPath/recovery may differ | fixture corpus for all selectors; no hand-rewritten selectors without evidence |
 | high | Cached mutable engines and global `HttpClient2.Patch` are unsafe under concurrent calls | isolate request state, close bodies, use contexts, race-test; document any semantic decision |

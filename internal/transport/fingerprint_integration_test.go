@@ -34,6 +34,56 @@ func TestClient_LiveFingerprintObservation(t *testing.T) {
 	observeLiveFingerprint(t, client)
 }
 
+// TestBrowserProfileFamilies_LiveFingerprintObservation observes one explicit
+// frozen pair from each primp browser family. It has no default endpoint and
+// never contacts a search engine.
+func TestBrowserProfileFamilies_LiveFingerprintObservation(t *testing.T) {
+	if os.Getenv(fingerprintEndpointEnvironment) == "" {
+		t.Skipf("set %s to run the controlled live fingerprint observation", fingerprintEndpointEnvironment)
+	}
+	catalog, err := loadBrowserProfileCatalog()
+	if err != nil {
+		t.Fatalf("load browser profile catalog: %v", err)
+	}
+
+	profiles := []struct {
+		variant         string
+		operatingSystem string
+	}{
+		{variant: "chrome_146", operatingSystem: "windows"},
+		{variant: "edge_148", operatingSystem: "linux"},
+		{variant: "opera_131", operatingSystem: "android"},
+		{variant: "safari_26.3", operatingSystem: "macos"},
+		{variant: "firefox_148", operatingSystem: "ios"},
+	}
+	for _, profile := range profiles {
+		t.Run(profile.variant+"/"+profile.operatingSystem, func(t *testing.T) {
+			variantIndex := indexOfBrowserProfilePart(t, catalog.variants, profile.variant)
+			operatingSystemIndex := indexOfBrowserProfilePart(t, catalog.operatingSystems, profile.operatingSystem)
+			client, err := newClientWithBehaviorAndBrowserProfileChooser(
+				Config{Timeout: WithTimeout(15 * time.Second)},
+				nil,
+				clientBehavior{followRedirects: true},
+				fixedBrowserProfileChooser(operatingSystemIndex, variantIndex),
+			)
+			if err != nil {
+				t.Fatalf("new client: %v", err)
+			}
+			if client.browserProfile == nil {
+				t.Fatal("browser profile = nil")
+			}
+			if got, want := client.browserProfile.sourceVariant, profile.variant; got != want {
+				t.Fatalf("browser variant = %q, want %q", got, want)
+			}
+			if got, want := client.browserProfile.sourceOperatingSystem, profile.operatingSystem; got != want {
+				t.Fatalf("operating system = %q, want %q", got, want)
+			}
+			defer client.CloseIdleConnections()
+			observeLiveFingerprint(t, client)
+		})
+	}
+}
+
 func TestDuckDuckGoTextClient_LiveFingerprintObservation(t *testing.T) {
 	client, err := NewDuckDuckGoTextClient(Config{Timeout: WithTimeout(15 * time.Second)}, nil)
 	if err != nil {

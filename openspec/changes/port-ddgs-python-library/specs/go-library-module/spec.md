@@ -103,6 +103,36 @@ timeout, and explicit caller verification control.
 - **WHEN** caller configures non-empty proxy and `DDGS_PROXY` is also set
 - **THEN** explicit proxy SHALL take precedence
 
+### Requirement: Practical browser-profile transport
+
+HTTPS target requests made through the base source-client transport SHALL use
+the reviewed browser-profile capability rather than the standard Go TLS and
+HTTP/2 fingerprint. The capability SHALL preserve the established client
+configuration and lifecycle contracts. This requirement is completed and its
+current selection/route details are governed by the superseding
+`randomize-browser-profiles` change.
+
+#### Scenario: Browser-profile HTTPS request is opened
+- **WHEN** a source engine performs a direct HTTPS request through its isolated base client
+- **THEN** the client SHALL select one coherent frozen `primp` browser/OS
+  bundle and send that bundle's TLS semantics, headers, HTTP/2 SETTINGS order,
+  connection window, and pseudo-header order
+
+#### Scenario: Browser-profile connection is no longer needed
+- **WHEN** `CloseIdleConnections` is called on the owning transport client
+- **THEN** cached browser-profile connections SHALL be closed without affecting another engine client
+
+#### Scenario: Browser profile crosses an HTTPS target route
+- **WHEN** a caller configures a PEM root, disabled verification, HTTP(S)
+  CONNECT proxy, or SOCKS target route
+- **THEN** the target SHALL receive the same selected complete browser bundle
+  while the configured verification and proxy contract remains in force
+
+#### Scenario: DuckDuckGo temporary fingerprint is considered
+- **WHEN** a caller uses DuckDuckGo text's temporary HTTP/2 client
+- **THEN** the module SHALL document that it is a distinct source transport and
+  does not inherit the base-client browser-profile claim
+
 ### Requirement: Classifiable source errors
 Public package SHALL expose errors allowing callers to classify source DDGS
 failures, timeouts, and rate-limit failures with `errors.Is` or `errors.As`,

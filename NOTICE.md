@@ -30,3 +30,9 @@ DuckDuckGo text User-Agent data notice:
 - That package identifies its bundled browser data as pre-downloaded and
   post-processed from `intoli/user-agents`, Copyright 2018-present Intoli,
   LLC, BSD-2-Clause: https://github.com/intoli/user-agents
+
+Browser transport dependency notices:
+
+- `github.com/sardanioss/utls` v1.10.3, BSD-3-Clause.
+- `github.com/andybalholm/brotli`, MIT; `github.com/klauspost/compress`,
+  Apache-2.0.

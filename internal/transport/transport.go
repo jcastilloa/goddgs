@@ -3,6 +3,9 @@
 package transport
 
 import (
+	"bytes"
+	"compress/gzip"
+	"compress/zlib"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -18,6 +21,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/andybalholm/brotli"
+	"github.com/klauspost/compress/zstd"
 	"golang.org/x/net/proxy"
 )
 
@@ -126,6 +131,8 @@ type Client struct {
 	behavior clientBehavior
 	jar      *cookiejar.Jar
 
+	browserProfile *browserProfile
+
 	headersMu sync.RWMutex
 	headers   http.Header
 
@@ -145,6 +152,10 @@ func newClient(config Config, roundTripper http.RoundTripper) (*Client, error) {
 }
 
 func newClientWithBehavior(config Config, roundTripper http.RoundTripper, behavior clientBehavior) (*Client, error) {
+	return newClientWithBehaviorAndBrowserProfileChooser(config, roundTripper, behavior, nil)
+}
+
+func newClientWithBehaviorAndBrowserProfileChooser(config Config, roundTripper http.RoundTripper, behavior clientBehavior, chooser browserProfileChooser) (*Client, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, fmt.Errorf("create cookie jar: %w", err)
@@ -154,6 +165,20 @@ func newClientWithBehavior(config Config, roundTripper http.RoundTripper, behavi
 		behavior: behavior,
 		jar:      jar,
 		headers:  make(http.Header),
+	}
+	if roundTripper == nil && !behavior.forceHTTP2 && browserTransportEligible(client.settings) {
+		catalog, err := loadBrowserProfileCatalog()
+		if err != nil {
+			return nil, err
+		}
+		if chooser == nil {
+			chooser = chooseBrowserProfileIndex
+		}
+		profile, err := selectSourceBrowserProfile(catalog, chooser)
+		if err != nil {
+			return nil, err
+		}
+		client.browserProfile = &profile
 	}
 	if roundTripper != nil {
 		client.initializeOnce.Do(func() {
@@ -190,7 +215,7 @@ func (client *Client) Do(ctx context.Context, sourceRequest Request) (Response, 
 	}
 	defer nativeResponse.Body.Close()
 
-	content, err := io.ReadAll(nativeResponse.Body)
+	content, err := readDecodedResponseBody(nativeResponse)
 	if err != nil {
 		return Response{}, classifyError(err)
 	}
@@ -199,6 +224,51 @@ func (client *Client) Do(ctx context.Context, sourceRequest Request) (Response, 
 		Content:    content,
 		Text:       strings.ToValidUTF8(string(content), "\ufffd"),
 	}, nil
+}
+
+func readDecodedResponseBody(response *http.Response) ([]byte, error) {
+	content, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	encoding := strings.TrimSpace(strings.ToLower(response.Header.Get("Content-Encoding")))
+	switch encoding {
+	case "", "identity":
+		return content, nil
+	case "gzip":
+		reader, err := gzip.NewReader(bytes.NewReader(content))
+		if err != nil {
+			return nil, err
+		}
+		decoded, readErr := io.ReadAll(reader)
+		closeErr := reader.Close()
+		if readErr != nil {
+			return nil, readErr
+		}
+		return decoded, closeErr
+	case "deflate":
+		reader, err := zlib.NewReader(bytes.NewReader(content))
+		if err != nil {
+			return nil, err
+		}
+		decoded, readErr := io.ReadAll(reader)
+		closeErr := reader.Close()
+		if readErr != nil {
+			return nil, readErr
+		}
+		return decoded, closeErr
+	case "br":
+		return io.ReadAll(brotli.NewReader(bytes.NewReader(content)))
+	case "zstd":
+		reader, err := zstd.NewReader(bytes.NewReader(content))
+		if err != nil {
+			return nil, err
+		}
+		defer reader.Close()
+		return io.ReadAll(reader)
+	default:
+		return nil, fmt.Errorf("unsupported content encoding %q", encoding)
+	}
 }
 
 // UpdateHeaders applies source engine default headers to this client only.
@@ -251,17 +321,35 @@ func normalizeSettings(config Config) clientSettings {
 
 func (client *Client) ensureHTTPClient() error {
 	client.initializeOnce.Do(func() {
-		transport, err := newBaseRoundTripper(client.settings)
+		transport, err := client.newRoundTripper()
 		client.initializeErr = err
 		if client.initializeErr != nil {
 			return
 		}
-		if client.behavior.forceHTTP2 {
-			transport.ForceAttemptHTTP2 = true
+		if standardTransport, ok := transport.(*http.Transport); ok && client.behavior.forceHTTP2 {
+			standardTransport.ForceAttemptHTTP2 = true
 		}
 		client.setHTTPClient(client.newHTTPClient(transport))
 	})
 	return client.initializeErr
+}
+
+func (client *Client) newRoundTripper() (http.RoundTripper, error) {
+	if client.behavior.forceHTTP2 {
+		return newBaseRoundTripper(client.settings)
+	}
+	if client.browserProfile == nil {
+		return nil, errors.New("browser transport profile is unavailable")
+	}
+	return newBrowserRoundTripperForProfile(client.settings, cloneBrowserProfile(*client.browserProfile))
+}
+
+func browserTransportEligible(settings clientSettings) bool {
+	// primp chooses its random identity while constructing the client, before it
+	// knows whether a request will be direct, use CONNECT, use SOCKS, or have a
+	// non-default TLS policy. The browser transport itself keeps plain HTTP on
+	// the standard fallback path, where no coherent TLS/H2 identity exists.
+	return true
 }
 
 func (client *Client) setHTTPClient(httpClient *http.Client) {

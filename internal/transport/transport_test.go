@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"compress/zlib"
 	"context"
 	"encoding/binary"
 	"encoding/json"
@@ -22,6 +23,9 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/andybalholm/brotli"
+	"github.com/klauspost/compress/zstd"
 )
 
 const sourceHTTPClientDefaultTimeout = 10 * time.Second
@@ -72,6 +76,162 @@ func TestNewClient_MatchesFrozenConstructorFixtures(t *testing.T) {
 				t.Fatal("NewClient() = nil, want isolated transport client")
 			}
 			assertClientConfiguration(t, client, want)
+		})
+	}
+}
+
+func TestClient_DefaultConfigurationUsesBrowserTransportWithoutChangingCookieLifecycle(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path == "/set" {
+			http.SetCookie(writer, &http.Cookie{Name: "browser_fixture", Value: "set"})
+			_, _ = io.WriteString(writer, "set")
+			return
+		}
+		cookie, _ := request.Cookie("browser_fixture")
+		if cookie == nil {
+			_, _ = io.WriteString(writer, "missing")
+			return
+		}
+		_, _ = io.WriteString(writer, request.Header.Get("User-Agent")+"|"+cookie.Value)
+	}))
+	defer server.Close()
+
+	client, err := NewClient(Config{})
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+	if got, want := mustDo(t, client, server.URL+"/set").Text, "set"; got != want {
+		t.Fatalf("set response = %q, want %q", got, want)
+	}
+	response := mustDo(t, client, server.URL+"/check")
+	if client.browserProfile == nil {
+		t.Fatal("client browser profile = nil")
+	}
+	if got, want := response.Text, "Go-http-client/1.1|set"; got != want {
+		t.Fatalf("HTTP request = %q, want standard transport header and jar cookie %q", got, want)
+	}
+	native := client.nativeHTTPClient()
+	if native == nil {
+		t.Fatal("native client = nil after request")
+	}
+	if _, ok := native.Transport.(*browserRoundTripper); !ok {
+		t.Fatalf("default native transport = %T, want browserRoundTripper", native.Transport)
+	}
+}
+
+func TestClient_HTTPDoesNotSendSelectedBrowserBundle(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		_, _ = io.WriteString(writer, request.Header.Get("Sec-Ch-Ua")+"|"+request.Header.Get("User-Agent"))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(Config{})
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+	if client.browserProfile == nil {
+		t.Fatal("eligible client browser profile = nil")
+	}
+
+	response := mustDo(t, client, server.URL)
+	if got, want := response.Text, "|Go-http-client/1.1"; got != want {
+		t.Fatalf("HTTP request headers = %q, want standard non-profile headers %q", got, want)
+	}
+}
+
+func browserProfileHeader(t testing.TB, profile browserProfile, name string) string {
+	t.Helper()
+	for _, header := range profile.defaultHeaders {
+		if strings.EqualFold(header.Name, name) {
+			return header.Value
+		}
+	}
+	t.Fatalf("browser profile %s/%s has no %s header", profile.sourceVariant, profile.sourceOperatingSystem, name)
+	return ""
+}
+
+func TestReadDecodedResponseBody_DecodesBrowserAdvertisedEncodings(t *testing.T) {
+	const content = "compressed browser fixture"
+	tests := []struct {
+		name     string
+		encoding string
+		encode   func(testing.TB, []byte) []byte
+	}{
+		{
+			name:     "gzip",
+			encoding: "gzip",
+			encode: func(t testing.TB, source []byte) []byte {
+				t.Helper()
+				var target bytes.Buffer
+				writer := gzip.NewWriter(&target)
+				if _, err := writer.Write(source); err != nil {
+					t.Fatalf("gzip write: %v", err)
+				}
+				if err := writer.Close(); err != nil {
+					t.Fatalf("gzip close: %v", err)
+				}
+				return target.Bytes()
+			},
+		},
+		{
+			name:     "deflate",
+			encoding: "deflate",
+			encode: func(t testing.TB, source []byte) []byte {
+				t.Helper()
+				var target bytes.Buffer
+				writer := zlib.NewWriter(&target)
+				if _, err := writer.Write(source); err != nil {
+					t.Fatalf("deflate write: %v", err)
+				}
+				if err := writer.Close(); err != nil {
+					t.Fatalf("deflate close: %v", err)
+				}
+				return target.Bytes()
+			},
+		},
+		{
+			name:     "br",
+			encoding: "br",
+			encode: func(t testing.TB, source []byte) []byte {
+				t.Helper()
+				var target bytes.Buffer
+				writer := brotli.NewWriter(&target)
+				if _, err := writer.Write(source); err != nil {
+					t.Fatalf("brotli write: %v", err)
+				}
+				if err := writer.Close(); err != nil {
+					t.Fatalf("brotli close: %v", err)
+				}
+				return target.Bytes()
+			},
+		},
+		{
+			name:     "zstd",
+			encoding: "zstd",
+			encode: func(t testing.TB, source []byte) []byte {
+				t.Helper()
+				encoder, err := zstd.NewWriter(nil)
+				if err != nil {
+					t.Fatalf("zstd encoder: %v", err)
+				}
+				defer encoder.Close()
+				return encoder.EncodeAll(source, nil)
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			decoded, err := readDecodedResponseBody(&http.Response{
+				Body:   io.NopCloser(bytes.NewReader(test.encode(t, []byte(content)))),
+				Header: http.Header{"Content-Encoding": []string{test.encoding}},
+			})
+			if err != nil {
+				t.Fatalf("readDecodedResponseBody: %v", err)
+			}
+			if got, want := string(decoded), content; got != want {
+				t.Fatalf("decoded content = %q, want %q", got, want)
+			}
 		})
 	}
 }

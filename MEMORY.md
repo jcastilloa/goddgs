@@ -10,7 +10,7 @@ verification result.
   Docker service, or executable entrypoint.
 - Module scaffold exists. Root package is `ddgs`; final module path is
   `github.com/jcastilloa/goddgs`.
-- Active OpenSpec change: `openspec/changes/port-ddgs-python-library/`.
+- Active OpenSpec change: `openspec/changes/randomize-browser-profiles/`.
 - Public façade/configuration, normalizers, ordered result aggregation, ranker,
   backend selection/static registry, isolated fixture-tested scheduler core,
   offline HTML/XPath/JSON parser adapter, isolated base transport,
@@ -23,8 +23,17 @@ verification result.
   scheduler work, ordered keyword forwarding, and non-normalizing results.
   `Extract` preserves frozen fetch/bytes/text/error lifecycle with a
   user-authorized practical renderer; its rendered strings are not source
-  `primp` claims. No live search-engine proof or source TLS/H2 fingerprint
-  parity exists yet.
+  `primp` claims. Base HTTPS clients now select one complete frozen `primp`
+  browser/OS bundle from the 23×5 source outcome space at construction. The
+  choice binds ClientHello semantics, ALPN, HTTP/2 SETTINGS/window/priority,
+  pseudo-header order, regular-header order and default headers for that
+  client's whole lifetime across direct, PEM, disabled-verification, HTTP(S)
+  CONNECT and SOCKS HTTPS target routes. It is never a superficial User-Agent
+  or header shuffle. Python binding chronology is OS first (Android, iOS,
+  Linux, macOS, Windows), then browser variant. Local wire tests cover all 115
+  pairs; controlled diagnostics match explicit Chrome, Edge, Opera, Safari and
+  Firefox source observations. DuckDuckGo's temporary client remains
+  non-equivalent. No live search-engine request has been made by this work.
 - Tasks 2.1–2.7 are complete. The isolated Python oracle lives temporarily at
   `/tmp/goddgs-reference-a12929a`; exact resolved packages and rebuild steps
   are in `docs/reference-environment.md`. It made no external engine request.
@@ -47,12 +56,12 @@ verification result.
   plus dedicated Go output tests for the practical renderer. Root `DDGS.Extract`
   creates an isolated transport per call; rendered Markdown/plain/rich remains
   explicitly excepted by the user decision below.
-- Task 5.5 is complete as an evidence gate, not a parity approval:
-  `docs/fingerprint-gate.md` records one sanitized, tagged TLS/HTTP2
-  observation per Python and Go client. Both Go clients negotiated HTTP/2 but
-  differed from `primp` and `HttpClient2` hashes. This remains an explicit
-  strict-parity limitation; user-approved practical release scope does not
-  reinterpret it as browser-fingerprint equivalence.
+- Task 5.5 is complete as the evidence gate. The completed
+  `randomize-browser-profiles` change replaces its historical fixed Chrome
+  proof with all 23×5 source browser/OS bundles. `docs/fingerprint-gate.md`
+  records matching explicit Python/Go Chrome, Edge, Opera, Safari and Firefox
+  diagnostic observations; TLS random/key-share/GREASE entropy remains fresh
+  by design. DuckDuckGo's temporary source client remains distinct.
 - Task 6.5 design decision: source image filters cross the Go façade as ordered
   source-keyword options (`size`, `color`, `type_image`, `layout`,
   `license_image`), while public `max_results` remains scheduler/slicing-only.
@@ -189,10 +198,10 @@ Treat registry output as truth.
 
 | Source dependency | Why it matters | Go status |
 | --- | --- | --- |
-| `primp>=1.2.3` | randomized browser impersonation, TLS/HTTP behavior, proxy/certs, HTML render properties | TLS/H2 remains a hard compatibility gate; rendered extraction has a user-authorized practical exception |
+| `primp>=1.2.3` | randomized browser impersonation, TLS/HTTP behavior, proxy/certs, HTML render properties | base HTTPS uses a frozen 23×5 coherent browser/OS catalog across direct and tunnel target routes; DDG temporary fingerprint and renderer strings remain documented limits |
 | `lxml>=4.9.4` | tolerant HTML parse + XPath | Helium v0.6.0 internal adapter passes 14 frozen lxml fixtures; JSON decoder preserves `json.Number`/raw mixed values |
-| `httpx[http2,socks,brotli]`, `httpcore`, `h2` | DDG text temporary client; random HTTP/2/TLS behavior | standard request-local H2/no-redirect/header behavior fixture-tested; randomized TLS/H2 fingerprint remains hard gate |
-| `fake-useragent>=2.2.0` | DDG text random user agent | capture/preserve acceptable UA behavior |
+| `httpx[http2,socks,brotli]`, `httpcore`, `h2` | DDG text temporary client; random HTTP/2/TLS behavior | standard request-local H2/no-redirect/header behavior fixture-tested; temporary randomized TLS/H2 fingerprint remains non-equivalent |
+| `fake-useragent>=2.2.0` | DDG text random user agent | full frozen weighted pool is embedded, checksum-verified, and selected once per process |
 | Click/FastAPI/Uvicorn/MCP | CLI/service only | explicitly excluded |
 
 Go parser `github.com/lestrrat-go/helium v0.6.0` is approved and implemented
@@ -203,10 +212,13 @@ ordering to engine adapters.
 
 Base transport imports `golang.org/x/net/proxy v0.57.0` only to preserve the
 frozen SOCKS5-local versus SOCKS5H-remote DNS distinction. It materializes and
-closes native bodies and has per-client cookie/header state. It does **not**
-establish `primp` browser fingerprint/TLS parity. `DuckDuckGoTextClient`
-separately proves standard request-local H2, no-redirect, header/jar isolation,
-and lifecycle behavior; source randomized TLS/H2 settings stay gated by 5.5.
+closes native bodies and has per-client cookie/header state. All HTTPS target
+routes additionally use `sardanioss/utls` with one selected frozen `primp`
+ClientHello/H2/header bundle per isolated client. The generated catalog has 23
+browser variants × 5 operating systems and is captured only via local loopback;
+details and checksum are in `docs/browser-profiles.md`. `DuckDuckGoTextClient` separately proves standard
+request-local H2, no-redirect, header/jar isolation, and lifecycle behavior;
+its temporary randomized source TLS/H2 fingerprint remains non-equivalent.
 
 The frozen Python repository has no dependency lockfile; its `pyproject.toml`
 only declares lower bounds. Before fixture capture, task 2.1 must record exact
@@ -214,29 +226,19 @@ resolved runtime package versions (and preferably wheel hashes) as provenance.
 
 ## Open blockers / risks
 
-1. **Browser fingerprint parity — critical.** Source uses `primp` random
-   impersonation and custom HTTP/2 settings. Base `net/http`/SOCKS behavior
-   and DDG standard H2/no-redirect behavior are proven offline only; source
-   randomized TLS/H2 fingerprint and each `primp`-dependent engine still need
-   controlled evidence.
-2. **Engine parser integration — high.** Internal Helium/JSON parser contracts
-   are complete, but no engine adapter has consumed them with a real transport
-   response or source-specific post-processing yet.
-3. **Rendered extraction divergence — accepted exception.** `primp` output is
+1. **Browser fingerprint limits — narrowed.** Base HTTPS uses the full source
+   23×5 coherent selection space on direct, PEM, disabled-verification and
+   tunnel target routes. TLS entropy/GREASE bytes remain intentionally fresh.
+   DuckDuckGo's temporary `HttpClient2` fingerprint remains non-equivalent.
+2. **Rendered extraction divergence — accepted exception.** `primp` output is
    not reproduced for Markdown/plain/rich. `html-to-markdown` plus a practical
    plain-text projection is tested and documented; do not advertise it as 1:1.
-4. **Public Go API — high.** Python signatures and dynamic dict results cannot
-   be copied literally. Design must retain raw parity and document Go-native
-   `context.Context`/typed options without hiding source behavior.
-5. **State and concurrency — high.** Python cached engines mutate URLs,
-   language, cookies, and a globally monkey-patched HTTP/2 method. Go must
-   avoid races/leaks while preserving user-visible semantics.
-6. **Live-engine volatility — high.** Upstream markup and anti-bot policy
+3. **Live-engine volatility — high.** Upstream markup and anti-bot policy
    change. Offline contracts are primary; integration checks are tagged and
    rate-limited.
-7. **Source baseline drift — medium.** Source `__version__` and HEAD differ.
+4. **Source baseline drift — medium.** Source `__version__` and HEAD differ.
    Any upstream update requires a new audit/diff and explicit OpenSpec change.
-8. **Module path — resolved.** Final Git remote/import path is
+5. **Module path — resolved.** Final Git remote/import path is
    `github.com/jcastilloa/goddgs`; changing it later breaks every importing
    program.
 
@@ -252,17 +254,11 @@ resolved runtime package versions (and preferably wheel hashes) as provenance.
 
 ## Next implementation order
 
-1. Build isolated Python reference environment and pure fixture schema/capture
-   harness. **Completed 2026-07-20 (tasks 2.1–2.3).**
-2. Capture engine-visible request behavior before each relevant engine adapter;
-   never write an engine without its fixture evidence.
-3. Capture engine-visible request behavior and define the lossless per-category
-   scheduler request shape; only then compose the public façade with engines.
-4. DDG text, Grokipedia, Wikipedia, Brave, Google, and Mojeek adapter gates
-   are complete. Next implement Startpage, Yahoo, and Yandex with their
-   captured bootstrap/random-path/search-id/URL-decode behavior; keep every
-   `primp`/randomized TLS-H2 fingerprint explicitly incomplete pending task
-   5.5.
+Implementation scope is complete. The next action is user-run functional
+engine smoke testing under an appropriate rate limit, recording connectivity
+observations separately from the frozen offline contracts. Any request to close
+the remaining strict fingerprint or rendered-output gaps needs a new OpenSpec
+change and source evidence.
 
 ## Verification baseline
 
@@ -340,6 +336,8 @@ Verification recorded on 2026-07-20:
 | 2026-07-25 | Complete completed-package refactor/audit gate (task 7.6) | Applied clean-code/simplification review across every green package. No behavior-preserving production rewrite was justified against the differential corpus; corrected public Godoc/README for practical extraction and fingerprint limits. Full unit/race/CGO-off, oracle, vet, formatting, and OpenSpec pass. |
 | 2026-07-25 | Approve practical extraction renderer scope exception | User authorized `github.com/JohannesKaufmann/html-to-markdown v1.6.0` for `Extract` rendered formats after reviewing frozen differences. This unblocks task 7.5. Raw fetch, bytes, decoded text, configuration, cancellation, and error behavior remain source contracts; rendered Markdown/plain/rich are explicitly not claimed as `primp`-identical. |
 | 2026-07-25 | Complete practical-release review (task 8.6) | User explicitly accepted a practical release after reviewing renderer and fingerprint limits. All revised OpenSpec tasks are complete; documentation must continue to prohibit claims of a strict `primp` renderer or browser TLS/H2 fingerprint/complete 1:1 parity. The change is releasable as a tested Go module, but must not be marketed as strict source equivalence. |
+| 2026-07-25 | Complete practical browser transport and final review (tasks 5.6, 8.7) | Historical fixed-Chrome transport proof: `sardanioss/utls v1.10.3` supplied the first isolated direct-HTTPS Chrome 146 ClientHello/H2 implementation. It is superseded by the completed 23×5 browser-profile change below; DuckDuckGo temporary `HttpClient2` remains a distinct limit. |
+| 2026-07-25 | Complete source-shaped browser-profile randomization | `primp-python` chooses operating system first (`android`, `ios`, `linux`, `macos`, `windows`) then one of 23 browser variants. Go now retains the same two independent draws as one immutable 23×5 TLS/ALPN/H2/header identity per base client, across direct, PEM, verify-off, HTTP(S) CONNECT and SOCKS HTTPS target routes. The 115-pair loopback capture asset is checksum/provenance verified; every bundle passes uTLS instantiation and local wire tests. TDD RED exposed the former fixed-profile/wrong-draw-order gap, then GREEN/REFACTOR unified catalog, TLS and H2 ownership. `golang-pro`, hexagonal boundary review, `golang-testing`, TDD RED→GREEN→REFACTOR, clean-code and simplification applied. Concurrency patterns/debugger review covered per-origin cache, cancellation, retry and reuse; focused `-race -count=10` passes. Final acceptance passed formatter, diff check, vet, full tests/race/CGO-off, integration-tag compile/opt-out, Python fixture/profile verification, `make verify`, strict OpenSpec validation and 80.2% transport coverage. Controlled diagnostics match explicit `primp` Chrome 146/Windows, Edge 148/Linux, Opera 131/Android, Safari 26.3/macOS and Firefox 148/iOS observations. No search engine request ran. |
 
 ## Core TDD evidence — 2026-07-20
 
@@ -608,3 +606,13 @@ Verification recorded on 2026-07-20:
   the 368-fixture oracle, and strict OpenSpec validation passed. The known
   `internal/extract` RED remains intentionally excluded; it fails only because
   no approved renderer exists.
+- **Acceptance 5.6/8.7 (2026-07-25):** frozen Python `--check` verified 368
+  fixtures (138 pure, 179 engine, 9 extract, 24 parser, 18 transport).
+  `gofmt`, `git diff --check`, `go vet ./...`, unit tests, full `-race`,
+  `CGO_ENABLED=0` tests, integration-tag compilation/opt-out smoke, `make
+  verify`, and strict OpenSpec validation passed. Coverage: total 86.0%; root
+  90.4%; engine 86.9%; extract 82.2%; normalize 91.7%; parser 83.4%; search
+  91.9%; transport 80.0%. Focused browser transport `-race` stress passed
+  20–30 repetitions. A controlled TLS diagnostic (not an engine search)
+  observed HTTP/2, source Chrome JA4/Akamai H2, and GREASE-varying JA3 values
+  including `0482d5…`; no live search-engine request ran.

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import hashlib
 import importlib
 import importlib.metadata
 import json
@@ -36,6 +37,7 @@ from urllib.parse import urlsplit
 import ddgs
 from lxml import html
 from lxml.etree import HTMLParser as LHTMLParser
+from fake_useragent import UserAgent
 from ddgs.engines.annasarchive import AnnasArchive
 from ddgs.engines.bing_images import BingImages
 from ddgs.engines.bing_news import BingNews
@@ -833,6 +835,39 @@ def _client_configuration_fixtures() -> list[Fixture]:
             _ok(_with_proxy_environment(None, lambda: _client_state(ddgs.DDGS(verify=pem_path)))),
         ),
     ]
+
+
+def _duckduckgo_user_agent_fixture() -> Fixture:
+    """Freeze fake-useragent's default weighted pool used at DDG module import."""
+    rows = UserAgent()._filter_useragents()
+    agents = [row["useragent"] for row in rows]
+    encoded = ("\n".join(agents) + "\n").encode()
+    positions = [0, len(agents) // 2, len(agents) - 1]
+    return _fixture(
+        "pure.duckduckgo-text-user-agent-pool",
+        "duckduckgo_text_user_agent_pool",
+        {
+            "distribution": "fake-useragent",
+            "version": importlib.metadata.version("fake-useragent"),
+            "selection": "random.choice(UserAgent()._filter_useragents())",
+        },
+        _ok(
+            {
+                "ordered_rows_sha256": hashlib.sha256(encoded).hexdigest(),
+                "row_count": len(agents),
+                "unique_count": len(set(agents)),
+                "positions": [
+                    {"index": index, "user_agent": agents[index]}
+                    for index in positions
+                ],
+            }
+        ),
+        random="source random.choice over the ordered fake-useragent default pool",
+        notes=[
+            "No external request; pool is packaged by fake-useragent.",
+            "Row multiplicity and order are observable through random.choice and are frozen here.",
+        ],
+    )
 
 
 def _aggregation_fixtures() -> list[Fixture]:
@@ -1639,6 +1674,111 @@ def _disabled_text_bing_regression_fixture() -> Fixture:
                 "note": "fake active registry only; disabled Bing is inspected as source metadata and never constructed",
             }
         ],
+    )
+
+
+def _facade_composition_fixture() -> Fixture:
+    """Freeze DDGS's lazy per-class engine cache without HTTP I/O."""
+
+    constructor_calls: list[dict[str, Any]] = []
+    search_calls: list[dict[str, Any]] = []
+
+    def fake_engine_class(name: str, provider: str) -> type[Any]:
+        class FakeEngine:
+            priority = 1
+
+            def __init__(self, *, proxy: str | None, timeout: int | None, verify: bool | str) -> None:
+                constructor_calls.append(
+                    {"name": name, "proxy": proxy, "timeout": timeout, "verify": verify}
+                )
+
+            def search(self, query: str, **kwargs: Any) -> list[TextResult]:
+                search_calls.append({"name": name, "query": query, "kwargs": dict(kwargs)})
+                return [TextResult(title=name, href=f"https://{name}.example/%2520", body=query)]
+
+        FakeEngine.name = name
+        FakeEngine.provider = provider
+        return FakeEngine
+
+    engines = {
+        "text": {
+            "alpha": fake_engine_class("alpha", "alpha"),
+            "beta": fake_engine_class("beta", "beta"),
+        }
+    }
+
+    def reverse(items: list[str]) -> None:
+        items.reverse()
+
+    core, old_engines, old_shuffle, old_threads = _patched_core_engines(engines, reverse)
+    try:
+        client = core.DDGS(proxy="tb", timeout=0, verify="source-root.pem")
+
+        def search(label: str, backend: str) -> dict[str, Any]:
+            return {
+                "label": label,
+                "results": client._search_sync(
+                    "text",
+                    "needle",
+                    region="fr-fr",
+                    safesearch="off",
+                    timelimit="w",
+                    max_results=1,
+                    page=3,
+                    backend=backend,
+                    source_marker=label,
+                ),
+            }
+
+        operations = [
+            search("first", "alpha"),
+            search("second", "alpha"),
+            search("third", "beta"),
+        ]
+        operation_constructor_calls = list(constructor_calls)
+
+        eager_client = core.DDGS(proxy="tb", timeout=0, verify="source-root.pem")
+        eager_constructor_offset = len(constructor_calls)
+        eager_instances = eager_client._get_engines("text", "auto")
+        eager_constructor_names = [call["name"] for call in constructor_calls[eager_constructor_offset:]]
+
+        output = {
+            "operations": operations,
+            "constructor_calls": operation_constructor_calls,
+            "search_calls": search_calls,
+            "cache_size": len(client._engines_cache),
+            "eager_auto": {
+                "cache_size": len(eager_client._engines_cache),
+                "constructor_names": eager_constructor_names,
+                "instance_names": [instance.name for instance in eager_instances],
+            },
+        }
+    finally:
+        _restore_core_engines(core, old_engines, old_shuffle, old_threads)
+
+    return _fixture(
+        "pure.facade-lazy-engine-cache-and-forwarding",
+        "ddgs_facade_composition",
+        {
+            "category": "text",
+            "client": {"proxy": "tb", "timeout": 0, "verify": "source-root.pem"},
+            "calls": [
+                {
+                    "query": "needle",
+                    "region": "fr-fr",
+                    "safesearch": "off",
+                    "timelimit": "w",
+                    "max_results": 1,
+                    "page": 3,
+                    "backend": backend,
+                    "source_marker": label,
+                }
+                for label, backend in (("first", "alpha"), ("second", "alpha"), ("third", "beta"))
+            ],
+        },
+        _ok(output),
+        random="shuffle patched to reverse; explicit singleton backends preserve selected engine",
+        trace=[{"sequence": 1, "kind": "note", "note": "fake engine classes only; no HTTP client is used"}],
     )
 
 
@@ -2701,6 +2841,35 @@ def _error_and_extract_fixtures() -> list[Fixture]:
     finally:
         core.HttpClient = old_client
 
+    constructor_calls: list[dict[str, Any]] = []
+
+    class ConfigResponse(Response):
+        pass
+
+    class ConfigClient:
+        def __init__(self, **kwargs: Any) -> None:
+            constructor_calls.append(kwargs)
+
+        def get(self, _url: str) -> ConfigResponse:
+            return ConfigResponse()
+
+    forwarding_cases = [
+        {"name": "default", "proxy": None, "timeout": 5, "verify": True},
+        {"name": "explicit", "proxy": "socks5h://proxy.fixture:1080", "timeout": None, "verify": False},
+        {"name": "pem", "proxy": None, "timeout": 0, "verify": "fixture-roots.pem"},
+    ]
+    forwarding_output: dict[str, Any] = {}
+    core.HttpClient = ConfigClient
+    try:
+        for case in forwarding_cases:
+            constructor_calls.clear()
+            core.DDGS(proxy=case["proxy"], timeout=case["timeout"], verify=case["verify"]).extract(
+                "https://extract.fixture/page", fmt="text_plain"
+            )
+            forwarding_output[case["name"]] = [dict(call) for call in constructor_calls]
+    finally:
+        core.HttpClient = old_client
+
     return [
         _fixture("pure.error-empty-query", "search_error", {"query": "", "keywords": ""}, empty_query),
         _fixture(
@@ -2723,6 +2892,13 @@ def _error_and_extract_fixtures() -> list[Fixture]:
             {"formats": ["content", "text", "text_plain", "text_rich", "unknown"]},
             _ok(extract_output),
             trace=[{"sequence": 1, "kind": "note", "note": "fake HTTP client only; selected renderer access is observable"}],
+        ),
+        _fixture(
+            "pure.extract-constructor-forwarding",
+            "extract_constructor",
+            {"cases": forwarding_cases},
+            _ok(forwarding_output),
+            trace=[{"sequence": 1, "kind": "note", "note": "fake HTTP client records DDGS.extract constructor inputs only"}],
         ),
     ]
 
@@ -7458,12 +7634,14 @@ def build_fixtures() -> list[Fixture]:
     fixtures = [
         *_normalizer_fixtures(),
         *_client_configuration_fixtures(),
+        _duckduckgo_user_agent_fixture(),
         *_aggregation_fixtures(),
         *_ranker_fixtures(),
         _engine_registry_fixture(),
         *_backend_fixtures(),
         _frozen_registry_backend_fixture(),
         _disabled_text_bing_regression_fixture(),
+        _facade_composition_fixture(),
         _category_scheduler_differential_fixture(),
         *_search_invocation_fixtures(),
         *_scheduler_fixtures(),

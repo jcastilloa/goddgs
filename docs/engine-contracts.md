@@ -42,7 +42,9 @@ gates separados: esta tabla no prueba ninguno.
 Detalles obligatorios de texto:
 
 - User-Agent de Google y DuckDuckGo se decide al crear módulo/clase Python,
-  no por request.
+  no por request. DuckDuckGo usa el pool ponderado completo de
+  `fake-useragent 2.2.0`; su orden y multiplicidad están congelados en
+  `pure.duckduckgo-text-user-agent-pool` y se validan al cargarlo en Go.
 - Startpage siempre hace bootstrap; Wikipedia puede hacer segunda request.
 - Yahoo y Yandex generan valores aleatorios por búsqueda.
 - Valores de región/safesearch/timelimit no soportados pueden producir

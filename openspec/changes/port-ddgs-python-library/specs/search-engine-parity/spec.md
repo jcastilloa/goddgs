@@ -101,6 +101,12 @@ de-duplication, worker-count formula, occurrence aggregation, duplicate
 replacement, ranker buckets, category-page filtering, no-result classification,
 and `max_results` semantics.
 
+#### Scenario: Adapter fields enter scheduler aggregation
+- **WHEN** a composed public operation receives category results from an
+  adapter whose URL or text was already source-normalized
+- **THEN** scheduler aggregation SHALL retain the adapter field order and
+  values without routing through a second named-field normalizer
+
 #### Scenario: Provider duplicate is scheduled before first result returns
 - **WHEN** controlled engine fixtures share provider label and first submitted engine has not yet returned nonempty result
 - **THEN** scheduler behavior SHALL match frozen source submit/seen-provider timing rather than reserve provider at submission

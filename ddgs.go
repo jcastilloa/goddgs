@@ -3,6 +3,9 @@ package ddgs
 import (
 	"os"
 	"time"
+
+	"github.com/jcastillo/goddgs/internal/engine"
+	"github.com/jcastillo/goddgs/internal/search"
 )
 
 const torBrowserProxy = "socks5h://127.0.0.1:9150"
@@ -63,7 +66,12 @@ func New(options ...Option) *DDGS {
 
 	environmentProxy, environmentSet := os.LookupEnv("DDGS_PROXY")
 	config.proxy = resolveProxy(config.proxy, environmentProxy, environmentSet)
-	return &DDGS{config: config}
+	registry := engine.FrozenRegistry()
+	selector := search.NewBackendSelector(registry.Categories(), nil)
+	return &DDGS{
+		config:   config,
+		executor: newComposedExecutor(config, newSourceEngineFactory(), selector),
+	}
 }
 
 func defaultClientConfig() clientConfig {

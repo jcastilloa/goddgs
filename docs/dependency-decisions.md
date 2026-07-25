@@ -73,3 +73,58 @@ capability: `ForceAttemptHTTP2`, request-local headers/jar, and disabled
 redirect following are fixture- and loopback-proven. It is **not** evidence of
 `primp` browser impersonation or randomized TLS/H2 fingerprint parity; task
 5.5 remains open.
+
+## Browser-fingerprint gate — observed mismatch, 2026-07-25
+
+The opt-in tagged observation in
+`internal/transport/fingerprint_integration_test.go` ran once per Go transport
+against a diagnostic TLS/HTTP2 endpoint, with no search-engine request and no
+raw response persisted. Both Go clients negotiated HTTP/2 but exposed the same
+standard Go JA3/JA4/Akamai hashes; those differ from separately observed frozen
+Python `primp 1.3.1` and `HttpClient2` hashes. The exact sanitized observations
+and per-active-engine matrix are in `docs/fingerprint-gate.md`.
+
+Therefore neither `net/http` client is approved as browser-fingerprint
+equivalent. This closes task 5.5 only as an evidence gate: each affected engine
+is explicitly still incomplete in that dimension. No module or cgo dependency
+was added by the observation.
+
+## Extract renderers — no candidate approved, 2026-07-25
+
+Frozen extraction is not a generic HTML-to-text operation. The resolved source
+dependency `primp 1.3.1` is pinned to upstream tag `v1.3.1`
+(`f662999ad2a44bfad4ee433f8d37dd4a231f3154`). Its Python response code calls
+Rust crate `html2text 0.16.7` (lock checksum
+`12d23156ea4dbe6b37ad48fab2da56ff27b0f6192fb5db210c44eb07bfe6e787`) at width
+100: default decorator for Markdown, `TrivialDecorator` for plain text, and
+`RichDecorator` for rich text. The source crate is MIT, tag
+`release_0.16.7` (`ec40e98a7097bf0926ba5df740e1d7b2aa08c557`), but its visible
+implementation/test surface is about 11,543 Rust lines (about 397 KiB) and it
+depends on `html5ever`/`tendril`/`unicode-width`.
+
+| Candidate | Version / license | Frozen fixture result | Decision |
+| --- | --- | --- | --- |
+| `github.com/JohannesKaufmann/html-to-markdown` | `v1.6.0`, MIT, `h1:04VXMiE50YYfCfLboJCLcgqF5x+rHJnb1ssNmqpLH/k=` | Markdown uses inline `[link](URL)` and `-` bullets, while source emits footnote links and `*` bullets; it does not provide source-equivalent plain/rich decorators. | Rejected. |
+| `github.com/k3a/html2text` | `v1.4.0`, MIT, `h1:e4xarrVgZST+h+5C/fbA6AI49VFDSlEWMmIcDWcxsd0=` | Produces CRLF, URL-bearing text, and extra blank lines; source plain has neither link URL nor those line breaks. | Rejected. |
+| `github.com/jaytaylor/html2text` | `v0.0.0-20260303211410-1a4bdc82ecec`, MIT, `h1:DrV+GDNKHeHyfqEZaoxQoHlWcgTBiaJ8ZUyNyd5vvkY=` | Produces underline-style headings and `link ( URL )`; source emits ATX headings and source-specific decorator output. It also brings table-rendering dependencies. | Rejected. |
+
+All probes use only `extract.html-*` synthetic fixtures in a temporary module;
+none changed `go.mod` or made a source-engine request. `cargo` is unavailable
+in this environment, and cgo/external-renderer shipping is not approved.
+Implementing a faithful internal port of the Rust crate would be a substantial
+new OpenSpec decision, not a safe fallback. Therefore no renderer dependency
+or extraction implementation is approved; task 7.5 remains blocked until a
+candidate matches the expanded frozen renderer corpus or the project explicitly
+authorizes a reviewed renderer-port scope.
+
+## DuckDuckGo text User-Agent pool — vendored data approved, 2026-07-25
+
+| Item | Decision |
+| --- | --- |
+| Purpose | Frozen `ddgs.engines.duckduckgo` assigns `UserAgent().random` to a class header at module import. The Go composition root must retain its source pool, duplicate weighting, and process-lifetime selection rather than use a fixed or generic User-Agent. |
+| Source artifact | `fake-useragent` `2.2.0`, tag commit `72a60b078817da26fe8825ad7ba143568e12eba2`, `src/fake_useragent/data/browsers.jsonl`, source SHA-256 `32270597095ae268d140489e8fa7ffbd44b882c876f4b7a23f347bedcfc227b5`. Its README identifies the bundled data as pre-downloaded and post-processed from Intoli. |
+| Derived Go asset | The Go source stores the exact default-filtered ordered sequence selected by `UserAgent()._filter_useragents()`: 6,933 rows, 836 distinct strings, newline form SHA-256 `e36a0c36f109eecf4bda3c835d57f0e5ddd72f77591c6a3442179d9c2f244475`. It is gzip-compressed with fixed `mtime=0` (23,733 bytes; SHA-256 `0ea7a1383e477001a7992890d5d05594fa5a2d168db5b450c178836c7a29587f`) and decoded only once per process. Row order and multiplicity are retained; no network fetch occurs. |
+| License / notice | `fake-useragent` is Apache-2.0, copyright hellysmile@gmail.com. Its stated data origin, `intoli/user-agents`, is BSD-2-Clause, copyright 2018-present Intoli, LLC. Both notices are retained in `NOTICE.md`. |
+| cgo / module impact | No cgo and no new Go module. The standard library alone decodes the immutable embedded asset and chooses one uniformly weighted row. |
+| Supply-chain risk | The data is intentionally pinned to the resolved Python reference package and is checksum-validated at decode time. A malformed/truncated asset fails construction rather than silently falling back. |
+| Update rule | Do not refresh with a newer fake-useragent database casually. Re-capture `pure.duckduckgo-text-user-agent-pool`, review license/provenance, compare ordered row count/hash/positions, and update source baseline/OpenSpec explicitly. |

@@ -28,6 +28,14 @@ than panic for expected failures.
 - **WHEN** caller invokes public text, images, news, videos, books, and extract operations
 - **THEN** each operation SHALL route to corresponding source category contract rather than generic web-search substitute
 
+#### Scenario: Caller invokes a composed search category
+- **WHEN** caller invokes a public search method with a source backend and
+  category-specific keyword options
+- **THEN** the façade SHALL select only frozen active metadata, construct the
+  corresponding source adapter lazily with isolated per-engine transport
+  state, preserve ordered keyword inputs, and route the ordered source result
+  fields to scheduler aggregation without a second normalization pass
+
 #### Scenario: Caller configures image source filters
 - **WHEN** caller invokes `Images` with image size, color, type, layout, or
   license options

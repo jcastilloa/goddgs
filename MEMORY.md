@@ -4,7 +4,7 @@ Persistent project state. Read before changing behavior. Update after every
 material decision, completed OpenSpec task, source-baseline change, blocker, or
 verification result.
 
-## Current state — 2026-07-21
+## Current state — 2026-07-25
 
 - Target: Go library port of DDGS only. No API server, CLI, MCP, DHT, cache,
   Docker service, or executable entrypoint.
@@ -16,15 +16,17 @@ verification result.
   offline HTML/XPath/JSON parser adapter, isolated base transport,
   request-local DDG text standard-HTTP/2 transport, and fixture-backed
   DuckDuckGo, Grokipedia, Wikipedia, Brave, Google, Mojeek, Startpage, Yahoo,
-  and Yandex text adapters plus Bing and DuckDuckGo image adapters are complete. The
-  adapters are not yet composed into the public client. No live search engine,
-  source TLS/H2 fingerprint parity, renderer, extraction implementation, or
-  public-client-to-engine composition exists yet; those internal package
-  boundaries remain intentional.
+  and Yandex text adapters; Bing/DuckDuckGo image adapters; Bing/DuckDuckGo/
+  Yahoo News adapters; DuckDuckGo Videos; and Anna's Archive Books are complete.
+  Task 7.7 composes all active frozen adapters into the public client with lazy
+  per-client caching, fresh isolated transports, source-order construction before
+  scheduler work, ordered keyword forwarding, and non-normalizing results. No
+  live search-engine proof, source TLS/H2 fingerprint parity, renderer, or
+  extraction implementation exists yet; those gates remain intentional.
 - Tasks 2.1–2.7 are complete. The isolated Python oracle lives temporarily at
   `/tmp/goddgs-reference-a12929a`; exact resolved packages and rebuild steps
   are in `docs/reference-environment.md`. It made no external engine request.
-- Fixture corpus has 365 deterministic synthetic/offline contracts: 135 pure,
+- Fixture corpus has 368 deterministic synthetic/offline contracts: 138 pure,
   179 engine-visible, 9 extract, 24 parser, and 18 transport contracts under
   their
   respective `testdata/contracts/` directories. `tools/reference_capture.py --check`
@@ -36,6 +38,17 @@ verification result.
   Parser, base transport, and request-local DDG HTTP/2 transport have
   independently consumed their relevant offline fixtures; the doubles/loopback
   still do not prove renderer or browser/TLS-H2 fingerprint parity.
+- Task 7.3 is intentionally RED-only: `internal/extract` has a context-first
+  fetcher/renderer boundary and fixture tests for raw bytes/text, selected
+  render representation, non-200, config forwarding and cancellation. The
+  focused test fails only at the unavailable extractor implementation. Task
+  7.4 rejected three Go renderer candidates; source-compatible extraction must
+  not be implemented until a reviewed renderer passes the frozen corpus.
+- Task 5.5 is complete as an evidence gate, not a parity approval:
+  `docs/fingerprint-gate.md` records one sanitized, tagged TLS/HTTP2
+  observation per Python and Go client. Both Go clients negotiated HTTP/2 but
+  differed from `primp` and `HttpClient2` hashes, so every active engine stays
+  explicitly incomplete for browser-fingerprint parity.
 - Task 6.5 design decision: source image filters cross the Go façade as ordered
   source-keyword options (`size`, `color`, `type_image`, `layout`,
   `license_image`), while public `max_results` remains scheduler/slicing-only.
@@ -45,26 +58,27 @@ verification result.
   injected request port. Bing preserves engine-only Python `int`, literal
   long-form timelimit, metadata/dimension errors, and source provider collision;
   DuckDuckGo preserves header order, VQD/bootstrap/error order, six filter
-  slots, raw image values, and result-root errors. They are not yet public-client
-  composition or browser/TLS-H2 fingerprint proof.
+  slots, raw image values, and result-root errors. They are composed through
+  task 7.7 but remain without browser/TLS-H2 fingerprint proof.
 - Task 6.6 complete: News adapters use injected request ports and per-instance
   UTC clock seams. Bing preserves payload mapping, source local-zone absolute
   date conversion, localized relative dates, and image truncation; DuckDuckGo
   preserves VQD-before-safe validation and raw dynamic `results` iteration;
   Yahoo preserves fixed-relative-date units, URL/image/source cleanup, and its
-  broad partial postprocess failure. They are not yet public-client composition
-  or browser/TLS-H2 fingerprint proof.
+  broad partial postprocess failure. They are composed through task 7.7 but
+  remain without browser/TLS-H2 fingerprint proof.
 - Task 6.7 complete: DuckDuckGo Videos uses an injected request port and
   preserves VQD-before-safe validation, mandatory four-slot filters, page
   stride 60, nested heterogeneous video values, and raw iterable/attribute
   errors. Video filters cross the façade as ordered `resolution`, `duration`,
   and `license_videos` keywords; public `max_results` remains scheduler-only.
-  It is not yet public-client composition or browser/TLS-H2 fingerprint proof.
+  It is composed through task 7.7 but remains without browser/TLS-H2
+  fingerprint proof.
 - Task 6.8 complete: Anna's Archive uses a private process-lifetime,
   synchronized TLD selector and an immutable per-adapter search URL. Fixtures
   preserve its ordered GET pagination, HTML comment delimiter removal,
   nil-versus-empty response boundary, and the intentional base prefix on an
-  already-absolute URL. It is not yet public-client composition or
+  already-absolute URL. It is composed through task 7.7 but remains without
   browser/TLS-H2 fingerprint proof.
 - Task 6.9 complete: disabled text Bing is captured as source metadata outside
   the active text registry. Explicit `backend="bing"` runs the source invalid
@@ -318,6 +332,10 @@ Verification recorded on 2026-07-20:
 | 2026-07-21 | Complete Anna's Archive adapter gate (task 6.8) | Fixture RED/GREEN/REFACTOR proves one process-lifetime archive TLD, immutable adapter URL, ordered `q,page` GET (including page zero), comment delimiter removal, nil/empty/malformed distinctions, and source base-prefix repair even for absolute URLs. Full tests/race, adapter race stress x50, cgo-off, `make verify`, strict OpenSpec validation, and the 363-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 | 2026-07-21 | Complete disabled text Bing regression gate (task 6.9) | Direct frozen-source fixture proves `Bing.disabled=True` metadata, its absence from active text names, and explicit `backend="bing"` fallback to active `auto` after two shuffle calls. This task intentionally added no production code or active adapter; test-only TDD GREEN is existing behavior, with RED/GREEN production phases N/A. Focused race x20, full acceptance, and the 364-fixture oracle pass. |
 | 2026-07-25 | Complete category selector/scheduler differential gate (task 6.10) | Frozen synthetic engines drive every active category through explicit/comma, `auto`, `all`, invalid fallback, provider collisions, empty/error recovery, timeout/no-result, and max-result branches. RED caught missing common/category-keyword forwarding and source timeout-cause shape; scheduler now owns immutable ordered source parameters, copied again per worker. Focused race x50, full acceptance, and the 365-fixture oracle pass. Real adapter/public-client composition remains intentionally open. |
+| 2026-07-25 | Complete extraction RED contract (task 7.3) | `internal/extract/extract_test.go` fails only against the unavailable extractor, after proving 9 frozen extract fixtures plus constructor forwarding, GET, raw byte/text ownership, lazy rendering, unknown fallback, cancellation, and fetch-error propagation. It is intentionally not green until renderer gate resolves. |
+| 2026-07-25 | Reject current Go extract renderers (task 7.4 remains blocked) | Resolved `primp 1.3.1` calls Rust `html2text 0.16.7` width 100/default/Trivial/Rich decorators. Three MIT Go candidates diverge on frozen heading/link/list output; the exact MIT Rust crate is ~11.5k lines and this environment has no cargo. No cgo/subprocess/best-effort fallback is approved. |
+| 2026-07-25 | Complete browser-fingerprint evidence gate (task 5.5) | Endpoint-explicit tagged observations show both Go transports negotiate HTTP/2 but expose the same standard Go JA3/JA4/Akamai hashes, distinct from observed source `primp` and `HttpClient2` values. `docs/fingerprint-gate.md` maps every active engine to its still-unproven source client; no dependency or parity claim was added. |
+| 2026-07-25 | Complete public composition gate (task 7.7) | Root composition selects frozen metadata lazily, eagerly constructs all selected adapters before scheduler workers, caches adapters per public client under a narrow lock, and gives every engine a fresh isolated transport. DuckDuckGo text gets its separate H2 client plus the frozen full weighted `fake-useragent 2.2.0` pool, decoded/checksummed once per Go process. Public boundary preserves ordered keyword forwarding and maps scheduler timeout/generic failures to classifiable `DDGSError` values. |
 
 ## Core TDD evidence — 2026-07-20
 
@@ -470,6 +488,18 @@ Verification recorded on 2026-07-20:
   concurrency patterns, and debugger review applied; 32 concurrent calls and
   `go test -race -count=50` pass. The adapter owns no goroutine or response
   body.
+- **RED/GREEN/REFACTOR 7.7:** composition fixture tests were RED before the
+  root executor/factory existed. GREEN wires each active frozen registry entry
+  through a per-client cache and a fresh transport, retains DDG text's special
+  H2 path, forwards source keywords without maps, and classifies scheduler
+  timeout/generic errors at the public boundary. Follow-up RED requires all
+  selected adapters to exist before scheduler work starts and a concurrent
+  cache test proves exactly one adapter construction. REFACTOR retains only
+  small consumer-side factory/selector ports. `golang-pro`, hexagonal boundary
+  review, `golang-testing`, strict TDD, clean-code, simplification,
+  concurrency patterns, and debugger review applied; focused cache stress
+  passes `-race -count=50`. The executor owns no response body or goroutine;
+  scheduler/transport own their established lifecycles.
 - **Regression 6.9:** a new frozen-source fixture directly combines disabled
   Bing metadata, active text names, and `backend="bing"` fallback. The Go
   implementation already matched this frozen behavior, so this was a
@@ -559,3 +589,12 @@ Verification recorded on 2026-07-20:
   `internal/engine`: 86.9%; `internal/search`: 91.9%; parser: 83.4%;
   transport: 83.8%. Live checks skipped: no external engine request or
   fingerprint evidence was authorized.
+- **Acceptance 7.7 (2026-07-25):** frozen Python `--check` verified 368
+  fixtures (138 pure, 179 engine, 9 extract, 24 parser, 18 transport);
+  `gofmt`, `git diff --check`, `go vet ./...`, root composition tests,
+  `go test -count=1` and `go test -race -count=1` for every package except the
+  intentionally RED-only `internal/extract`, plus CGO-off tests and strict
+  OpenSpec validation passed. Root package coverage: 90.9%; transport: 81.4%.
+  Full `make verify` remains intentionally blocked only by task 7.3/7.4
+  extractor RED, not by composition. Live checks were skipped; fingerprint
+  parity remains unapproved.

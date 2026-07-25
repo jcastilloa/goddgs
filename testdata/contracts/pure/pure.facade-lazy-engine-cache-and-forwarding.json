@@ -1,0 +1,190 @@
+{
+  "contract": {
+    "kind": "pure",
+    "operation": "ddgs_facade_composition"
+  },
+  "controls": {
+    "clock": "not used",
+    "random": "shuffle patched to reverse; explicit singleton backends preserve selected engine"
+  },
+  "fixture_id": "pure.facade-lazy-engine-cache-and-forwarding",
+  "input": {
+    "calls": [
+      {
+        "backend": "alpha",
+        "max_results": 1,
+        "page": 3,
+        "query": "needle",
+        "region": "fr-fr",
+        "safesearch": "off",
+        "source_marker": "first",
+        "timelimit": "w"
+      },
+      {
+        "backend": "alpha",
+        "max_results": 1,
+        "page": 3,
+        "query": "needle",
+        "region": "fr-fr",
+        "safesearch": "off",
+        "source_marker": "second",
+        "timelimit": "w"
+      },
+      {
+        "backend": "beta",
+        "max_results": 1,
+        "page": 3,
+        "query": "needle",
+        "region": "fr-fr",
+        "safesearch": "off",
+        "source_marker": "third",
+        "timelimit": "w"
+      }
+    ],
+    "category": "text",
+    "client": {
+      "proxy": "tb",
+      "timeout": 0,
+      "verify": "source-root.pem"
+    }
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs",
+      "no external request",
+      "no credentials or cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "output": {
+      "cache_size": 2,
+      "constructor_calls": [
+        {
+          "name": "alpha",
+          "proxy": "socks5h://127.0.0.1:9150",
+          "timeout": 0,
+          "verify": "source-root.pem"
+        },
+        {
+          "name": "beta",
+          "proxy": "socks5h://127.0.0.1:9150",
+          "timeout": 0,
+          "verify": "source-root.pem"
+        }
+      ],
+      "eager_auto": {
+        "cache_size": 2,
+        "constructor_names": [
+          "beta",
+          "alpha"
+        ],
+        "instance_names": [
+          "beta",
+          "alpha"
+        ]
+      },
+      "operations": [
+        {
+          "label": "first",
+          "results": [
+            {
+              "body": "needle",
+              "href": "https://alpha.example/%20",
+              "title": "alpha"
+            }
+          ]
+        },
+        {
+          "label": "second",
+          "results": [
+            {
+              "body": "needle",
+              "href": "https://alpha.example/%20",
+              "title": "alpha"
+            }
+          ]
+        },
+        {
+          "label": "third",
+          "results": [
+            {
+              "body": "needle",
+              "href": "https://beta.example/%20",
+              "title": "beta"
+            }
+          ]
+        }
+      ],
+      "search_calls": [
+        {
+          "kwargs": {
+            "page": 3,
+            "region": "fr-fr",
+            "safesearch": "off",
+            "source_marker": "first",
+            "timelimit": "w"
+          },
+          "name": "alpha",
+          "query": "needle"
+        },
+        {
+          "kwargs": {
+            "page": 3,
+            "region": "fr-fr",
+            "safesearch": "off",
+            "source_marker": "second",
+            "timelimit": "w"
+          },
+          "name": "alpha",
+          "query": "needle"
+        },
+        {
+          "kwargs": {
+            "page": 3,
+            "region": "fr-fr",
+            "safesearch": "off",
+            "source_marker": "third",
+            "timelimit": "w"
+          },
+          "name": "beta",
+          "query": "needle"
+        }
+      ]
+    },
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "kind": "note",
+      "note": "fake engine classes only; no HTTP client is used",
+      "sequence": 1
+    }
+  ]
+}

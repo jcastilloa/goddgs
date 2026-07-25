@@ -238,6 +238,39 @@ before public-to-engine composition exists. Resolved client timeout, including
 explicit `None`, still belongs to the pending composition task. The isolated
 scheduler remains a tested core until that composition task is complete.
 
+### Compose the public façade without re-normalizing adapter results
+
+**Proven:** engine adapters construct category results with Python dataclass
+defaults, named-field normalization, dynamic value types, and field insertion
+order. The scheduler separately owns source selection, aggregation, ranking,
+and slicing. Passing an adapter result through the scheduler's normalizing
+constructor a second time would change non-idempotent source URLs.
+
+**Decision:** the root `ddgs` package owns a private composition executor. It
+snapshots the public client proxy/timeout/verification configuration into a
+fresh `internal/transport.Client` for each cached source engine, matching
+Python's per-engine client/cache scope without sharing cookie or header state
+between engines. DuckDuckGo text receives its distinct local HTTP/2 client.
+The executor remains lazy between operations: it creates nothing before a
+category/backend is selected. Once selected, however, it eagerly constructs
+every selected adapter in source order before scheduler workers begin, exactly
+as Python `_get_engines` initializes every selected class before
+`_search_sync` submits work. It converts `internal/engine.Result` fields into
+a non-normalizing `internal/search` source-result boundary and invokes the
+scheduler with copied common and ordered category keyword inputs.
+
+The executor lock protects cache creation only; no lock is held during network
+I/O or scheduler work. Constructor failures remain operation errors rather
+than changing `New`'s public no-error signature. The resulting façade remains
+explicitly unapproved for browser TLS/HTTP2 fingerprint parity as recorded by
+the transport gate.
+
+**Rejected:** routing through public maps loses field order; rebuilding via the
+normalizing search constructor can decode an already-normalized URL twice;
+one shared transport client changes source engine cookie/header isolation;
+per-worker adapter construction changes Python's selected-engine cache/error
+timing.
+
 **Rejected:** direct cached mutable engines cause races; serial/unbounded
 execution changes behavior/resource use; `errgroup` early cancellation changes
 partial-result behavior.
@@ -307,6 +340,14 @@ the archive URL.
 **Rejected:** default `net/http` everywhere is unproven; blindly importing
 fingerprint dependency creates supply-chain/cgo risk.
 
+**Fingerprint gate result (2026-07-25):** an opt-in, endpoint-explicit tagged
+test observes sanitized TLS/HTTP2 identifiers for both Go transports. Both
+negotiate HTTP/2, but their observed JA3/JA4/Akamai identifiers differ from the
+frozen Python `primp` and temporary `HttpClient2` observations. The complete
+per-engine matrix is `docs/fingerprint-gate.md`. Task 5.5 is therefore closed
+as a gate while every affected engine remains unapproved for browser
+fingerprint parity; no fallback or transport dependency is implied.
+
 ### Parser and renderer are selected by differential corpus
 
 **Proven:** HTML engines use lxml recovery/XPath; `primp` provides Markdown,
@@ -322,6 +363,27 @@ defaults: no external network/filesystem loader, DTD, XInclude, or cgo path.
 union and malformed Startpage contracts. Do not rewrite selectors to fit a
 candidate. Capture all extract formats and accept renderer only when corpus
 matches; unknown format defaults to source Markdown.
+
+`internal/extract` owns a consumer-side, context-first fetcher port. The port
+receives an immutable `internal/transport.Config` snapshot and URL and returns
+the already materialized source response (status, raw bytes, decoded text).
+This keeps proxy, timeout, TLS verification, cancellation, and response-body
+ownership in the lower transport layer while allowing extraction tests to use a
+small fake. Extraction selects exactly one source representation after a 200
+response; it must not eagerly render the other formats. The renderer remains a
+separate dependency decision and must not be selected or implemented before
+the frozen Markdown/plain/rich corpus is accepted.
+
+**Renderer gate status (2026-07-25):** resolved `primp 1.3.1` calls Rust
+`html2text 0.16.7` at width 100 with its default, `TrivialDecorator`, and
+`RichDecorator` outputs. Offline probes reject
+`JohannesKaufmann/html-to-markdown v1.6.0`, `k3a/html2text v1.4.0`, and
+`jaytaylor/html2text`
+`v0.0.0-20260303211410-1a4bdc82ecec`: all diverge on the minimal frozen
+heading/link/list fixture. No Go renderer is approved, so `internal/extract`
+remains RED-only and task 7.5 is blocked. See `docs/dependency-decisions.md`
+for license, provenance, and output evidence; do not add a best-effort
+converter merely to unblock the task.
 
 JSON-backed engines decode one complete JSON value through `internal/parser`
 with `json.Decoder.UseNumber`. This preserves integer-versus-float lexical

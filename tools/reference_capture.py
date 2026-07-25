@@ -1663,6 +1663,51 @@ def _search_invocation_fixtures() -> list[Fixture]:
             _ok(capture({"page": -7})),
             trace=[{"sequence": 1, "kind": "note", "note": "fake engine records unvalidated negative page"}],
         ),
+        _fixture(
+            "pure.search-call-image-filters-forwarded-max-results-omitted",
+            "search_invocation",
+            {
+                "category": "probe",
+                "query": "query",
+                "arguments": {
+                    "region": "us-en",
+                    "safesearch": "on",
+                    "timelimit": "d",
+                    "max_results": 41,
+                    "page": 2,
+                    "backend": "bing",
+                    "size": "Medium",
+                    "color": "Blue",
+                    "type_image": "photo",
+                    "layout": "Square",
+                    "license_image": "Share",
+                },
+            },
+            _ok(
+                capture(
+                    {
+                        "region": "us-en",
+                        "safesearch": "on",
+                        "timelimit": "d",
+                        "max_results": 41,
+                        "page": 2,
+                        "backend": "bing",
+                        "size": "Medium",
+                        "color": "Blue",
+                        "type_image": "photo",
+                        "layout": "Square",
+                        "license_image": "Share",
+                    }
+                )
+            ),
+            trace=[
+                {
+                    "sequence": 1,
+                    "kind": "note",
+                    "note": "_search_sync forwards image kwargs but consumes max_results for scheduling/slicing",
+                }
+            ],
+        ),
     ]
 
 
@@ -4627,6 +4672,470 @@ def _html_engine_matrix_fixtures() -> list[Fixture]:
     return fixtures
 
 
+def _image_engine_edge_fixtures() -> list[Fixture]:
+    """Capture image-engine-only option, empty-text, and dynamic-value branches."""
+    fixtures: list[Fixture] = []
+
+    bing_minimum_input = {
+        "query": "fixture bing minimum count",
+        "region": "us-en",
+        "safesearch": "moderate",
+        "timelimit": None,
+        "page": 2,
+        "max_results": "10",
+    }
+    fixtures.append(
+        _synthetic_search_fixture(
+            "engine.images.bing-engine-max-results-minimum",
+            "images",
+            "bing",
+            bing_minimum_input,
+            BingImages,
+            [_SyntheticResponse(text="<html><body></body></html>")],
+            notes=["Direct engine kwargs clamp Bing Images count to its source minimum 35."],
+        )
+    )
+    fixtures.append(
+        _synthetic_engine_fixture(
+            "engine.images.bing-invalid-engine-max-results-error",
+            "images",
+            "bing",
+            "search",
+            {
+                **bing_minimum_input,
+                "max_results": "wrong",
+            },
+            [],
+            lambda _events: _engine_search_output(
+                BingImages().search(**{**bing_minimum_input, "max_results": "wrong"})
+            ),
+            notes=["Bing Images converts direct engine max_results with int() before any request."],
+        )
+    )
+    fixtures.append(
+        _synthetic_engine_fixture(
+            "engine.images.bing-empty-engine-max-results-error",
+            "images",
+            "bing",
+            "search",
+            {
+                **bing_minimum_input,
+                "max_results": "",
+            },
+            [],
+            lambda _events: _engine_search_output(
+                BingImages().search(**{**bing_minimum_input, "max_results": ""})
+            ),
+            notes=["An explicit empty direct engine max_results reaches int('') instead of Bing's missing-key default."],
+        )
+    )
+    fixtures.append(
+        _synthetic_search_fixture(
+            "engine.images.bing-unicode-underscore-engine-max-results",
+            "images",
+            "bing",
+            {
+                **bing_minimum_input,
+                "max_results": "\u00a0\u0661_\u0660\u00a0",
+            },
+            BingImages,
+            [_SyntheticResponse(text="<html><body></body></html>")],
+            notes=["Python int() accepts Unicode decimal digits, Unicode surrounding whitespace, and a single digit separator."],
+        )
+    )
+    fixtures.append(
+        _synthetic_search_fixture(
+            "engine.images.bing-supplementary-unicode-engine-max-results",
+            "images",
+            "bing",
+            {
+                **bing_minimum_input,
+                "max_results": "\U0001d7d9_\U0001d7d8",
+            },
+            BingImages,
+            [_SyntheticResponse(text="<html><body></body></html>")],
+            notes=["Python int() also accepts decimal digits from a supplementary-plane Unicode digit range."],
+        )
+    )
+    fixtures.append(
+        _synthetic_engine_fixture(
+            "engine.images.bing-timelimit-shortcode-error",
+            "images",
+            "bing",
+            "search",
+            {
+                **bing_minimum_input,
+                "timelimit": "d",
+                "page": 1,
+            },
+            [],
+            lambda _events: _engine_search_output(
+                BingImages().search(**{**bing_minimum_input, "timelimit": "d", "page": 1})
+            ),
+            notes=["Public DDGS timelimit shorthand reaches Bing Images unchanged and raises its source KeyError."],
+        )
+    )
+    fixtures.append(
+        _synthetic_search_fixture(
+            "engine.images.bing-empty-text-none",
+            "images",
+            "bing",
+            {
+                "query": "fixture bing empty text",
+                "region": "us-en",
+                "safesearch": "moderate",
+                "timelimit": None,
+                "page": 1,
+            },
+            BingImages,
+            [_SyntheticResponse(text="")],
+            notes=["BaseSearchEngine returns None for a status-200 response with exactly empty text."],
+        )
+    )
+    fixtures.append(
+        _synthetic_search_fixture(
+            "engine.images.bing-malformed-metadata-json-error",
+            "images",
+            "bing",
+            {
+                "query": "fixture bing malformed metadata",
+                "region": "us-en",
+                "safesearch": "moderate",
+                "timelimit": None,
+                "page": 1,
+            },
+            BingImages,
+            [
+                _SyntheticResponse(
+                    text='''<html><body><div><div class="imgpt"><a class="iusc" m="{"></a></div><div class="infopt"></div></div></body></html>'''
+                )
+            ],
+            notes=["Bing Images json.loads the m attribute exactly; malformed metadata exposes JSONDecodeError."],
+        )
+    )
+    fixtures.append(
+        _synthetic_search_fixture(
+            "engine.images.bing-null-metadata-root-error",
+            "images",
+            "bing",
+            {
+                "query": "fixture bing null metadata",
+                "region": "us-en",
+                "safesearch": "moderate",
+                "timelimit": None,
+                "page": 1,
+            },
+            BingImages,
+            [
+                _SyntheticResponse(
+                    text='''<html><body><div><div class="imgpt"><a class="iusc" m="null"></a></div><div class="infopt"></div></div></body></html>'''
+                )
+            ],
+            notes=["Bing Images calls get() on the decoded m root; JSON null exposes AttributeError."],
+        )
+    )
+    control_space_metadata = json.dumps(
+        {
+            "t": "Fixture Bing control whitespace",
+            "murl": "https://bing-image.example/control",
+            "turl": "https://bing-image.example/control-thumb",
+            "purl": "https://bing-page.example/control",
+        }
+    )
+    fixtures.append(
+        _synthetic_search_fixture(
+            "engine.images.bing-dimension-python-control-whitespace",
+            "images",
+            "bing",
+            {
+                "query": "fixture bing control whitespace",
+                "region": "us-en",
+                "safesearch": "moderate",
+                "timelimit": None,
+                "page": 1,
+            },
+            BingImages,
+            [
+                _SyntheticResponse(
+                    text=(
+                        '<html><body><div><div class="imgpt"><a class="iusc" m="'
+                        + escape(control_space_metadata, quote=True)
+                        + '"></a></div><div class="infopt"></div><div class="img_info"><span class="nowrap">\x1c640\x1c × \x1d480\x1e</span></div></div></body></html>'
+                    )
+                )
+            ],
+            notes=["Bing Images uses Python str.strip/split, whose whitespace includes U+001C through U+001F."],
+        )
+    )
+
+    ddg_filter_holes_input = {
+        "query": "fixture ddg image filter holes",
+        "region": "us-en",
+        "safesearch": "ON",
+        "timelimit": "d",
+        "page": 2,
+        "size": "",
+        "color": "Blue",
+    }
+    fixtures.append(
+        _synthetic_search_fixture(
+            "engine.images.duckduckgo-filter-holes-and-safe-case",
+            "images",
+            "duckduckgo",
+            ddg_filter_holes_input,
+            DuckduckgoImages,
+            [
+                _SyntheticResponse(content=b"vqd=fixture-vqd&"),
+                _SyntheticResponse(text=json.dumps({"results": []})),
+            ],
+            notes=["DuckDuckGo Images preserves all six filter slots and lower-cases safesearch only for lookup."],
+        )
+    )
+    fixtures.append(
+        _synthetic_engine_fixture(
+            "engine.images.duckduckgo-invalid-safe-after-vqd-error",
+            "images",
+            "duckduckgo",
+            "search",
+            {
+                "query": "fixture ddg invalid safe",
+                "region": "us-en",
+                "safesearch": "strict",
+                "timelimit": None,
+                "page": 1,
+            },
+            [_SyntheticResponse(content=b"vqd=fixture-vqd&")],
+            lambda _events: _engine_search_output(
+                DuckduckgoImages().search(
+                    "fixture ddg invalid safe",
+                    region="us-en",
+                    safesearch="strict",
+                    timelimit=None,
+                    page=1,
+                )
+            ),
+            notes=["DuckDuckGo Images fetches VQD before its safesearch mapping can raise KeyError."],
+        )
+    )
+    fixtures.append(
+        _synthetic_engine_fixture(
+            "engine.images.duckduckgo-invalid-timelimit-before-vqd-error",
+            "images",
+            "duckduckgo",
+            "search",
+            {
+                "query": "fixture ddg invalid time",
+                "region": "us-en",
+                "safesearch": "on",
+                "timelimit": "invalid",
+                "page": 1,
+            },
+            [],
+            lambda _events: _engine_search_output(
+                DuckduckgoImages().search(
+                    "fixture ddg invalid time",
+                    region="us-en",
+                    safesearch="on",
+                    timelimit="invalid",
+                    page=1,
+                )
+            ),
+            notes=["DuckDuckGo Images maps timelimit before requesting VQD, so an invalid value raises KeyError with no request."],
+        )
+    )
+    fixtures.append(
+        _synthetic_search_fixture(
+            "engine.images.duckduckgo-absent-null-and-mixed-fields",
+            "images",
+            "duckduckgo",
+            {
+                "query": "fixture ddg image mixed fields",
+                "region": "us-en",
+                "safesearch": "on",
+                "timelimit": None,
+                "page": 1,
+            },
+            DuckduckgoImages,
+            [
+                _SyntheticResponse(content=b"vqd=fixture-vqd&"),
+                _SyntheticResponse(
+                    text=json.dumps(
+                        {
+                            "results": [
+                                {
+                                    "title": None,
+                                    "image": "https://image.example/a%20b",
+                                    "height": 0,
+                                    "source": {"name": "fixture"},
+                                }
+                            ]
+                        }
+                    )
+                ),
+            ],
+            notes=["DuckDuckGo Images assigns dict.get values for every declared field, including absent/null/falsy values."],
+        )
+    )
+    fixtures.append(
+        _synthetic_engine_fixture(
+            "engine.images.duckduckgo-null-results-error",
+            "images",
+            "duckduckgo",
+            "search",
+            {
+                "query": "fixture ddg image null results",
+                "region": "us-en",
+                "safesearch": "on",
+                "timelimit": None,
+                "page": 1,
+            },
+            [
+                _SyntheticResponse(content=b"vqd=fixture-vqd&"),
+                _SyntheticResponse(text=json.dumps({"results": None})),
+            ],
+            lambda _events: _engine_search_output(
+                DuckduckgoImages().search(
+                    "fixture ddg image null results",
+                    region="us-en",
+                    safesearch="on",
+                    timelimit=None,
+                    page=1,
+                )
+            ),
+            notes=["DuckDuckGo Images iterates an explicit JSON null results value and exposes the source TypeError."],
+        )
+    )
+    fixtures.append(
+        _synthetic_search_fixture(
+            "engine.images.duckduckgo-absent-results-empty-list",
+            "images",
+            "duckduckgo",
+            {
+                "query": "fixture ddg image absent results",
+                "region": "us-en",
+                "safesearch": "on",
+                "timelimit": None,
+                "page": 1,
+            },
+            DuckduckgoImages,
+            [
+                _SyntheticResponse(content=b"vqd=fixture-vqd&"),
+                _SyntheticResponse(text=json.dumps({})),
+            ],
+            notes=["DuckDuckGo Images uses dict.get('results', []), so an absent key returns an empty list while JSON null raises."],
+        )
+    )
+    fixtures.append(
+        _synthetic_search_fixture(
+            "engine.images.duckduckgo-empty-object-results-empty-list",
+            "images",
+            "duckduckgo",
+            {
+                "query": "fixture ddg image empty object results",
+                "region": "us-en",
+                "safesearch": "on",
+                "timelimit": None,
+                "page": 1,
+            },
+            DuckduckgoImages,
+            [
+                _SyntheticResponse(content=b"vqd=fixture-vqd&"),
+                _SyntheticResponse(text=json.dumps({"results": {}})),
+            ],
+            notes=["Python iterates an empty dict results value zero times, producing an empty list."],
+        )
+    )
+    fixtures.append(
+        _synthetic_engine_fixture(
+            "engine.images.duckduckgo-root-null-error",
+            "images",
+            "duckduckgo",
+            "search",
+            {
+                "query": "fixture ddg image root null",
+                "region": "us-en",
+                "safesearch": "on",
+                "timelimit": None,
+                "page": 1,
+            },
+            [
+                _SyntheticResponse(content=b"vqd=fixture-vqd&"),
+                _SyntheticResponse(text="null"),
+            ],
+            lambda _events: _engine_search_output(
+                DuckduckgoImages().search(
+                    "fixture ddg image root null",
+                    region="us-en",
+                    safesearch="on",
+                    timelimit=None,
+                    page=1,
+                )
+            ),
+            notes=["DuckDuckGo Images calls get() on the decoded root before accessing results."],
+        )
+    )
+    fixtures.append(
+        _synthetic_engine_fixture(
+            "engine.images.duckduckgo-null-item-error",
+            "images",
+            "duckduckgo",
+            "search",
+            {
+                "query": "fixture ddg image null item",
+                "region": "us-en",
+                "safesearch": "on",
+                "timelimit": None,
+                "page": 1,
+            },
+            [
+                _SyntheticResponse(content=b"vqd=fixture-vqd&"),
+                _SyntheticResponse(text=json.dumps({"results": [None]})),
+            ],
+            lambda _events: _engine_search_output(
+                DuckduckgoImages().search(
+                    "fixture ddg image null item",
+                    region="us-en",
+                    safesearch="on",
+                    timelimit=None,
+                    page=1,
+                )
+            ),
+            notes=["DuckDuckGo Images invokes get() on each result item without type validation."],
+        )
+    )
+    for name, results_value in (("nonempty-dict", {"fixture": "value"}), ("nonempty-string", "fixture"), ("bool", True)):
+        fixtures.append(
+            _synthetic_engine_fixture(
+                f"engine.images.duckduckgo-{name}-results-error",
+                "images",
+                "duckduckgo",
+                "search",
+                {
+                    "query": f"fixture ddg image {name} results",
+                    "region": "us-en",
+                    "safesearch": "on",
+                    "timelimit": None,
+                    "page": 1,
+                },
+                [
+                    _SyntheticResponse(content=b"vqd=fixture-vqd&"),
+                    _SyntheticResponse(text=json.dumps({"results": results_value})),
+                ],
+                lambda _events, name=name: _engine_search_output(
+                    DuckduckgoImages().search(
+                        f"fixture ddg image {name} results",
+                        region="us-en",
+                        safesearch="on",
+                        timelimit=None,
+                        page=1,
+                    )
+                ),
+                notes=["DuckDuckGo Images iterates results directly and calls get() on each yielded item without coercion."],
+            )
+        )
+    return fixtures
+
+
 def _brave_google_mojeek_edge_fixtures() -> list[Fixture]:
     """Capture source-only HTML text edge behavior before Go adapter work."""
     fixtures: list[Fixture] = []
@@ -6087,6 +6596,7 @@ def build_fixtures() -> list[Fixture]:
         *_json_engine_matrix_fixtures(),
         *_grokipedia_wikipedia_edge_fixtures(),
         *_html_engine_matrix_fixtures(),
+        *_image_engine_edge_fixtures(),
         *_brave_google_mojeek_edge_fixtures(),
         *_startpage_yahoo_yandex_edge_fixtures(),
         *_engine_non_200_fixtures(),

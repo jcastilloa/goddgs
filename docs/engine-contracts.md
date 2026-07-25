@@ -52,8 +52,8 @@ Detalles obligatorios de texto:
 
 | Motor / provider | Secuencia y payload | Parseo y quirk |
 | --- | --- | --- |
-| Bing / `bing` | GET `https://www.bing.com/images/async`; `q`, `async=1`, `first`, `count`; count directo es `max(int(max_results),35)`. Llamada pública normal no reenvía su `max_results`, por tanto count 35. Time acepta literalmente `day/week/month/year`, no `d/w/m/y`. | XPath de tarjetas con `a[@m]`; JSON `m` usa `t/murl/turl/purl`; dimensions desde texto con multiplicación; sólo añade item con metadata. |
-| DuckDuckGo / `bing` | GET bootstrap `https://duckduckgo.com?q=...` para VQD crudo, luego GET `https://duckduckgo.com/i.js`; `o=json`, `q`, `l`, `vqd`, `p`, `ct=AT`; filtro `f` con slots ordenados time/size/color/type/layout/license; página `s=(page-1)*100`. | JSON `results` mapea title/image/thumbnail/url/height/width/source sin forzar tipos. Headers explícitos de navegación/cors son contrato. |
+| Bing / `bing` | GET `https://www.bing.com/images/async`; `q`, `async=1`, `first`, `count`; count directo es `max(int(max_results),35)`, con semántica Python de `int` (Unicode decimal, `_` y whitespace incluidos). Llamada pública normal no reenvía su `max_results`, por tanto count 35. Time acepta literalmente `day/week/month/year`, no `d/w/m/y`. | XPath de tarjetas con `a[@m]`; JSON `m` usa `t/murl/turl/purl`; `m=null` falla como atributo Python, y dimensions sustituyen `×` antes de split/whitespace Python; sólo añade item con metadata. |
+| DuckDuckGo / `bing` | GET bootstrap `https://duckduckgo.com?q=...` para VQD crudo, luego GET `https://duckduckgo.com/i.js`; mapea timelimit antes del bootstrap, pero safesearch después; `o=json`, `q`, `l`, `vqd`, `p`, `ct=AT`; filtro `f` con slots ordenados time/size/color/type/layout/license, incluso huecos; página `s=(page-1)*100`. | JSON `results` mapea title/image/thumbnail/url/height/width/source sin forzar tipos. Ausente/objeto/string vacío puede producir lista vacía; `null`, bool, item null u objeto/string no vacío retienen sus errores Python. Headers explícitos de navegación/cors son contrato. |
 
 ## Noticias
 

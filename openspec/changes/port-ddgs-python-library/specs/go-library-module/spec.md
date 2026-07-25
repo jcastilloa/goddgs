@@ -28,6 +28,19 @@ than panic for expected failures.
 - **WHEN** caller invokes public text, images, news, videos, books, and extract operations
 - **THEN** each operation SHALL route to corresponding source category contract rather than generic web-search substitute
 
+#### Scenario: Caller configures image source filters
+- **WHEN** caller invokes `Images` with image size, color, type, layout, or
+  license options
+- **THEN** Go SHALL retain source keyword names `size`, `color`, `type_image`,
+  `layout`, and `license_image` for the selected engine without exposing an
+  HTTP/parser type or coercing empty values
+
+#### Scenario: Image max-results remains scheduler-only
+- **WHEN** caller invokes `Images` with a public max-results option and image
+  filters
+- **THEN** Go SHALL retain max-results separately from forwarded image keyword
+  arguments, matching frozen `_search_sync` data flow
+
 ### Requirement: Lossless raw result contract
 Public search result representation SHALL preserve source category fields and
 dynamic value types without coercing all values to strings. Public extraction

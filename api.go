@@ -93,12 +93,18 @@ type searchRequest struct {
 }
 
 type searchConfig struct {
-	region     string
-	safeSearch string
-	timeLimit  *string
-	maxResults *int
-	page       int
-	backend    string
+	region         string
+	safeSearch     string
+	timeLimit      *string
+	maxResults     *int
+	page           int
+	backend        string
+	sourceKeywords []sourceKeyword
+}
+
+type sourceKeyword struct {
+	name  string
+	value string
 }
 
 type extractRequest struct {
@@ -156,6 +162,43 @@ func WithPage(page int) SearchOption {
 func WithBackend(backend string) SearchOption {
 	return func(config *searchConfig) {
 		config.backend = backend
+	}
+}
+
+// WithImageSize configures the source image size keyword.
+func WithImageSize(size string) SearchOption {
+	return withSourceKeyword("size", size)
+}
+
+// WithImageColor configures the source image color keyword.
+func WithImageColor(color string) SearchOption {
+	return withSourceKeyword("color", color)
+}
+
+// WithImageType configures the source type_image keyword.
+func WithImageType(imageType string) SearchOption {
+	return withSourceKeyword("type_image", imageType)
+}
+
+// WithImageLayout configures the source image layout keyword.
+func WithImageLayout(layout string) SearchOption {
+	return withSourceKeyword("layout", layout)
+}
+
+// WithImageLicense configures the source license_image keyword.
+func WithImageLicense(license string) SearchOption {
+	return withSourceKeyword("license_image", license)
+}
+
+func withSourceKeyword(name, value string) SearchOption {
+	return func(config *searchConfig) {
+		for index := range config.sourceKeywords {
+			if config.sourceKeywords[index].name == name {
+				config.sourceKeywords[index].value = value
+				return
+			}
+		}
+		config.sourceKeywords = append(config.sourceKeywords, sourceKeyword{name: name, value: value})
 	}
 }
 

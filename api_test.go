@@ -43,6 +43,22 @@ type recordingExecutor struct {
 	extracts      []extractRequest
 }
 
+type imageKeywordInvocationFixture struct {
+	FixtureID string `json:"fixture_id"`
+	Input     struct {
+		Arguments map[string]json.RawMessage `json:"arguments"`
+		Query     string                     `json:"query"`
+	} `json:"input"`
+	Result struct {
+		Output struct {
+			Calls []struct {
+				Kwargs map[string]json.RawMessage `json:"kwargs"`
+				Query  string                     `json:"query"`
+			} `json:"calls"`
+		} `json:"output"`
+	} `json:"result"`
+}
+
 func (e *recordingExecutor) search(_ context.Context, request searchRequest) ([]RawResult, error) {
 	e.searches = append(e.searches, request)
 	return e.searchResult, e.searchError
@@ -144,6 +160,53 @@ func TestDDGS_SearchMethodsRouteSourceCategories(t *testing.T) {
 				t.Fatalf("category = %q, want %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestDDGS_ImagesForwardsFrozenSourceKeywordFilters(t *testing.T) {
+	fixture := loadImageKeywordInvocationFixture(
+		t,
+		"testdata/contracts/pure/pure.search-call-image-filters-forwarded-max-results-omitted.json",
+	)
+	executor := &recordingExecutor{}
+	client := New()
+	client.executor = executor
+
+	_, err := client.Images(
+		context.Background(),
+		fixture.Input.Query,
+		searchInvocationFixtureOptions(t, fixture.Input.Arguments)...,
+	)
+	if err != nil {
+		t.Fatalf("Images(...): %v", err)
+	}
+	if len(executor.searches) != 1 {
+		t.Fatalf("search calls = %d, want 1", len(executor.searches))
+	}
+
+	request := executor.searches[0]
+	if request.category != imagesCategory {
+		t.Fatalf("category = %q, want %q", request.category, imagesCategory)
+	}
+	if got, want := request.config.maxResults, 41; got == nil || *got != want {
+		t.Fatalf("max results = %#v, want %d", got, want)
+	}
+	if len(fixture.Result.Output.Calls) != 1 {
+		t.Fatalf("fixture calls = %d, want 1", len(fixture.Result.Output.Calls))
+	}
+
+	call := fixture.Result.Output.Calls[0]
+	if call.Query != request.query {
+		t.Fatalf("query = %q, want %q", request.query, call.Query)
+	}
+	want := orderedSourceKeywordArguments(t, call.Kwargs)
+	if !reflect.DeepEqual(request.config.sourceKeywords, want) {
+		t.Fatalf("source keywords = %#v, want %#v", request.config.sourceKeywords, want)
+	}
+	for _, keyword := range request.config.sourceKeywords {
+		if keyword.name == "max_results" {
+			t.Fatal("public max_results leaked into source keywords")
+		}
 	}
 }
 
@@ -327,6 +390,20 @@ func loadSearchInvocationFixture(t *testing.T, path string) searchInvocationFixt
 	return fixture
 }
 
+func loadImageKeywordInvocationFixture(t *testing.T, path string) imageKeywordInvocationFixture {
+	t.Helper()
+
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	var fixture imageKeywordInvocationFixture
+	if err := json.Unmarshal(contents, &fixture); err != nil {
+		t.Fatalf("decode %s: %v", path, err)
+	}
+	return fixture
+}
+
 func loadErrorFixture(t *testing.T, path string) errorFixture {
 	t.Helper()
 
@@ -375,7 +452,35 @@ func searchInvocationFixtureOptions(t *testing.T, arguments map[string]json.RawM
 	if raw, ok := arguments["backend"]; ok {
 		options = append(options, WithBackend(decodeFixtureString(t, "backend", raw)))
 	}
+	for _, keyword := range []struct {
+		name   string
+		option func(string) SearchOption
+	}{
+		{name: "size", option: WithImageSize},
+		{name: "color", option: WithImageColor},
+		{name: "type_image", option: WithImageType},
+		{name: "layout", option: WithImageLayout},
+		{name: "license_image", option: WithImageLicense},
+	} {
+		if raw, ok := arguments[keyword.name]; ok {
+			options = append(options, keyword.option(decodeFixtureString(t, keyword.name, raw)))
+		}
+	}
 	return options
+}
+
+func orderedSourceKeywordArguments(t *testing.T, arguments map[string]json.RawMessage) []sourceKeyword {
+	t.Helper()
+
+	keywords := make([]sourceKeyword, 0, len(arguments))
+	for _, name := range []string{"size", "color", "type_image", "layout", "license_image"} {
+		raw, ok := arguments[name]
+		if !ok {
+			continue
+		}
+		keywords = append(keywords, sourceKeyword{name: name, value: decodeFixtureString(t, name, raw)})
+	}
+	return keywords
 }
 
 func decodeFixtureString(t *testing.T, name string, raw json.RawMessage) string {

@@ -85,6 +85,17 @@ without exposing internal engine or transport types. `ErrDDGS`, `ErrTimeout`,
 The public façade uses a private consumer-side executor port so fixture tests
 can prove lossless forwarding before a real internal search adapter exists.
 
+Image filters are source keyword arguments, represented in Go by
+`WithImageSize`, `WithImageColor`, `WithImageType`, `WithImageLayout`, and
+`WithImageLicense` search options. Their internal names stay exactly `size`,
+`color`, `type_image`, `layout`, and `license_image`; repeated options replace
+the original value without moving its source insertion position. They remain
+search options because frozen Python accepts them through `**kwargs`, including
+for categories whose engines ignore them. `WithMaxResults` deliberately stays
+outside that keyword list: `_search_sync` consumes it for scheduler/slicing and
+does not forward it to engines. Direct adapter fixtures may still supply a
+literal `max_results` keyword to reproduce the isolated Bing Images contract.
+
 **Ordered internal result boundary:** Python result objects retain attribute
 insertion order, including dynamically added fields; aggregation uses that
 order to select its first eligible cache field. Each `internal/engine` adapter
@@ -123,8 +134,13 @@ dependency discipline without irrelevant DI containers, repositories, or
 service architecture.
 
 **Engine execution port:** `internal/engine` owns a small `SearchRequest`,
-ordered `Field`/`Result` draft, and `Searcher` contract. An adapter defines its
-transport interface at its own consumer boundary and imports only
+ordered `SearchParameter` source-keyword list, ordered `Field`/`Result` draft,
+and `Searcher` contract. `SearchParameter` uses source key strings and values,
+is copied at request ownership boundaries, and exists so engine adapters do
+not receive a Go map whose iteration/order semantics differ from Python
+`**kwargs`. The public façade does not place scheduler-only `max_results` in
+this list. An adapter defines its transport interface at its own consumer
+boundary and imports only
 `internal/parser`, `internal/normalize` when source behavior needs it, and
 `internal/transport`. It must never import `internal/search`. At composition,
 `internal/search` consumes the engine result value without re-normalizing it.

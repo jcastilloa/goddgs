@@ -141,6 +141,12 @@ and `max_results` semantics.
 - **WHEN** caller invokes normal public image search with Bing and a max-results value
 - **THEN** request payload SHALL match frozen source data flow, including engine default-count behavior unless direct engine-only contract supplies engine kwargs
 
+#### Scenario: Image source filters are forwarded as kwargs
+- **WHEN** caller supplies source image filters for size, color, type, layout,
+  or license
+- **THEN** Go SHALL forward their exact source keyword names to the selected
+  engine while retaining public max-results as scheduler-only state
+
 #### Scenario: Bing Images receives documented timelimit shorthand
 - **WHEN** caller invokes Bing Images with source public shorthand such as `d`
 - **THEN** Go behavior SHALL match frozen source exception/result behavior rather than silently map it to different time unit

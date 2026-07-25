@@ -16,7 +16,7 @@ verification result.
   offline HTML/XPath/JSON parser adapter, isolated base transport,
   request-local DDG text standard-HTTP/2 transport, and fixture-backed
   DuckDuckGo, Grokipedia, Wikipedia, Brave, Google, Mojeek, Startpage, Yahoo,
-  and Yandex text adapters are complete. The
+  and Yandex text adapters plus Bing and DuckDuckGo image adapters are complete. The
   adapters are not yet composed into the public client. No live search engine,
   source TLS/H2 fingerprint parity, renderer, extraction implementation, or
   public-client-to-engine composition exists yet; those internal package
@@ -24,8 +24,8 @@ verification result.
 - Tasks 2.1–2.7 are complete. The isolated Python oracle lives temporarily at
   `/tmp/goddgs-reference-a12929a`; exact resolved packages and rebuild steps
   are in `docs/reference-environment.md`. It made no external engine request.
-- Fixture corpus has 314 deterministic synthetic/offline contracts: 130 pure,
-  133 engine-visible, 9 extract, 24 parser, and 18 transport contracts under
+- Fixture corpus has 337 deterministic synthetic/offline contracts: 131 pure,
+  155 engine-visible, 9 extract, 24 parser, and 18 transport contracts under
   their
   respective `testdata/contracts/` directories. `tools/reference_capture.py --check`
   validates frozen SHA, resolved-package provenance, result/error shape, trace
@@ -36,6 +36,17 @@ verification result.
   Parser, base transport, and request-local DDG HTTP/2 transport have
   independently consumed their relevant offline fixtures; the doubles/loopback
   still do not prove renderer or browser/TLS-H2 fingerprint parity.
+- Task 6.5 design decision: source image filters cross the Go façade as ordered
+  source-keyword options (`size`, `color`, `type_image`, `layout`,
+  `license_image`), while public `max_results` remains scheduler/slicing-only.
+  Direct Bing adapter fixtures may still set engine-only `max_results`; this is
+  required to retain frozen `_search_sync` data flow.
+- Task 6.5 complete: image adapters use immutable ordered parameters and an
+  injected request port. Bing preserves engine-only Python `int`, literal
+  long-form timelimit, metadata/dimension errors, and source provider collision;
+  DuckDuckGo preserves header order, VQD/bootstrap/error order, six filter
+  slots, raw image values, and result-root errors. They are not yet public-client
+  composition or browser/TLS-H2 fingerprint proof.
 - Local target repo had no commits when work began. Existing `.codex`,
   `.claude`, `.opencode`, and `openspec` tooling belong to project setup;
   preserve them unless task explicitly changes them.
@@ -278,6 +289,7 @@ Verification recorded on 2026-07-20:
 | 2026-07-21 | Complete Grokipedia and Wikipedia adapter gate (task 6.1) | Ordered JSON now preserves source object iteration where Wikipedia selects `next(iter(query.pages.values()))`; Grokipedia preserves Python JSON non-finite and f-string-visible slug behavior only at its source operation. Fixture RED/GREEN/REFACTOR proves missing/null/type errors, exact request sequences, `nil`/empty states, source error classes/messages, ordered pages, and case-sensitive disambiguation. Race stress, 288-fixture oracle, full tests/race, `make verify`, and OpenSpec validation pass. Browser fingerprint proof and public composition remain intentionally open. |
 | 2026-07-21 | Complete Brave, Google, and Mojeek adapter gate (task 6.3) | Ordered request/cookie fixtures prove Brave Python-dict replacement order, Google process-lifetime UA/consent/case/page/redirect behavior, and Mojeek exact safe/page/time behavior. The adapters use injected request-local ports and immutable request values; `cookie_order` is now part of fixture traces. Full tests/race, adapter race stress x50, cgo-off, `make verify`, strict OpenSpec validation, and the 300-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 | 2026-07-21 | Complete Startpage, Yahoo, and Yandex adapter gate (task 6.4) | Ordered request/form fixtures prove Startpage bootstrap sequencing/raw-status/empty-text behavior, Yahoo request-time token path and double URL post-processing, and Yandex request-time search-id/ignored-option branches. Adapters use injected request-local ports and immutable request values; full tests/race, adapter race stress x50, cgo-off, `make verify`, strict OpenSpec validation, and the 314-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
+| 2026-07-21 | Complete Bing and DuckDuckGo image adapter gate (task 6.5) | Ordered source-parameter fixtures prove Bing engine-only `max_results`/Python `int`, long-form-only timelimit, metadata/dimension errors, and DuckDuckGo VQD/header/filter/result-root/error ordering. Public image options retain source keyword ordering while scheduler `max_results` stays outside engine kwargs. Full tests/race, adapter race stress x50, cgo-off, `make verify`, strict OpenSpec validation, and the 337-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 
 ## Core TDD evidence — 2026-07-20
 
@@ -389,6 +401,16 @@ Verification recorded on 2026-07-20:
   simplification, concurrency patterns, and debugger review applied; 32
   concurrent calls per adapter and `go test -race -count=50` pass. Adapters
   own no response body or goroutine.
+- **RED/GREEN/REFACTOR 6.5:** Bing/DuckDuckGo image fixture tests were RED
+  before adapters/options existed. GREEN adds only captured GET/bootstrap/VQD,
+  ordered payload/filter fields, XPath/JSON extraction, and source error
+  branches. Follow-up RED fixtures exposed Python `int()` Unicode digits,
+  underscores/control whitespace, Bing `m=null`, and DuckDuckGo raw
+  `results` roots. REFACTOR removed mutable shared header data and retained
+  ordered source parameters. `golang-pro`, hexagonal boundary review,
+  `golang-testing`, strict TDD, clean-code, simplification, concurrency
+  patterns, and debugger review applied; adapter stress and `go test -race
+  -count=50` pass. Adapters own no response body or goroutine.
 - **Skills assessed:** `golang-pro`, `go-clean-ddd-hexagonal` (public façade
   port), `golang-testing`, TDD RED/GREEN/REFACTOR, `clean-code`, and
   `go-code-simplification` applied. `go-concurrency-patterns` and
@@ -420,3 +442,11 @@ Verification recorded on 2026-07-20:
   `go test -race -count=1 ./...`, focused adapter race stress x50,
   `CGO_ENABLED=0 go test -count=1 ./...`, `make verify`, and strict OpenSpec
   validation passed. Total coverage: 87.0%; `internal/engine`: 85.1%.
+- **Acceptance 6.5 (2026-07-21):** frozen Python `--check` verified 337
+  fixtures (131 pure, 155 engine, 9 extract, 24 parser, 18 transport);
+  `gofmt`, `git diff --check`, `go vet ./...`, `go test -count=1 ./...`,
+  `go test -race -count=1 ./...`, focused image-adapter race stress x50,
+  `CGO_ENABLED=0 go test -count=1 ./...`, `make verify`, and strict OpenSpec
+  validation passed. Total coverage: 87.4%; public package: 94.7%;
+  `internal/engine`: 86.7%; parser: 83.4%; transport: 83.8%. Live checks
+  skipped: no external engine request or fingerprint evidence was authorized.

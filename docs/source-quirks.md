@@ -50,7 +50,7 @@ complete.
 | ID | Frozen behavior | Port rule |
 | --- | --- | --- |
 | Q-30 | Google and DuckDuckGo text user agents are chosen at Python module/class creation, not per request. | Model source lifetime correctly; do not casually re-randomize every request. |
-| Q-31 | Anna's Archive TLD is randomly chosen in class declaration at module import, then shared by instances in Python process. | Model source-lifetime selection, not mandatory per-request rotation. |
+| Q-31 | Anna's Archive TLD is randomly chosen in class declaration at module import, then shared by instances in Python process. Its post-extract loop prepends `search_url.split("/search")[0]` to every URL, including already-absolute URLs. | Model source-lifetime selection, not mandatory per-request rotation; retain the malformed absolute URL prefix rather than correcting it. |
 | Q-32 | Yahoo random `_ylt`/`_ylu` path and Yandex random `searchid` are built per search. | Keep request-time random seams deterministic in tests. |
 | Q-33 | Startpage retrieves home-page `sc` for every payload build; it stores `_sc` but does not reuse it. | Preserve bootstrap sequence and missing-token behavior. |
 | Q-34 | Wikipedia mutates cached instance `search_url` and `lang` per search, then makes second request during extraction. | Go avoids races while preserving per-call request/result behavior. |

@@ -24,8 +24,8 @@ verification result.
 - Tasks 2.1–2.7 are complete. The isolated Python oracle lives temporarily at
   `/tmp/goddgs-reference-a12929a`; exact resolved packages and rebuild steps
   are in `docs/reference-environment.md`. It made no external engine request.
-- Fixture corpus has 361 deterministic synthetic/offline contracts: 132 pure,
-  178 engine-visible, 9 extract, 24 parser, and 18 transport contracts under
+- Fixture corpus has 363 deterministic synthetic/offline contracts: 133 pure,
+  179 engine-visible, 9 extract, 24 parser, and 18 transport contracts under
   their
   respective `testdata/contracts/` directories. `tools/reference_capture.py --check`
   validates frozen SHA, resolved-package provenance, result/error shape, trace
@@ -60,7 +60,12 @@ verification result.
   errors. Video filters cross the façade as ordered `resolution`, `duration`,
   and `license_videos` keywords; public `max_results` remains scheduler-only.
   It is not yet public-client composition or browser/TLS-H2 fingerprint proof.
-  or browser/TLS-H2 fingerprint proof.
+- Task 6.8 complete: Anna's Archive uses a private process-lifetime,
+  synchronized TLD selector and an immutable per-adapter search URL. Fixtures
+  preserve its ordered GET pagination, HTML comment delimiter removal,
+  nil-versus-empty response boundary, and the intentional base prefix on an
+  already-absolute URL. It is not yet public-client composition or
+  browser/TLS-H2 fingerprint proof.
 - Local target repo had no commits when work began. Existing `.codex`,
   `.claude`, `.opencode`, and `openspec` tooling belong to project setup;
   preserve them unless task explicitly changes them.
@@ -306,6 +311,7 @@ Verification recorded on 2026-07-20:
 | 2026-07-21 | Complete Bing and DuckDuckGo image adapter gate (task 6.5) | Ordered source-parameter fixtures prove Bing engine-only `max_results`/Python `int`, long-form-only timelimit, metadata/dimension errors, and DuckDuckGo VQD/header/filter/result-root/error ordering. Public image options retain source keyword ordering while scheduler `max_results` stays outside engine kwargs. Full tests/race, adapter race stress x50, cgo-off, `make verify`, strict OpenSpec validation, and the 337-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 | 2026-07-21 | Complete Bing, DuckDuckGo, and Yahoo News adapter gate (task 6.6) | Fixture RED/GREEN/REFACTOR proves source-ordered News payloads, VQD sequencing, nil/empty/error distinctions, Bing local-zone and relative dates/image truncation, DuckDuckGo raw dynamic `results` iteration, and Yahoo broad partial cleanup with clock-injected dates. Adapters own no goroutine or response body; injected ports and immutable per-call data pass race stress. Full tests/race, cgo-off, `make verify`, strict OpenSpec validation, and the 353-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 | 2026-07-21 | Complete DuckDuckGo Videos adapter gate (task 6.7) | Fixture RED/GREEN/REFACTOR proves public video keyword forwarding, VQD-before-safe error order, exact four-slot `f`, page stride 60, nested/dynamic result values, and raw results-root/item errors. Images, News, and Videos share only the fixture-proven JSON-iterable helper. Full tests/race, video race stress x20, cgo-off, `make verify`, strict OpenSpec validation, and the 361-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
+| 2026-07-21 | Complete Anna's Archive adapter gate (task 6.8) | Fixture RED/GREEN/REFACTOR proves one process-lifetime archive TLD, immutable adapter URL, ordered `q,page` GET (including page zero), comment delimiter removal, nil/empty/malformed distinctions, and source base-prefix repair even for absolute URLs. Full tests/race, adapter race stress x50, cgo-off, `make verify`, strict OpenSpec validation, and the 363-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 
 ## Core TDD evidence — 2026-07-20
 
@@ -448,6 +454,16 @@ Verification recorded on 2026-07-20:
   TDD, clean-code, simplification, concurrency patterns, and debugger review
   applied; 32 concurrent calls and `go test -race -count=20` pass. The adapter
   owns no goroutine or response body.
+- **RED/GREEN/REFACTOR 6.8:** Anna's Archive fixtures were RED before the
+  adapter existed. GREEN adds only the process-lifetime archive URL selector,
+  ordered GET request, source comment delimiter preprocessing, XPath result
+  construction, and source URL prefix behavior. REFACTOR removes mutable TLD
+  storage while retaining the synchronized `sync.OnceValues` source-lifetime
+  selector and a private fixed-URL fixture seam. `golang-pro`, hexagonal
+  boundary review, `golang-testing`, strict TDD, clean-code, simplification,
+  concurrency patterns, and debugger review applied; 32 concurrent calls and
+  `go test -race -count=50` pass. The adapter owns no goroutine or response
+  body.
 - **Skills assessed:** `golang-pro`, `go-clean-ddd-hexagonal` (public façade
   port), `golang-testing`, TDD RED/GREEN/REFACTOR, `clean-code`, and
   `go-code-simplification` applied. `go-concurrency-patterns` and
@@ -502,4 +518,12 @@ Verification recorded on 2026-07-20:
   `CGO_ENABLED=0 go test -count=1 ./...`, `make verify`, and strict OpenSpec
   validation passed. Total coverage: 87.6%; public package: 94.8%;
   `internal/engine`: 87.1%; parser: 83.4%; transport: 83.8%. Live checks
+  skipped: no external engine request or fingerprint evidence was authorized.
+- **Acceptance 6.8 (2026-07-21):** frozen Python `--check` verified 363
+  fixtures (133 pure, 179 engine, 9 extract, 24 parser, 18 transport);
+  `gofmt`, `git diff --check`, `go vet ./...`, `go test -count=1 ./...`,
+  `go test -race -count=1 ./...`, focused Anna's Archive race stress x50,
+  `CGO_ENABLED=0 go test -count=1 ./...`, `make verify`, and strict OpenSpec
+  validation passed. Total coverage: 87.5%; public package: 94.8%;
+  `internal/engine`: 86.9%; parser: 83.4%; transport: 83.8%. Live checks
   skipped: no external engine request or fingerprint evidence was authorized.

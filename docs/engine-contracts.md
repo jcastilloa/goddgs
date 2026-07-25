@@ -68,7 +68,7 @@ Detalles obligatorios de texto:
 | Motor / provider | Secuencia y payload | Parseo y quirk |
 | --- | --- | --- |
 | DuckDuckGo vídeos / `bing` | Bootstrap VQD crudo, luego GET `https://duckduckgo.com/v.js`; `l`, `o=json`, `q`, `vqd`, safe `1/-1/-2`, siempre `f` con slots `publishedAfter`, `videoDefinition`, `videoDuration`, `videoLicense`; página `s=(page-1)*60`. VQD se obtiene antes de validar safe-search. | JSON `results` conserva content, embed, imágenes, statistics y tipos anidados/dinámicos. Ausente/objeto/string vacío produce `[]`; `null`, objeto/string no vacío, item `null` y raíz no-mapa retienen errores Python de iteración/`.get`. |
-| Anna's Archive / `annasarchive` | GET en TLD `gd/gl/pk` elegido una vez al cargar clase/módulo; `q`, `page` string. | Quita delimitadores HTML comment antes de XPath; prefija base URL a **todo** URL incluso absoluto. |
+| Anna's Archive / `annasarchive` | GET en TLD `gd/gl/pk` elegido una vez al cargar clase/módulo; `q`, `page` string, incluidos `0`/negativos. | Quita todos los delimitadores `<!--`/`-->` antes de XPath; prefija base URL a **todo** URL incluso absoluto y normaliza de nuevo el resultado. |
 
 ## Motor presente pero deshabilitado
 

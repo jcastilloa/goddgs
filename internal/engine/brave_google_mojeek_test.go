@@ -368,8 +368,17 @@ func testHTMLTextEngineFixturesWithFixture(
 	engineName string,
 	newAdapter func(*testing.T, htmlTextTransport, htmlTextEngineFixture) Searcher,
 ) {
+	testCategoryHTMLTextEngineFixturesWithFixture(t, "text", engineName, newAdapter)
+}
+
+func testCategoryHTMLTextEngineFixturesWithFixture(
+	t *testing.T,
+	category string,
+	engineName string,
+	newAdapter func(*testing.T, htmlTextTransport, htmlTextEngineFixture) Searcher,
+) {
 	t.Helper()
-	paths, err := filepath.Glob("../../testdata/contracts/engine/engine.text." + engineName + "-*.json")
+	paths, err := filepath.Glob("../../testdata/contracts/engine/engine." + category + "." + engineName + "-*.json")
 	if err != nil {
 		t.Fatalf("find %s fixtures: %v", engineName, err)
 	}

@@ -4710,7 +4710,67 @@ def _html_engine_matrix_fixtures() -> list[Fixture]:
             notes=["source module-lifetime archive TLD is replaced only with a synthetic deterministic test domain"],
         )
     )
+
+    annas_absolute_input = {
+        "query": "fixture annas absolute URL",
+        "region": "us-en",
+        "safesearch": "moderate",
+        "timelimit": None,
+        "page": 0,
+    }
+
+    def annas_absolute_action(_events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        AnnasArchive.search_url = "https://annas-archive.fixture/search"
+        try:
+            return _engine_search_output(AnnasArchive().search(**annas_absolute_input)) or []
+        finally:
+            AnnasArchive.search_url = old_annas_url
+
+    fixtures.append(
+        _synthetic_engine_fixture(
+            "engine.books.annasarchive-absolute-url-prefixed-and-page-zero",
+            "books",
+            "annasarchive",
+            "search",
+            annas_absolute_input,
+            [
+                _SyntheticResponse(
+                    text="""
+                    <div class="record-list-outer"><div>
+                      <a class="text-lg">Fixture absolute</a><a href="https://absolute.example/a%20b"></a>
+                    </div></div>
+                    """
+                )
+            ],
+            annas_absolute_action,
+            notes=["source prepends the archive base even when the extracted href is already absolute"],
+        )
+    )
     return fixtures
+
+
+def _annasarchive_lifetime_fixture() -> Fixture:
+    """Capture the class-level archive URL shared by source instances."""
+    old_search_url = AnnasArchive.search_url
+    fixed_search_url = "https://annas-archive.fixture/search"
+    AnnasArchive.search_url = fixed_search_url
+    try:
+        first = AnnasArchive()
+        second = AnnasArchive()
+        output = {
+            "first_search_url": first.search_url,
+            "second_search_url": second.search_url,
+            "same_object_value": first.search_url == second.search_url,
+        }
+    finally:
+        AnnasArchive.search_url = old_search_url
+    return _fixture(
+        "pure.annasarchive-module-lifetime-search-url",
+        "annasarchive_module_lifetime_search_url",
+        {"tlds": ["gd", "gl", "pk"], "fixed_search_url": fixed_search_url},
+        _ok(output),
+        random="the source samples a TLD while the class is created; this fixture fixes that class value and observes two instances",
+    )
 
 
 def _image_engine_edge_fixtures() -> list[Fixture]:
@@ -7154,6 +7214,7 @@ def build_fixtures() -> list[Fixture]:
         *_transport_fixtures(),
         *_parser_xpath_fixtures(),
         *_parser_json_fixtures(),
+        _annasarchive_lifetime_fixture(),
         *_engine_visible_fixtures(),
         *_json_engine_matrix_fixtures(),
         *_grokipedia_wikipedia_edge_fixtures(),

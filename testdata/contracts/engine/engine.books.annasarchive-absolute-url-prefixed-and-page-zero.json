@@ -1,0 +1,103 @@
+{
+  "contract": {
+    "category": "books",
+    "engine": "annasarchive",
+    "kind": "engine",
+    "operation": "search"
+  },
+  "controls": {
+    "clock": "not used",
+    "notes": [
+      "source prepends the archive base even when the extracted href is already absolute"
+    ],
+    "random": "not used"
+  },
+  "fixture_id": "engine.books.annasarchive-absolute-url-prefixed-and-page-zero",
+  "input": {
+    "page": 0,
+    "query": "fixture annas absolute URL",
+    "region": "us-en",
+    "safesearch": "moderate",
+    "timelimit": null
+  },
+  "redaction": {
+    "rules": [
+      "synthetic inputs and responses",
+      "no external request",
+      "no credentials or live session cookies"
+    ],
+    "sanitized": true
+  },
+  "result": {
+    "field_order": [
+      [
+        "title",
+        "author",
+        "publisher",
+        "info",
+        "url",
+        "thumbnail"
+      ]
+    ],
+    "output": [
+      {
+        "author": "",
+        "info": "",
+        "publisher": "",
+        "thumbnail": "",
+        "title": "Fixture absolute",
+        "url": "https://annas-archive.fixturehttps://absolute.example/a+b"
+      }
+    ],
+    "status": "ok"
+  },
+  "schema_version": 1,
+  "source": {
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package_version": "9.14.4",
+    "python": "3.12.3",
+    "reference_environment": "docs/reference-environment.md",
+    "resolved_packages": {
+      "anyio": "4.14.2",
+      "brotli": "1.2.0",
+      "certifi": "2026.6.17",
+      "click": "8.4.2",
+      "ddgs": "9.14.4",
+      "fake-useragent": "2.2.0",
+      "h11": "0.16.0",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0",
+      "idna": "3.18",
+      "lxml": "6.1.1",
+      "primp": "1.3.1",
+      "socksio": "1.0.0",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "trace": [
+    {
+      "kind": "request",
+      "method": "GET",
+      "query": {
+        "page": "0",
+        "q": "fixture annas absolute URL"
+      },
+      "query_order": [
+        "q",
+        "page"
+      ],
+      "sequence": 1,
+      "url": "https://annas-archive.fixture/search"
+    },
+    {
+      "content_hex": "0a20202020202020202020202020202020202020203c64697620636c6173733d227265636f72642d6c6973742d6f75746572223e3c6469763e0a202020202020202020202020202020202020202020203c6120636c6173733d22746578742d6c67223e46697874757265206162736f6c7574653c2f613e3c6120687265663d2268747470733a2f2f6162736f6c7574652e6578616d706c652f6125323062223e3c2f613e0a20202020202020202020202020202020202020203c2f6469763e3c2f6469763e0a2020202020202020202020202020202020202020",
+      "kind": "response",
+      "sequence": 2,
+      "status": 200,
+      "text": "\n                    <div class=\"record-list-outer\"><div>\n                      <a class=\"text-lg\">Fixture absolute</a><a href=\"https://absolute.example/a%20b\"></a>\n                    </div></div>\n                    "
+    }
+  ]
+}

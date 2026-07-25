@@ -294,6 +294,13 @@ cookie/request sequence through its small consumer-side transport port. This
 preserves the observable lifetime rather than coupling engine calls to a
 mutable package-global transport header.
 
+Anna's Archive likewise samples one archive TLD while its Python class is
+created, then every instance uses that same `search_url`. The Go adapter uses a
+private `sync.OnceValues` selector over `gd`, `gl`, and `pk`, and stores the
+chosen URL immutably on each adapter. A private fixed-URL constructor exists
+only for deterministic fixture tests; a search must never resample or mutate
+the archive URL.
+
 **Rejected:** default `net/http` everywhere is unproven; blindly importing
 fingerprint dependency creates supply-chain/cgo risk.
 

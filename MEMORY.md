@@ -6,23 +6,20 @@ verification result.
 
 ## Current state — 2026-07-25
 
-- **Handoff status:** all OpenSpec work is complete: `port-ddgs-python-library`
-  is **56/56** and `randomize-browser-profiles` is **15/15**. Published
-  baseline is `ca7c613` (`feat: randomize coherent browser profiles`) on
-  `origin/master`; worktree was clean immediately after publishing. Do not
-  restart implementation from the historical task lists below.
-- **Next concrete action:** only opt-in functional connectivity checks remain.
-  The user will run them because they contact real search engines:
-  `make integration`. Do not run that target without explicit rate-limit/network
-  authorization. No development task is currently open. If a live engine fails,
-  open a focused OpenSpec change, capture sanitized evidence, and preserve the
-  frozen source contract before changing an adapter or transport.
+- **Handoff status:** historical changes `port-ddgs-python-library` (**56/56**)
+  and `randomize-browser-profiles` (**15/15**) remain complete. Active change
+  `port-ddg-session-fingerprint` (**12/12**) was synced and archived at
+  `openspec/changes/archive/2026-07-25-port-ddg-session-fingerprint/`. Do not
+  restart historical task lists or run a live search request.
+- **Next concrete action:** no migration development task remains. A controlled
+  fingerprint observation still needs an explicitly supplied endpoint;
+  `make integration` contacts real engines and remains user-authorized only.
 - **Known scoped exceptions:** `Extract` Markdown/plain/rich rendering is the
   user-authorized practical renderer exception; raw fetch/bytes/text/errors
-  remain frozen-source contracts. DuckDuckGo text's separate temporary
-  `HttpClient2` TLS/H2 randomization remains unported. These are the only
-  material compatibility limits recorded at handoff; base `primp.HttpClient`
-  uses the complete 23×5 coherent profile catalog.
+  remain frozen-source contracts. DDG `HttpClient2` now has local TLS/H2
+  lifecycle parity evidence, but no newly authorized external JA3/JA4/Akamai
+  observation; do not claim external byte/fingerprint equality. Base
+  `primp.HttpClient` uses the complete 23×5 coherent profile catalog.
 - **Final offline verification (2026-07-25):** passed `gofmt -d`, `git diff
   --check`, `go vet ./...`, `go test -count=1 -timeout=120s ./...`, `go test
   -race -count=1 -timeout=180s ./...`, `CGO_ENABLED=0 go test -count=1
@@ -32,11 +29,22 @@ verification result.
   strict validation of both OpenSpec changes, and 80.2% line coverage for
   `internal/transport`. Controlled diagnostic only (no engine) matched
   explicit Python/Go Chrome, Edge, Opera, Safari and Firefox observations.
+- **DDG session-fingerprint acceptance (2026-07-25):** passed focused RED/GREEN
+  tests, `go test ./internal/transport -covermode=atomic` (**80.2%**),
+  `go test ./... -count=1`, `go test -race ./... -count=1`,
+  `CGO_ENABLED=0 go test ./... -count=1`, `make verify`, exact-source
+  `tools/capture_duckduckgo_session_profiles.py --verify`, strict OpenSpec,
+  integration-tag compilation and endpoint-absent fingerprint skips. Repeated
+  `-race -count=20` passed concurrent clients, reuse/reconnect and cancellation.
+  The concurrency/debugger review found no shared mutable profile, response-body,
+  cancellation or goroutine-lifecycle hazard. No external request ran.
 - Target: Go library port of DDGS only. No API server, CLI, MCP, DHT, cache,
   Docker service, or executable entrypoint.
 - Module scaffold exists. Root package is `ddgs`; final module path is
   `github.com/jcastilloa/goddgs`.
-- Active OpenSpec change: `openspec/changes/randomize-browser-profiles/`.
+- Current OpenSpec work is archived; DDG session transport specs live in
+  `openspec/specs/duckduckgo-text-session-transport/` and
+  `openspec/specs/duckduckgo-text-fingerprint-verification/`.
 - Public façade/configuration, normalizers, ordered result aggregation, ranker,
   backend selection/static registry, isolated fixture-tested scheduler core,
   offline HTML/XPath/JSON parser adapter, isolated base transport,
@@ -58,8 +66,9 @@ verification result.
   or header shuffle. Python binding chronology is OS first (Android, iOS,
   Linux, macOS, Windows), then browser variant. Local wire tests cover all 115
   pairs; controlled diagnostics match explicit Chrome, Edge, Opera, Safari and
-  Firefox source observations. DuckDuckGo's temporary client remains
-  non-equivalent. No live search-engine request has been made by this work.
+  Firefox source observations. DuckDuckGo now has its own source-shaped local
+  TLS/H2 profile path; no live search-engine request has been made by this
+  work.
 - Tasks 2.1–2.7 are complete. The isolated Python oracle lives temporarily at
   `/tmp/goddgs-reference-a12929a`; exact resolved packages and rebuild steps
   are in `docs/reference-environment.md`. It made no external engine request.
@@ -226,7 +235,7 @@ Treat registry output as truth.
 | --- | --- | --- |
 | `primp>=1.2.3` | randomized browser impersonation, TLS/HTTP behavior, proxy/certs, HTML render properties | base HTTPS uses a frozen 23×5 coherent browser/OS catalog across direct and tunnel target routes; DDG temporary fingerprint and renderer strings remain documented limits |
 | `lxml>=4.9.4` | tolerant HTML parse + XPath | Helium v0.6.0 internal adapter passes 14 frozen lxml fixtures; JSON decoder preserves `json.Number`/raw mixed values |
-| `httpx[http2,socks,brotli]`, `httpcore`, `h2` | DDG text temporary client; random HTTP/2/TLS behavior | standard request-local H2/no-redirect/header behavior fixture-tested; temporary randomized TLS/H2 fingerprint remains non-equivalent |
+| `httpx[http2,socks,brotli]`, `httpcore`, `h2` | DDG text temporary client; random HTTP/2/TLS behavior | local source-shaped TLS policy/cipher session selection and per-connection H2 initialization are loopback fixture-tested; external fingerprint equality remains unobserved |
 | `fake-useragent>=2.2.0` | DDG text random user agent | full frozen weighted pool is embedded, checksum-verified, and selected once per process |
 | Click/FastAPI/Uvicorn/MCP | CLI/service only | explicitly excluded |
 
@@ -242,9 +251,11 @@ closes native bodies and has per-client cookie/header state. All HTTPS target
 routes additionally use `sardanioss/utls` with one selected frozen `primp`
 ClientHello/H2/header bundle per isolated client. The generated catalog has 23
 browser variants × 5 operating systems and is captured only via local loopback;
-details and checksum are in `docs/browser-profiles.md`. `DuckDuckGoTextClient` separately proves standard
-request-local H2, no-redirect, header/jar isolation, and lifecycle behavior;
-its temporary randomized source TLS/H2 fingerprint remains non-equivalent.
+details and checksum are in `docs/browser-profiles.md`. `DuckDuckGoTextClient`
+uses a separate five-policy local source capture: enabled-verification policy
+and legacy cipher order are selected once per client, while H2 values are
+sampled per connection. It retains no-redirect/header/jar/lifecycle behavior;
+external fingerprint equality remains deliberately unobserved.
 
 The frozen Python repository has no dependency lockfile; its `pyproject.toml`
 only declares lower bounds. Before fixture capture, task 2.1 must record exact
@@ -255,7 +266,8 @@ resolved runtime package versions (and preferably wheel hashes) as provenance.
 1. **Browser fingerprint limits — narrowed.** Base HTTPS uses the full source
    23×5 coherent selection space on direct, PEM, disabled-verification and
    tunnel target routes. TLS entropy/GREASE bytes remain intentionally fresh.
-   DuckDuckGo's temporary `HttpClient2` fingerprint remains non-equivalent.
+   DuckDuckGo's external `HttpClient2` fingerprint remains unobserved after
+   the local port; do not infer JA3/JA4/Akamai equality.
 2. **Rendered extraction divergence — accepted exception.** `primp` output is
    not reproduced for Markdown/plain/rich. `html-to-markdown` plus a practical
    plain-text projection is tested and documented; do not advertise it as 1:1.
@@ -320,6 +332,10 @@ Verification recorded on 2026-07-20:
 | Date | Decision | Reason |
 | --- | --- | --- |
 | 2026-07-20 | Freeze source at `a12929a`; use source over README discrepancies | reproducible behavioral target |
+| 2026-07-25 | Start `port-ddg-session-fingerprint` from local source checkout | User supplied `/home/jcastillo/Proyectos/ddgs`; it is clean at `a12929a72429a39a0841c3d7caacb20ee17acd4d`. Exact editable probe is CPython 3.12.3 with ddgs 9.14.4, httpx 0.28.1, httpcore 1.0.9, h2 4.3.0, hpack 4.2.0 and hyperframe 6.1.0. |
+| 2026-07-25 | Correct DDG randomness lifetime | `_get_random_ssl_context` runs once at `HttpClient2` construction only when verification is enabled; policy and legacy cipher order are DDGS-session/client lifetime. `Patch` is request-scoped but samples seven H2 values only when a new h2 connection sends its initialization. `verify=false` bypasses TLS draws but not new-connection H2 draws. |
+| 2026-07-25 | Capture deterministic sanitized DDG source templates | `tools/capture_duckduckgo_session_profiles.py` passes twice with byte-identical artifact SHA-256 `5111e75b502d8991f8f98e70231fb3ca169fec94342120e2d4cbd4a5a00e87df`; `--verify` passes. It uses loopback only and strips handshake random/session/key-share entropy. |
+| 2026-07-25 | Complete and archive DDG session-fingerprint OpenSpec (12/12) | RED `go test ./internal/transport -run '^TestDuckDuckGoTextClient_EmitsSourceShapedHTTP2Initialization$' -count=1` failed only because standard Go emitted connection window `1073741824`, not source `16777216`. GREEN/REFACTOR adds private session TLS policy/cipher shuffle, connection H2 factory, all target routes, reuse and cancellation. `gofmt`, diff, 80.2% transport coverage, full/race/CGO-off, `make verify`, capture verify, strict OpenSpec, tagged compile/skip and `-race -count=20` pass. Sync created five main-spec requirements; archive path is `openspec/changes/archive/2026-07-25-port-ddg-session-fingerprint/`. Parser/result/extract are N/A; no endpoint or live engine was contacted. |
 | 2026-07-20 | Restrict epic to Go library | explicit user scope |
 | 2026-07-20 | Use root public `ddgs` package plus small internal library layers | Go-module adaptation of skeleton; avoids service boilerplate |
 | 2026-07-20 | Do not implement an engine before differential contracts | search-engine parity is product-critical |

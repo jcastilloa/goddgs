@@ -42,10 +42,11 @@ type browserProfile struct {
 // browserRoundTripperConfig exists only to make the wire contract testable
 // with a local TLS endpoint. Production callers use newBrowserRoundTripper.
 type browserRoundTripperConfig struct {
-	dialContext func(context.Context, string, string) (net.Conn, error)
-	profile     browserProfile
-	tlsConfig   *utls.Config
-	fallback    http.RoundTripper
+	dialContext         func(context.Context, string, string) (net.Conn, error)
+	profile             browserProfile
+	http2ProfileFactory browserHTTP2ProfileFactory
+	tlsConfig           *utls.Config
+	fallback            http.RoundTripper
 }
 
 type browserRoundTripper struct {
@@ -64,6 +65,10 @@ type browserOrigin struct {
 type browserProfileChooser func(int) (int, error)
 
 func newBrowserRoundTripperForProfile(settings clientSettings, profile browserProfile) (*browserRoundTripper, error) {
+	return newBrowserRoundTripperForProfileWithHTTP2Factory(settings, profile, nil)
+}
+
+func newBrowserRoundTripperForProfileWithHTTP2Factory(settings clientSettings, profile browserProfile, factory browserHTTP2ProfileFactory) (*browserRoundTripper, error) {
 	fallback, err := newBaseRoundTripper(settings)
 	if err != nil {
 		return nil, err
@@ -77,10 +82,11 @@ func newBrowserRoundTripperForProfile(settings clientSettings, profile browserPr
 		return nil, err
 	}
 	return newBrowserRoundTripperWithConfig(browserRoundTripperConfig{
-		dialContext: dialContext,
-		profile:     profile,
-		fallback:    fallback,
-		tlsConfig:   tlsConfig,
+		dialContext:         dialContext,
+		profile:             profile,
+		http2ProfileFactory: factory,
+		fallback:            fallback,
+		tlsConfig:           tlsConfig,
 	}), nil
 }
 
@@ -229,7 +235,12 @@ func (roundTripper *browserRoundTripper) newOriginTransport(ctx context.Context,
 	}
 	alpn := connection.ConnectionState().NegotiatedProtocol
 	if alpn == http2.NextProtoTLS {
-		return newBrowserHTTP2Transport(roundTripper.config.profile, connection, func(ctx context.Context) (*utls.UConn, error) {
+		factory := roundTripper.config.http2ProfileFactory
+		if factory == nil {
+			profile := cloneBrowserProfile(roundTripper.config.profile)
+			factory = func() (browserProfile, error) { return cloneBrowserProfile(profile), nil }
+		}
+		return newBrowserHTTP2TransportWithProfileFactory(factory, connection, func(ctx context.Context) (*utls.UConn, error) {
 			return roundTripper.dialTLS(ctx, host)
 		}), nil
 	}
@@ -396,8 +407,8 @@ func cloneBrowserRequest(request *http.Request, defaults []Field) *http.Request 
 }
 
 type browserHTTP2Transport struct {
-	profile browserProfile
-	dial    func(context.Context) (*utls.UConn, error)
+	profileFactory browserHTTP2ProfileFactory
+	dial           func(context.Context) (*utls.UConn, error)
 
 	mu         sync.Mutex
 	connection *browserHTTP2Connection
@@ -405,8 +416,16 @@ type browserHTTP2Transport struct {
 	creating   chan struct{}
 }
 
+type browserHTTP2ProfileFactory func() (browserProfile, error)
+
 func newBrowserHTTP2Transport(profile browserProfile, initial *utls.UConn, dial func(context.Context) (*utls.UConn, error)) *browserHTTP2Transport {
-	return &browserHTTP2Transport{profile: profile, initial: initial, dial: dial}
+	return newBrowserHTTP2TransportWithProfileFactory(func() (browserProfile, error) {
+		return cloneBrowserProfile(profile), nil
+	}, initial, dial)
+}
+
+func newBrowserHTTP2TransportWithProfileFactory(factory browserHTTP2ProfileFactory, initial *utls.UConn, dial func(context.Context) (*utls.UConn, error)) *browserHTTP2Transport {
+	return &browserHTTP2Transport{profileFactory: factory, initial: initial, dial: dial}
 }
 
 func (transport *browserHTTP2Transport) RoundTrip(request *http.Request) (*http.Response, error) {
@@ -450,7 +469,12 @@ func (transport *browserHTTP2Transport) connectionFor(ctx context.Context) (*bro
 		}
 		var created *browserHTTP2Connection
 		if err == nil {
-			created, err = newBrowserHTTP2Connection(transport.profile, connection)
+			profile, profileErr := transport.profileFactory()
+			if profileErr != nil {
+				err = profileErr
+			} else {
+				created, err = newBrowserHTTP2Connection(profile, connection)
+			}
 		}
 		if err != nil && connection != nil {
 			_ = connection.Close()

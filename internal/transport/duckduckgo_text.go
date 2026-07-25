@@ -8,9 +8,9 @@ import (
 	"strings"
 )
 
-// DuckDuckGoTextClient owns the isolated temporary HTTP/2 capability required
-// by the frozen DuckDuckGo text engine. It deliberately does not claim the
-// Python client's randomized TLS or HTTP/2 fingerprint behavior.
+// DuckDuckGoTextClient owns the isolated source-shaped TLS and HTTP/2
+// capability required by the frozen DuckDuckGo text engine. Its profiles stay
+// private; callers retain the same request-oriented transport API.
 type DuckDuckGoTextClient struct {
 	client *Client
 }
@@ -21,12 +21,23 @@ func NewDuckDuckGoTextClient(config Config, headers []Field) (*DuckDuckGoTextCli
 }
 
 func newDuckDuckGoTextClient(config Config, headers []Field, roundTripper http.RoundTripper) (*DuckDuckGoTextClient, error) {
+	return newDuckDuckGoTextClientWithSessionProfileChooser(config, headers, roundTripper, nil)
+}
+
+func newDuckDuckGoTextClientWithSessionProfileChooser(config Config, headers []Field, roundTripper http.RoundTripper, chooser duckDuckGoSessionProfileChooser) (*DuckDuckGoTextClient, error) {
 	client, err := newClientWithBehavior(config, roundTripper, clientBehavior{
 		followRedirects: false,
 		forceHTTP2:      true,
 	})
 	if err != nil {
 		return nil, err
+	}
+	if roundTripper == nil {
+		profile, err := selectDuckDuckGoSessionProfile(client.settings, chooser)
+		if err != nil {
+			return nil, err
+		}
+		client.duckDuckGoSessionProfile = &profile
 	}
 	client.UpdateHeaders(headers)
 	return &DuckDuckGoTextClient{client: client}, nil

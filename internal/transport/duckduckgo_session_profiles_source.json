@@ -1,0 +1,324 @@
+{
+  "profiles": [
+    {
+      "client_hello_base64": "FgMBAgABAAH8AwMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAuEwITAxMBwCvMqcAvzKjALMAwwCPAJ8AkwCjACcATAJwAPAAvwBQAnQA9ADUA/wEAAYUAAAAOAAwAAAlsb2NhbGhvc3QACwAEAwABAgAKABYAFAAdABcAHgAZABgBAAEBAQIBAwEEACMAAAAQAA4ADAhodHRwLzEuMQJoMgAWAAAAFwAAAA0AKgAoBAMFAwYDCAcICAgJCAoICwgECAUIBgQBBQEGAQMDAwEDAgQCBQIGAgArAAUEAwQDAwAtAAIBAQAzACYAJAAdACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVAMgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+      "http2": {
+        "connection_window_increment": 16777216,
+        "headers": [
+          [
+            "accept",
+            "*/*"
+          ],
+          [
+            "accept-encoding",
+            "gzip, deflate, br"
+          ],
+          [
+            "user-agent",
+            "goddgs-ddg-source-capture"
+          ]
+        ],
+        "initial_stream_id": 1,
+        "priority": null,
+        "pseudo_order": [
+          "method",
+          "authority",
+          "scheme",
+          "path"
+        ],
+        "settings": [
+          [
+            1,
+            4000
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            4,
+            100
+          ],
+          [
+            5,
+            16384
+          ],
+          [
+            8,
+            0
+          ],
+          [
+            3,
+            100
+          ],
+          [
+            6,
+            65500
+          ]
+        ],
+        "stream_window_increment": 16777216
+      },
+      "name": "verify_default",
+      "verification_enabled": true
+    },
+    {
+      "client_hello_base64": "FgMBAMsBAADHAwMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKMArzKnAL8yowCzAMMAjwCfAJMAowAnAEwCcADwAL8AUAJ0APQA1AP8BAAB2AAAADgAMAAAJbG9jYWxob3N0AAsABAMAAQIACgAMAAoAHQAXAB4AGQAYACMAAAAQAA4ADAhodHRwLzEuMQJoMgAWAAAAFwAAAA0AKgAoBAMFAwYDCAcICAgJCAoICwgECAUIBgQBBQEGAQMDAwEDAgQCBQIGAg==",
+      "http2": {
+        "connection_window_increment": 16777216,
+        "headers": [
+          [
+            "accept",
+            "*/*"
+          ],
+          [
+            "accept-encoding",
+            "gzip, deflate, br"
+          ],
+          [
+            "user-agent",
+            "goddgs-ddg-source-capture"
+          ]
+        ],
+        "initial_stream_id": 1,
+        "priority": null,
+        "pseudo_order": [
+          "method",
+          "authority",
+          "scheme",
+          "path"
+        ],
+        "settings": [
+          [
+            1,
+            4000
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            4,
+            100
+          ],
+          [
+            5,
+            16384
+          ],
+          [
+            8,
+            0
+          ],
+          [
+            3,
+            100
+          ],
+          [
+            6,
+            65500
+          ]
+        ],
+        "stream_window_increment": 16777216
+      },
+      "name": "verify_max_tls12",
+      "verification_enabled": true
+    },
+    {
+      "client_hello_base64": "FgMBAgABAAH8AwMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIEwITAxMBAP8BAAGrAAAADgAMAAAJbG9jYWxob3N0AAsABAMAAQIACgAWABQAHQAXAB4AGQAYAQABAQECAQMBBAAjAAAAEAAOAAwIaHR0cC8xLjECaDIAFgAAABcAAAANAB4AHAQDBQMGAwgHCAgICQgKCAsIBAgFCAYEAQUBBgEAKwADAgMEAC0AAgEBADMAJgAkAB0AIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABUA/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+      "http2": {
+        "connection_window_increment": 16777216,
+        "headers": [
+          [
+            "accept",
+            "*/*"
+          ],
+          [
+            "accept-encoding",
+            "gzip, deflate, br"
+          ],
+          [
+            "user-agent",
+            "goddgs-ddg-source-capture"
+          ]
+        ],
+        "initial_stream_id": 1,
+        "priority": null,
+        "pseudo_order": [
+          "method",
+          "authority",
+          "scheme",
+          "path"
+        ],
+        "settings": [
+          [
+            1,
+            4000
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            4,
+            100
+          ],
+          [
+            5,
+            16384
+          ],
+          [
+            8,
+            0
+          ],
+          [
+            3,
+            100
+          ],
+          [
+            6,
+            65500
+          ]
+        ],
+        "stream_window_increment": 16777216
+      },
+      "name": "verify_min_tls13",
+      "verification_enabled": true
+    },
+    {
+      "client_hello_base64": "FgMBAgABAAH8AwMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAuEwITAxMBwCvMqcAvzKjALMAwwCPAJ8AkwCjACcATAJwAPAAvwBQAnQA9ADUA/wEAAYUAAAAOAAwAAAlsb2NhbGhvc3QACwAEAwABAgAKABYAFAAdABcAHgAZABgBAAEBAQIBAwEEABAADgAMCGh0dHAvMS4xAmgyABYAAAAXAAAADQAqACgEAwUDBgMIBwgICAkICggLCAQIBQgGBAEFAQYBAwMDAQMCBAIFAgYCACsABQQDBAMDAC0AAgEBADMAJgAkAB0AIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABUAzAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+      "http2": {
+        "connection_window_increment": 16777216,
+        "headers": [
+          [
+            "accept",
+            "*/*"
+          ],
+          [
+            "accept-encoding",
+            "gzip, deflate, br"
+          ],
+          [
+            "user-agent",
+            "goddgs-ddg-source-capture"
+          ]
+        ],
+        "initial_stream_id": 1,
+        "priority": null,
+        "pseudo_order": [
+          "method",
+          "authority",
+          "scheme",
+          "path"
+        ],
+        "settings": [
+          [
+            1,
+            4000
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            4,
+            100
+          ],
+          [
+            5,
+            16384
+          ],
+          [
+            8,
+            0
+          ],
+          [
+            3,
+            100
+          ],
+          [
+            6,
+            65500
+          ]
+        ],
+        "stream_window_increment": 16777216
+      },
+      "name": "verify_no_ticket",
+      "verification_enabled": true
+    },
+    {
+      "client_hello_base64": "FgMBAgABAAH8AwMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAkEwITAxMBwCzAMMArwC/MqcyowCTAKMAjwCcAnwCeAGsAZwD/AQABjwAAAA4ADAAACWxvY2FsaG9zdAALAAQDAAECAAoAFgAUAB0AFwAeABkAGAEAAQEBAgEDAQQAIwAAABAADgAMCGh0dHAvMS4xAmgyABYAAAAXAAAADQAqACgEAwUDBgMIBwgICAkICggLCAQIBQgGBAEFAQYBAwMDAQMCBAIFAgYCACsABQQDBAMDAC0AAgEBADMAJgAkAB0AIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABUA0gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+      "http2": {
+        "connection_window_increment": 16777216,
+        "headers": [
+          [
+            "accept",
+            "*/*"
+          ],
+          [
+            "accept-encoding",
+            "gzip, deflate, br"
+          ],
+          [
+            "user-agent",
+            "goddgs-ddg-source-capture"
+          ]
+        ],
+        "initial_stream_id": 1,
+        "priority": null,
+        "pseudo_order": [
+          "method",
+          "authority",
+          "scheme",
+          "path"
+        ],
+        "settings": [
+          [
+            1,
+            4000
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            4,
+            100
+          ],
+          [
+            5,
+            16384
+          ],
+          [
+            8,
+            0
+          ],
+          [
+            3,
+            100
+          ],
+          [
+            6,
+            65500
+          ]
+        ],
+        "stream_window_increment": 16777216
+      },
+      "name": "verify_off",
+      "verification_enabled": false
+    }
+  ],
+  "schema_version": 1,
+  "source": {
+    "capture": "deterministic source-random templates through loopback TLS/H2 only; no external request, cookies, credentials, or proxy",
+    "commit": "a12929a72429a39a0841c3d7caacb20ee17acd4d",
+    "package": "ddgs.HttpClient2",
+    "package_version": "9.14.4",
+    "python_packages": {
+      "ddgs": "9.14.4",
+      "h2": "4.3.0",
+      "hpack": "4.2.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "hyperframe": "6.1.0"
+    }
+  }
+}

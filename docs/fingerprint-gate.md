@@ -24,7 +24,7 @@ no conserva ni imprime la respuesta completa del servicio.
 | Python `HttpClient` / `primp 1.3.1` | `h2` | `091b5b7b79dabfb28d2e6d498acabcfd` | `t13d1516h2_8daaf6152771_d8a2da3f94cd` | `52d84b11737d980aef856699f885ca86` | Referencia base observada. |
 | Python `HttpClient2` / `httpx`+parche H2 | `h2` | `c8fe1b5352a80f2346fd55f755c75d54` | `t13d2311h1_60e844d7c027_c9e58cc61e36` | `9f8937ed5d7df159714246e27fa34a03` | Referencia temporal DDG observada. |
 | Go `transport.Client` estándar, antes de 5.6 | `h2` | `03117a8ed39ef02427ebbc39f121275c` | `t13d1312h2_f57a46bbacb6_ab7e3b40a677` | `cbcbfae223bb97a0cc79109588321a5c` | Referencia de la divergencia de `net/http`. |
-| Go `DuckDuckGoTextClient` | `h2` | `03117a8ed39ef02427ebbc39f121275c` | `t13d1312h2_f57a46bbacb6_ab7e3b40a677` | `cbcbfae223bb97a0cc79109588321a5c` | No equivale a `HttpClient2`. |
+| Go `DuckDuckGoTextClient` antes de `port-ddg-session-fingerprint` | `h2` | `03117a8ed39ef02427ebbc39f121275c` | `t13d1312h2_f57a46bbacb6_ab7e3b40a677` | `cbcbfae223bb97a0cc79109588321a5c` | Referencia histórica del transporte estándar sustituido. |
 | Go `transport.Client`, Chrome 146/Windows | `h2` | `091b5b7b79dabfb28d2e6d498acabcfd` | `t13d1516h2_8daaf6152771_d8a2da3f94cd` | `52d84b11737d980aef856699f885ca86` | Igual a `primp` explícito en esta pareja. |
 | Go `transport.Client`, Edge 148/Linux | `h2` | `211fd42460abf41337bf9d7ef016053f` | `t13d1516h2_8daaf6152771_d8a2da3f94cd` | `52d84b11737d980aef856699f885ca86` | Igual a `primp` explícito en esta pareja. |
 | Go `transport.Client`, Opera 131/Android | `h2` | `ce07d5a8351d54b78bf83ebd79ac5cc7` | `t13d1516h2_8daaf6152771_d8a2da3f94cd` | `52d84b11737d980aef856699f885ca86` | Igual a `primp` explícito en esta pareja. |
@@ -47,15 +47,22 @@ los 115 perfiles fuente a través de HTTP CONNECT loopback.
 
 Los cinco pares diagnósticos coinciden con su observación explícita de
 `primp`. Los valores de entropía TLS siguen siendo dinámicos, por lo que este
-resultado no implica igualdad byte a byte. `HttpClient2` de DuckDuckGo es otro
-cliente fuente y sigue sin equivalencia de fingerprint.
+resultado no implica igualdad byte a byte.
+
+DuckDuckGo tiene un corpus aparte, local y reproducible: cinco plantillas de
+política TLS capturadas desde `HttpClient2`, selección/orden de cifrados por
+cliente, y siete SETTINGS H2/ventanas por conexión. Las pruebas loopback cubren
+PEM, `verify=false`, HTTP(S) CONNECT, SOCKS5/SOCKS5H, reutilización,
+reconexión, cancelación y clientes aislados. No se ha repetido el diagnóstico
+externo de `HttpClient2` con la nueva implementación: sin una autorización y
+endpoint explícitos, este documento no afirma igualdad JA3/JA4/Akamai externa.
 
 ## Matriz por motor activo
 
 | Categoría | Motores fuente | Cliente fuente | Fixtures de transporte/adapter | Estado fingerprint |
 | --- | --- | --- | --- | --- |
 | Text | Brave, Google, Grokipedia, Mojeek, Startpage, Wikipedia, Yahoo, Yandex | `primp.HttpClient` | Fixtures verdes; 115 bundles y rutas HTTPS locales | Selección fuente completa; los cinco pares diagnósticos coinciden. |
-| Text | DuckDuckGo | `HttpClient2` | Verde HTTP/2 local, redirección y ciclo de vida | No equivalente: cliente temporal TLS/H2 fuente no portado. |
+| Text | DuckDuckGo | `HttpClient2` | Fixtures, cinco plantillas loopback, wire H2, rutas HTTPS y ciclo de vida verdes | Forma fuente TLS/H2 local portada; observación externa nueva pendiente y no es una búsqueda. |
 | Images | Bing, DuckDuckGo | `primp.HttpClient` | Fixtures verdes; 115 bundles y rutas HTTPS locales | Selección fuente completa; los cinco pares diagnósticos coinciden. |
 | News | Bing, DuckDuckGo, Yahoo | `primp.HttpClient` | Fixtures verdes; 115 bundles y rutas HTTPS locales | Selección fuente completa; los cinco pares diagnósticos coinciden. |
 | Videos | DuckDuckGo | `primp.HttpClient` | Fixtures verdes; 115 bundles y rutas HTTPS locales | Selección fuente completa; los cinco pares diagnósticos coinciden. |
@@ -65,7 +72,9 @@ Texto Bing permanece deshabilitado en fuente y no se activa por esta matriz.
 
 ## Decisión
 
-El artefacto, procedencia y comandos de regeneración están en
-[`browser-profiles.md`](browser-profiles.md). No se aprueba equivalencia para
-`HttpClient2`; toda extensión requiere revisar licencia/cgo/supply-chain,
-aislamiento y observación controlada.
+Los artefactos, procedencia y comandos de regeneración están en
+[`browser-profiles.md`](browser-profiles.md) y
+[`duckduckgo-session-profiles.md`](duckduckgo-session-profiles.md). La
+extensión DDG queda limitada a plantillas capturadas por loopback, uTLS ya
+revisado y verificaciones offline; no autoriza ninguna búsqueda real ni
+sustituye el diagnóstico controlado.

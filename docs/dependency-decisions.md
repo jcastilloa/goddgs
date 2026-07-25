@@ -102,6 +102,33 @@ dependency.
 | Why selected | Loopback capture plus local wire tests prove all 115 profiles instantiate with fresh entropy, source JA3 semantics (without GREASE), matching headers and matching H2 frames. Controlled diagnostic pairs match explicit `primp` Chrome, Edge, Opera, Safari and Firefox JA3/JA4/H2 observations. |
 | Scope / limits | Applied to every HTTPS target route: direct, PEM root, disabled verification, HTTP(S) CONNECT and SOCKS5/SOCKS5H. Plain HTTP intentionally remains standard. Outer TLS to an HTTPS proxy is proxy control, not target impersonation. The distinct DDG temporary `HttpClient2` fingerprint remains unimplemented. |
 
+### Extension review: DuckDuckGo `HttpClient2` templates — 2026-07-25
+
+The active OpenSpec change `port-ddg-session-fingerprint` extends the existing
+private uTLS adapter; it adds no module and does not expose a uTLS type. The
+source loopback asset is
+`internal/transport/duckduckgo_session_profiles_source.json` (SHA-256
+`5111e75b502d8991f8f98e70231fb3ca169fec94342120e2d4cbd4a5a00e87df`). It
+comes only from local TLS/H2 probes of checkout
+`a12929a72429a39a0841c3d7caacb20ee17acd4d` using CPython 3.12.3, ddgs
+9.14.4, httpx 0.28.1, httpcore 1.0.9, h2 4.3.0, hpack 4.2.0 and hyperframe
+6.1.0. The generator rejects a different checkout, editable import path, or
+dependency version.
+
+The captured templates contain public protocol bytes only: a synthetic
+`localhost` ClientHello, the seven H2 settings and headers supplied by the
+capture itself. They contain no search URL, external request, cookie,
+credential, proxy, or response body. The artifact zeros handshake random,
+session ID and key-share bytes before commit; uTLS recreates them per
+connection. The adapter shuffles only the source-observed variable
+legacy-cipher suffix once per verified client, not a User-Agent or shared
+template. uTLS remains BSD-3-Clause, pure Go and isolated under
+`internal/transport`; its existing pin and module checksum are unchanged. The
+implementation must rebuild a template per connection so TLS random/key-share
+bytes stay connection-local, while policy/cipher selection remains
+client/session-local. It must not run a live search request; any diagnostic
+endpoint stays opt-in and user supplied.
+
 ## Extract renderers — practical renderer approved by scope exception, 2026-07-25
 
 Frozen extraction is not a generic HTML-to-text operation. The resolved source

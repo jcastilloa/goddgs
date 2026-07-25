@@ -131,7 +131,8 @@ type Client struct {
 	behavior clientBehavior
 	jar      *cookiejar.Jar
 
-	browserProfile *browserProfile
+	browserProfile           *browserProfile
+	duckDuckGoSessionProfile *browserProfile
 
 	headersMu sync.RWMutex
 	headers   http.Header
@@ -336,7 +337,16 @@ func (client *Client) ensureHTTPClient() error {
 
 func (client *Client) newRoundTripper() (http.RoundTripper, error) {
 	if client.behavior.forceHTTP2 {
-		return newBaseRoundTripper(client.settings)
+		if client.duckDuckGoSessionProfile == nil {
+			return nil, errors.New("DuckDuckGo HTTP/2 session profile is unavailable")
+		}
+		return newBrowserRoundTripperForProfileWithHTTP2Factory(
+			client.settings,
+			cloneBrowserProfile(*client.duckDuckGoSessionProfile),
+			func() (browserProfile, error) {
+				return newDuckDuckGoHTTP2Profile(*client.duckDuckGoSessionProfile, nil)
+			},
+		)
 	}
 	if client.browserProfile == nil {
 		return nil, errors.New("browser transport profile is unavailable")

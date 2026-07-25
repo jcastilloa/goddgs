@@ -285,7 +285,7 @@ func duckDuckGoNewsResults(source string) ([]Result, error) {
 	if itemsValue == nil {
 		return nil, newSourceEngineError("TypeError", "'NoneType' object is not iterable", nil)
 	}
-	items, err := duckDuckGoNewsItems(itemsValue)
+	items, err := duckDuckGoJSONItems(itemsValue)
 	if err != nil {
 		return nil, err
 	}
@@ -309,25 +309,6 @@ func duckDuckGoNewsResults(source string) ([]Result, error) {
 		results = append(results, result)
 	}
 	return results, nil
-}
-
-func duckDuckGoNewsItems(value any) ([]any, error) {
-	switch typed := value.(type) {
-	case []any:
-		return typed, nil
-	case map[string]any:
-		if len(typed) == 0 {
-			return []any{}, nil
-		}
-		return []any{""}, nil
-	case string:
-		if typed == "" {
-			return []any{}, nil
-		}
-		return []any{""}, nil
-	default:
-		return nil, newSourceEngineError("TypeError", "'"+sourceTypeName(value)+"' object is not iterable", nil)
-	}
 }
 
 func bingNewsPostExtractResults(results []Result, now time.Time) ([]Result, error) {

@@ -24,8 +24,8 @@ verification result.
 - Tasks 2.1–2.7 are complete. The isolated Python oracle lives temporarily at
   `/tmp/goddgs-reference-a12929a`; exact resolved packages and rebuild steps
   are in `docs/reference-environment.md`. It made no external engine request.
-- Fixture corpus has 353 deterministic synthetic/offline contracts: 131 pure,
-  171 engine-visible, 9 extract, 24 parser, and 18 transport contracts under
+- Fixture corpus has 361 deterministic synthetic/offline contracts: 132 pure,
+  178 engine-visible, 9 extract, 24 parser, and 18 transport contracts under
   their
   respective `testdata/contracts/` directories. `tools/reference_capture.py --check`
   validates frozen SHA, resolved-package provenance, result/error shape, trace
@@ -53,6 +53,13 @@ verification result.
   preserves VQD-before-safe validation and raw dynamic `results` iteration;
   Yahoo preserves fixed-relative-date units, URL/image/source cleanup, and its
   broad partial postprocess failure. They are not yet public-client composition
+  or browser/TLS-H2 fingerprint proof.
+- Task 6.7 complete: DuckDuckGo Videos uses an injected request port and
+  preserves VQD-before-safe validation, mandatory four-slot filters, page
+  stride 60, nested heterogeneous video values, and raw iterable/attribute
+  errors. Video filters cross the façade as ordered `resolution`, `duration`,
+  and `license_videos` keywords; public `max_results` remains scheduler-only.
+  It is not yet public-client composition or browser/TLS-H2 fingerprint proof.
   or browser/TLS-H2 fingerprint proof.
 - Local target repo had no commits when work began. Existing `.codex`,
   `.claude`, `.opencode`, and `openspec` tooling belong to project setup;
@@ -298,6 +305,7 @@ Verification recorded on 2026-07-20:
 | 2026-07-21 | Complete Startpage, Yahoo, and Yandex adapter gate (task 6.4) | Ordered request/form fixtures prove Startpage bootstrap sequencing/raw-status/empty-text behavior, Yahoo request-time token path and double URL post-processing, and Yandex request-time search-id/ignored-option branches. Adapters use injected request-local ports and immutable request values; full tests/race, adapter race stress x50, cgo-off, `make verify`, strict OpenSpec validation, and the 314-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 | 2026-07-21 | Complete Bing and DuckDuckGo image adapter gate (task 6.5) | Ordered source-parameter fixtures prove Bing engine-only `max_results`/Python `int`, long-form-only timelimit, metadata/dimension errors, and DuckDuckGo VQD/header/filter/result-root/error ordering. Public image options retain source keyword ordering while scheduler `max_results` stays outside engine kwargs. Full tests/race, adapter race stress x50, cgo-off, `make verify`, strict OpenSpec validation, and the 337-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 | 2026-07-21 | Complete Bing, DuckDuckGo, and Yahoo News adapter gate (task 6.6) | Fixture RED/GREEN/REFACTOR proves source-ordered News payloads, VQD sequencing, nil/empty/error distinctions, Bing local-zone and relative dates/image truncation, DuckDuckGo raw dynamic `results` iteration, and Yahoo broad partial cleanup with clock-injected dates. Adapters own no goroutine or response body; injected ports and immutable per-call data pass race stress. Full tests/race, cgo-off, `make verify`, strict OpenSpec validation, and the 353-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
+| 2026-07-21 | Complete DuckDuckGo Videos adapter gate (task 6.7) | Fixture RED/GREEN/REFACTOR proves public video keyword forwarding, VQD-before-safe error order, exact four-slot `f`, page stride 60, nested/dynamic result values, and raw results-root/item errors. Images, News, and Videos share only the fixture-proven JSON-iterable helper. Full tests/race, video race stress x20, cgo-off, `make verify`, strict OpenSpec validation, and the 361-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 
 ## Core TDD evidence — 2026-07-20
 
@@ -430,6 +438,16 @@ Verification recorded on 2026-07-20:
   boundary review, `golang-testing`, strict TDD, clean-code, simplification,
   concurrency patterns, and debugger review applied; 24–32 concurrent calls
   per adapter and `go test -race -count=20` pass.
+- **RED/GREEN/REFACTOR 6.7:** Video filter API and DuckDuckGo Videos fixtures
+  were RED before source keyword behavior and the adapter existed. GREEN adds
+  only captured VQD/bootstrap GETs, ordered four-slot filters, paging, raw
+  JSON result fields, and source error paths. REFACTOR replaces duplicated
+  DuckDuckGo dynamic-JSON iterable handling with one fixture-proven private
+  helper shared by Images, News, and Videos; it preserves nil/empty/error
+  behavior. `golang-pro`, hexagonal boundary review, `golang-testing`, strict
+  TDD, clean-code, simplification, concurrency patterns, and debugger review
+  applied; 32 concurrent calls and `go test -race -count=20` pass. The adapter
+  owns no goroutine or response body.
 - **Skills assessed:** `golang-pro`, `go-clean-ddd-hexagonal` (public façade
   port), `golang-testing`, TDD RED/GREEN/REFACTOR, `clean-code`, and
   `go-code-simplification` applied. `go-concurrency-patterns` and
@@ -476,4 +494,12 @@ Verification recorded on 2026-07-20:
   `CGO_ENABLED=0 go test -count=1 ./...`, `make verify`, and strict OpenSpec
   validation passed. Total coverage: 87.3%; public package: 94.7%;
   `internal/engine`: 86.6%; parser: 83.4%; transport: 83.8%. Live checks
+  skipped: no external engine request or fingerprint evidence was authorized.
+- **Acceptance 6.7 (2026-07-21):** frozen Python `--check` verified 361
+  fixtures (132 pure, 178 engine, 9 extract, 24 parser, 18 transport);
+  `gofmt`, `git diff --check`, `go vet ./...`, `go test -count=1 ./...`,
+  `go test -race -count=1 ./...`, focused Video-adapter race stress x20,
+  `CGO_ENABLED=0 go test -count=1 ./...`, `make verify`, and strict OpenSpec
+  validation passed. Total coverage: 87.6%; public package: 94.8%;
+  `internal/engine`: 87.1%; parser: 83.4%; transport: 83.8%. Live checks
   skipped: no external engine request or fingerprint evidence was authorized.

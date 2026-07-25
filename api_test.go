@@ -210,6 +210,53 @@ func TestDDGS_ImagesForwardsFrozenSourceKeywordFilters(t *testing.T) {
 	}
 }
 
+func TestDDGS_VideosForwardsFrozenSourceKeywordFilters(t *testing.T) {
+	fixture := loadImageKeywordInvocationFixture(
+		t,
+		"testdata/contracts/pure/pure.search-call-video-filters-forwarded-max-results-omitted.json",
+	)
+	executor := &recordingExecutor{}
+	client := New()
+	client.executor = executor
+
+	_, err := client.Videos(
+		context.Background(),
+		fixture.Input.Query,
+		searchInvocationFixtureOptions(t, fixture.Input.Arguments)...,
+	)
+	if err != nil {
+		t.Fatalf("Videos(...): %v", err)
+	}
+	if len(executor.searches) != 1 {
+		t.Fatalf("search calls = %d, want 1", len(executor.searches))
+	}
+
+	request := executor.searches[0]
+	if request.category != videosCategory {
+		t.Fatalf("category = %q, want %q", request.category, videosCategory)
+	}
+	if got, want := request.config.maxResults, 61; got == nil || *got != want {
+		t.Fatalf("max results = %#v, want %d", got, want)
+	}
+	if len(fixture.Result.Output.Calls) != 1 {
+		t.Fatalf("fixture calls = %d, want 1", len(fixture.Result.Output.Calls))
+	}
+
+	call := fixture.Result.Output.Calls[0]
+	if call.Query != request.query {
+		t.Fatalf("query = %q, want %q", request.query, call.Query)
+	}
+	want := orderedSourceKeywordArguments(t, call.Kwargs)
+	if !reflect.DeepEqual(request.config.sourceKeywords, want) {
+		t.Fatalf("source keywords = %#v, want %#v", request.config.sourceKeywords, want)
+	}
+	for _, keyword := range request.config.sourceKeywords {
+		if keyword.name == "max_results" {
+			t.Fatal("public max_results leaked into source keywords")
+		}
+	}
+}
+
 func TestDDGS_ExtractPreservesSourceContentKinds(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -461,6 +508,9 @@ func searchInvocationFixtureOptions(t *testing.T, arguments map[string]json.RawM
 		{name: "type_image", option: WithImageType},
 		{name: "layout", option: WithImageLayout},
 		{name: "license_image", option: WithImageLicense},
+		{name: "resolution", option: WithVideoResolution},
+		{name: "duration", option: WithVideoDuration},
+		{name: "license_videos", option: WithVideoLicense},
 	} {
 		if raw, ok := arguments[keyword.name]; ok {
 			options = append(options, keyword.option(decodeFixtureString(t, keyword.name, raw)))
@@ -473,7 +523,10 @@ func orderedSourceKeywordArguments(t *testing.T, arguments map[string]json.RawMe
 	t.Helper()
 
 	keywords := make([]sourceKeyword, 0, len(arguments))
-	for _, name := range []string{"size", "color", "type_image", "layout", "license_image"} {
+	for _, name := range []string{
+		"size", "color", "type_image", "layout", "license_image",
+		"resolution", "duration", "license_videos",
+	} {
 		raw, ok := arguments[name]
 		if !ok {
 			continue

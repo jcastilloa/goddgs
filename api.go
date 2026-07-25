@@ -190,6 +190,21 @@ func WithImageLicense(license string) SearchOption {
 	return withSourceKeyword("license_image", license)
 }
 
+// WithVideoResolution configures the source resolution keyword.
+func WithVideoResolution(resolution string) SearchOption {
+	return withSourceKeyword("resolution", resolution)
+}
+
+// WithVideoDuration configures the source duration keyword.
+func WithVideoDuration(duration string) SearchOption {
+	return withSourceKeyword("duration", duration)
+}
+
+// WithVideoLicense configures the source license_videos keyword.
+func WithVideoLicense(license string) SearchOption {
+	return withSourceKeyword("license_videos", license)
+}
+
 func withSourceKeyword(name, value string) SearchOption {
 	return func(config *searchConfig) {
 		for index := range config.sourceKeywords {

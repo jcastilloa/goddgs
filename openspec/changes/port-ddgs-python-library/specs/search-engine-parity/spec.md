@@ -147,6 +147,13 @@ and `max_results` semantics.
 - **THEN** Go SHALL forward their exact source keyword names to the selected
   engine while retaining public max-results as scheduler-only state
 
+#### Scenario: Video source filters are forwarded as kwargs
+- **WHEN** caller supplies source video resolution, duration, or license
+  filters
+- **THEN** Go SHALL forward exact source keyword names `resolution`,
+  `duration`, and `license_videos` to the selected engine while retaining
+  public max-results as scheduler-only state
+
 #### Scenario: Bing Images receives documented timelimit shorthand
 - **WHEN** caller invokes Bing Images with source public shorthand such as `d`
 - **THEN** Go behavior SHALL match frozen source exception/result behavior rather than silently map it to different time unit

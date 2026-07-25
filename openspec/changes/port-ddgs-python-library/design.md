@@ -96,6 +96,14 @@ outside that keyword list: `_search_sync` consumes it for scheduler/slicing and
 does not forward it to engines. Direct adapter fixtures may still supply a
 literal `max_results` keyword to reproduce the isolated Bing Images contract.
 
+Video filters are likewise source keyword arguments, represented by
+`WithVideoResolution`, `WithVideoDuration`, and `WithVideoLicense`. Their
+internal names remain exactly `resolution`, `duration`, and `license_videos`.
+They use the same ordered replacement semantics as image filters because the
+frozen Python facade forwards both categories through `**kwargs`. As with
+images, `WithMaxResults` remains scheduler/slicing state and is never placed
+in this source-keyword list by the public facade.
+
 **Ordered internal result boundary:** Python result objects retain attribute
 insertion order, including dynamically added fields; aggregation uses that
 order to select its first eligible cache field. Each `internal/engine` adapter

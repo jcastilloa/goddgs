@@ -41,6 +41,13 @@ than panic for expected failures.
 - **THEN** Go SHALL retain max-results separately from forwarded image keyword
   arguments, matching frozen `_search_sync` data flow
 
+#### Scenario: Caller configures video source filters
+- **WHEN** caller invokes `Videos` with resolution, duration, or license
+  options
+- **THEN** Go SHALL retain source keyword names `resolution`, `duration`, and
+  `license_videos` for the selected engine without exposing an HTTP/parser type
+  or coercing empty values; public max-results SHALL remain scheduler-only
+
 ### Requirement: Lossless raw result contract
 Public search result representation SHALL preserve source category fields and
 dynamic value types without coercing all values to strings. Public extraction

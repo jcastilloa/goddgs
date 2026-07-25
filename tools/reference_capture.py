@@ -1708,6 +1708,47 @@ def _search_invocation_fixtures() -> list[Fixture]:
                 }
             ],
         ),
+        _fixture(
+            "pure.search-call-video-filters-forwarded-max-results-omitted",
+            "search_invocation",
+            {
+                "category": "probe",
+                "query": "query",
+                "arguments": {
+                    "region": "us-en",
+                    "safesearch": "off",
+                    "timelimit": "w",
+                    "max_results": 61,
+                    "page": 2,
+                    "backend": "duckduckgo",
+                    "resolution": "high",
+                    "duration": "medium",
+                    "license_videos": "creativeCommon",
+                },
+            },
+            _ok(
+                capture(
+                    {
+                        "region": "us-en",
+                        "safesearch": "off",
+                        "timelimit": "w",
+                        "max_results": 61,
+                        "page": 2,
+                        "backend": "duckduckgo",
+                        "resolution": "high",
+                        "duration": "medium",
+                        "license_videos": "creativeCommon",
+                    }
+                )
+            ),
+            trace=[
+                {
+                    "sequence": 1,
+                    "kind": "note",
+                    "note": "_search_sync forwards video kwargs but consumes max_results for scheduling/slicing",
+                }
+            ],
+        ),
     ]
 
 
@@ -5551,6 +5592,112 @@ def _news_engine_edge_fixtures() -> list[Fixture]:
     return fixtures
 
 
+def _video_engine_edge_fixtures() -> list[Fixture]:
+    """Capture DuckDuckGo Videos VQD, filter, and dynamic-result branches."""
+    fixtures: list[Fixture] = []
+    base_input = {
+        "query": "fixture ddg video edge",
+        "region": "us-en",
+        "safesearch": "on",
+        "timelimit": None,
+        "page": 1,
+    }
+
+    fixtures.extend(
+        [
+            _synthetic_engine_fixture(
+                "engine.videos.duckduckgo-invalid-safe-after-vqd-error",
+                "videos",
+                "duckduckgo",
+                "search",
+                {**base_input, "safesearch": "strict"},
+                [_SyntheticResponse(content=b"vqd=fixture-vqd&")],
+                lambda _events: _engine_search_output(
+                    DuckduckgoVideos().search(
+                        "fixture ddg video edge",
+                        region="us-en",
+                        safesearch="strict",
+                        timelimit=None,
+                        page=1,
+                    )
+                ),
+                notes=["DuckDuckGo Videos fetches VQD before its safesearch lookup raises KeyError."],
+            ),
+            _synthetic_search_fixture(
+                "engine.videos.duckduckgo-absent-results-empty-list",
+                "videos",
+                "duckduckgo",
+                base_input,
+                DuckduckgoVideos,
+                [_SyntheticResponse(content=b"vqd=fixture-vqd&"), _SyntheticResponse(text=json.dumps({}))],
+                notes=["DuckDuckGo Videos uses dict.get('results', []), so an absent key is an empty list."],
+            ),
+            _synthetic_search_fixture(
+                "engine.videos.duckduckgo-empty-dict-results-empty-list",
+                "videos",
+                "duckduckgo",
+                base_input,
+                DuckduckgoVideos,
+                [
+                    _SyntheticResponse(content=b"vqd=fixture-vqd&"),
+                    _SyntheticResponse(text=json.dumps({"results": {}})),
+                ],
+                notes=["An empty mapping iterates to no source video results."],
+            ),
+            _synthetic_engine_fixture(
+                "engine.videos.duckduckgo-null-results-error",
+                "videos",
+                "duckduckgo",
+                "search",
+                base_input,
+                [
+                    _SyntheticResponse(content=b"vqd=fixture-vqd&"),
+                    _SyntheticResponse(text=json.dumps({"results": None})),
+                ],
+                lambda _events: _engine_search_output(DuckduckgoVideos().search(**base_input)),
+                notes=["Explicit JSON null is iterated directly and exposes the source TypeError."],
+            ),
+            _synthetic_engine_fixture(
+                "engine.videos.duckduckgo-nonempty-dict-results-attribute-error",
+                "videos",
+                "duckduckgo",
+                "search",
+                base_input,
+                [
+                    _SyntheticResponse(content=b"vqd=fixture-vqd&"),
+                    _SyntheticResponse(text=json.dumps({"results": {"fixture": 1}})),
+                ],
+                lambda _events: _engine_search_output(DuckduckgoVideos().search(**base_input)),
+                notes=["A nonempty mapping yields string keys, then item.get() raises AttributeError."],
+            ),
+            _synthetic_engine_fixture(
+                "engine.videos.duckduckgo-null-item-attribute-error",
+                "videos",
+                "duckduckgo",
+                "search",
+                base_input,
+                [
+                    _SyntheticResponse(content=b"vqd=fixture-vqd&"),
+                    _SyntheticResponse(text=json.dumps({"results": [None]})),
+                ],
+                lambda _events: _engine_search_output(DuckduckgoVideos().search(**base_input)),
+                notes=["Each source video item receives direct item.get calls; null exposes AttributeError."],
+            ),
+            _synthetic_engine_fixture(
+                "engine.videos.duckduckgo-root-list-attribute-error",
+                "videos",
+                "duckduckgo",
+                "search",
+                base_input,
+                [_SyntheticResponse(content=b"vqd=fixture-vqd&"), _SyntheticResponse(text="[]")],
+                lambda _events: _engine_search_output(DuckduckgoVideos().search(**base_input)),
+                notes=["The decoded root receives .get('results', []); a list exposes AttributeError."],
+            ),
+        ]
+    )
+    return fixtures
+
+
 def _brave_google_mojeek_edge_fixtures() -> list[Fixture]:
     """Capture source-only HTML text edge behavior before Go adapter work."""
     fixtures: list[Fixture] = []
@@ -7013,6 +7160,7 @@ def build_fixtures() -> list[Fixture]:
         *_html_engine_matrix_fixtures(),
         *_image_engine_edge_fixtures(),
         *_news_engine_edge_fixtures(),
+        *_video_engine_edge_fixtures(),
         *_brave_google_mojeek_edge_fixtures(),
         *_startpage_yahoo_yandex_edge_fixtures(),
         *_engine_non_200_fixtures(),

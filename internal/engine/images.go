@@ -123,7 +123,7 @@ func duckDuckGoImagesHeaders() []transport.Field {
 }
 
 func bingImagesPayload(request SearchRequest) ([]transport.Field, error) {
-	maxResults, hasMaxResults := imageParameter(request, "max_results")
+	maxResults, hasMaxResults := sourceParameter(request, "max_results")
 	count, err := bingImagesCount(maxResults, hasMaxResults)
 	if err != nil {
 		return nil, err
@@ -320,11 +320,11 @@ func duckDuckGoImagesPayload(ctx context.Context, client htmlTextTransport, requ
 		}
 		timeLimit = "time:" + value
 	}
-	size := imageFilter("size", imageParameterValue(request, "size"))
-	color := imageFilter("color", imageParameterValue(request, "color"))
-	typeImage := imageFilter("type", imageParameterValue(request, "type_image"))
-	layout := imageFilter("layout", imageParameterValue(request, "layout"))
-	licenseImage := imageFilter("license", imageParameterValue(request, "license_image"))
+	size := imageFilter("size", sourceParameterValue(request, "size"))
+	color := imageFilter("color", sourceParameterValue(request, "color"))
+	typeImage := imageFilter("type", sourceParameterValue(request, "type_image"))
+	layout := imageFilter("layout", sourceParameterValue(request, "layout"))
+	licenseImage := imageFilter("license", sourceParameterValue(request, "license_image"))
 
 	vqd, err := duckDuckGoImagesVQD(ctx, client, request.Query)
 	if err != nil {
@@ -388,7 +388,7 @@ func duckDuckGoImagesResults(source string) ([]Result, error) {
 	if resultsValue == nil {
 		return nil, newSourceEngineError("TypeError", "'NoneType' object is not iterable", nil)
 	}
-	items, err := duckDuckGoImageItems(resultsValue)
+	items, err := duckDuckGoJSONItems(resultsValue)
 	if err != nil {
 		return nil, err
 	}
@@ -411,7 +411,7 @@ func duckDuckGoImagesResults(source string) ([]Result, error) {
 	return results, nil
 }
 
-func duckDuckGoImageItems(value any) ([]any, error) {
+func duckDuckGoJSONItems(value any) ([]any, error) {
 	switch typed := value.(type) {
 	case []any:
 		return typed, nil
@@ -444,7 +444,7 @@ var duckDuckGoImageResultFields = [...]string{
 	"source",
 }
 
-func imageParameter(request SearchRequest, name string) (string, bool) {
+func sourceParameter(request SearchRequest, name string) (string, bool) {
 	for index := len(request.Parameters) - 1; index >= 0; index-- {
 		if request.Parameters[index].Name == name {
 			return request.Parameters[index].Value, true
@@ -453,8 +453,8 @@ func imageParameter(request SearchRequest, name string) (string, bool) {
 	return "", false
 }
 
-func imageParameterValue(request SearchRequest, name string) string {
-	value, _ := imageParameter(request, name)
+func sourceParameterValue(request SearchRequest, name string) string {
+	value, _ := sourceParameter(request, name)
 	return value
 }
 

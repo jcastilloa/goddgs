@@ -482,6 +482,7 @@ func TestCopyScheduleRequest_OwnsOptionalValues(t *testing.T) {
 	maxResults := 10
 	threads := 2
 	waitTimeout := 5 * time.Second
+	parameters := []SourceParameter{{Name: "size", Value: "Large"}}
 
 	got := copyScheduleRequest(ScheduleRequest{
 		Query:       "query",
@@ -489,12 +490,14 @@ func TestCopyScheduleRequest_OwnsOptionalValues(t *testing.T) {
 		MaxResults:  &maxResults,
 		Threads:     &threads,
 		WaitTimeout: &waitTimeout,
+		Parameters:  parameters,
 	})
 
 	timeLimit = "m"
 	maxResults = 1
 	threads = 1
 	waitTimeout = 0
+	parameters[0].Value = "Small"
 
 	if got.TimeLimit == nil || *got.TimeLimit != "w" || got.TimeLimit == &timeLimit {
 		t.Fatalf("time limit = %#v, want owned \"w\"", got.TimeLimit)
@@ -507,6 +510,9 @@ func TestCopyScheduleRequest_OwnsOptionalValues(t *testing.T) {
 	}
 	if got.WaitTimeout == nil || *got.WaitTimeout != 5*time.Second || got.WaitTimeout == &waitTimeout {
 		t.Fatalf("wait timeout = %#v, want owned 5s", got.WaitTimeout)
+	}
+	if actual := got.Parameters; !reflect.DeepEqual(actual, []SourceParameter{{Name: "size", Value: "Large"}}) {
+		t.Fatalf("parameters = %#v, want owned source values", actual)
 	}
 }
 

@@ -26,6 +26,14 @@ type EngineRequest struct {
 	SafeSearch string
 	TimeLimit  *string
 	Page       int
+	Parameters []SourceParameter
+}
+
+// SourceParameter is one category-specific source keyword in call order.
+// Its value is immutable request data, never shared with another engine call.
+type SourceParameter struct {
+	Name  string
+	Value string
 }
 
 // EngineSearch is the scheduler's consumer-side execution boundary.
@@ -51,6 +59,7 @@ type ScheduleRequest struct {
 	TimeLimit   *string
 	MaxResults  *int
 	Page        int
+	Parameters  []SourceParameter
 	Threads     *int
 	WaitTimeout *time.Duration
 }
@@ -123,6 +132,7 @@ func (s *Scheduler) Search(ctx context.Context, request ScheduleRequest, engines
 		SafeSearch: request.SafeSearch,
 		TimeLimit:  request.TimeLimit,
 		Page:       request.Page,
+		Parameters: request.Parameters,
 	})
 	startSchedulerWorkers(&workersGroup, workers, jobs, completions, operationContext, engineRequest)
 	jobsClosed := false
@@ -196,6 +206,7 @@ func (s *Scheduler) Search(ctx context.Context, request ScheduleRequest, engines
 
 func copyScheduleRequest(request ScheduleRequest) ScheduleRequest {
 	requestCopy := request
+	requestCopy.Parameters = append([]SourceParameter(nil), request.Parameters...)
 	if request.TimeLimit != nil {
 		timeLimit := *request.TimeLimit
 		requestCopy.TimeLimit = &timeLimit
@@ -273,6 +284,7 @@ func startSchedulerWorkers(
 
 func copyEngineRequest(request EngineRequest) EngineRequest {
 	requestCopy := request
+	requestCopy.Parameters = append([]SourceParameter(nil), request.Parameters...)
 	if request.TimeLimit != nil {
 		timeLimit := *request.TimeLimit
 		requestCopy.TimeLimit = &timeLimit
@@ -442,7 +454,7 @@ func sourceNoResultsError(lastError error) error {
 	}
 	message := fmt.Sprint(lastError)
 	if strings.Contains(message, "timed out") {
-		return newSourceSchedulerError(sourceTimeoutErrorType, message, lastError)
+		return newSourceSchedulerError(sourceTimeoutErrorType, message, nil)
 	}
-	return newSourceSchedulerError(sourceDDGSErrorType, message, lastError)
+	return newSourceSchedulerError(sourceDDGSErrorType, message, nil)
 }

@@ -229,10 +229,13 @@ state is per-call. Client cookie/connection state is isolated/synchronized
 only where source-visible behavior needs it. All bodies close; all goroutines
 end.
 
-The current scheduler port carries only source common search inputs. Python
-forwards category-specific `**kwargs`; before public-to-engine wiring, fixture
-capture must define a lossless immutable per-category option representation
-and pass resolved client timeout, including explicit `None`. The isolated
+The scheduler port carries source common search inputs plus an ordered,
+immutable source-parameter list for category-specific `**kwargs`. It copies
+that list at schedule entry and once again for every engine invocation, so a
+worker cannot mutate caller or sibling state. This boundary proves the frozen
+`region`, `safesearch`, `timelimit`, `page`, and category-keyword forwarding
+before public-to-engine composition exists. Resolved client timeout, including
+explicit `None`, still belongs to the pending composition task. The isolated
 scheduler remains a tested core until that composition task is complete.
 
 **Rejected:** direct cached mutable engines cause races; serial/unbounded

@@ -24,7 +24,7 @@ verification result.
 - Tasks 2.1–2.7 are complete. The isolated Python oracle lives temporarily at
   `/tmp/goddgs-reference-a12929a`; exact resolved packages and rebuild steps
   are in `docs/reference-environment.md`. It made no external engine request.
-- Fixture corpus has 364 deterministic synthetic/offline contracts: 134 pure,
+- Fixture corpus has 365 deterministic synthetic/offline contracts: 135 pure,
   179 engine-visible, 9 extract, 24 parser, and 18 transport contracts under
   their
   respective `testdata/contracts/` directories. `tools/reference_capture.py --check`
@@ -317,6 +317,7 @@ Verification recorded on 2026-07-20:
 | 2026-07-21 | Complete DuckDuckGo Videos adapter gate (task 6.7) | Fixture RED/GREEN/REFACTOR proves public video keyword forwarding, VQD-before-safe error order, exact four-slot `f`, page stride 60, nested/dynamic result values, and raw results-root/item errors. Images, News, and Videos share only the fixture-proven JSON-iterable helper. Full tests/race, video race stress x20, cgo-off, `make verify`, strict OpenSpec validation, and the 361-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 | 2026-07-21 | Complete Anna's Archive adapter gate (task 6.8) | Fixture RED/GREEN/REFACTOR proves one process-lifetime archive TLD, immutable adapter URL, ordered `q,page` GET (including page zero), comment delimiter removal, nil/empty/malformed distinctions, and source base-prefix repair even for absolute URLs. Full tests/race, adapter race stress x50, cgo-off, `make verify`, strict OpenSpec validation, and the 363-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 | 2026-07-21 | Complete disabled text Bing regression gate (task 6.9) | Direct frozen-source fixture proves `Bing.disabled=True` metadata, its absence from active text names, and explicit `backend="bing"` fallback to active `auto` after two shuffle calls. This task intentionally added no production code or active adapter; test-only TDD GREEN is existing behavior, with RED/GREEN production phases N/A. Focused race x20, full acceptance, and the 364-fixture oracle pass. |
+| 2026-07-25 | Complete category selector/scheduler differential gate (task 6.10) | Frozen synthetic engines drive every active category through explicit/comma, `auto`, `all`, invalid fallback, provider collisions, empty/error recovery, timeout/no-result, and max-result branches. RED caught missing common/category-keyword forwarding and source timeout-cause shape; scheduler now owns immutable ordered source parameters, copied again per worker. Focused race x50, full acceptance, and the 365-fixture oracle pass. Real adapter/public-client composition remains intentionally open. |
 
 ## Core TDD evidence — 2026-07-20
 
@@ -547,5 +548,14 @@ Verification recorded on 2026-07-20:
   `CGO_ENABLED=0 go test -count=1 ./...`, `make verify`, and strict OpenSpec
   validation passed. Total coverage: 87.4%; public package: 94.8%;
   `internal/engine`: 86.9%; `internal/search`: 91.4%; parser: 83.4%;
+  transport: 83.8%. Live checks skipped: no external engine request or
+  fingerprint evidence was authorized.
+- **Acceptance 6.10 (2026-07-25):** frozen Python `--check` verified 365
+  fixtures (135 pure, 179 engine, 9 extract, 24 parser, 18 transport);
+  `gofmt`, `git diff --check`, `go vet ./...`, `go test -count=1 ./...`,
+  `go test -race -count=1 ./...`, focused category differential race x50,
+  `CGO_ENABLED=0 go test -count=1 ./...`, `make verify`, and strict OpenSpec
+  validation passed. Total coverage: 87.5%; public package: 94.8%;
+  `internal/engine`: 86.9%; `internal/search`: 91.9%; parser: 83.4%;
   transport: 83.8%. Live checks skipped: no external engine request or
   fingerprint evidence was authorized.

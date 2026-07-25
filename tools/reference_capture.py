@@ -1642,6 +1642,201 @@ def _disabled_text_bing_regression_fixture() -> Fixture:
     )
 
 
+def _category_scheduler_differential_fixture() -> Fixture:
+    """Freeze selection plus scheduling across every active source category."""
+
+    query = "needle"
+    common = {"region": "fr-fr", "safesearch": "off", "timelimit": "w", "page": 3}
+    cases = [
+        {
+            "label": "text_explicit_comma",
+            "category": "text",
+            "backend": "yahoo, brave",
+            "max_results": 10,
+            **common,
+            "parameters": [["text_flag", "kept"]],
+        },
+        {"label": "text_auto", "category": "text", "backend": "auto", "max_results": 10},
+        {"label": "text_all", "category": "text", "backend": "all", "max_results": 10},
+        {"label": "text_invalid_fallback", "category": "text", "backend": "missing", "max_results": 10},
+        {"label": "text_max_results", "category": "text", "backend": "brave, yahoo", "max_results": 1},
+        {
+            "label": "text_timeout",
+            "category": "text",
+            "backend": "brave",
+            "max_results": 10,
+            "outcomes": {"brave": "timeout"},
+        },
+        {
+            "label": "images_auto_provider_dedup",
+            "category": "images",
+            "backend": "auto",
+            "max_results": 10,
+            **common,
+            "parameters": [["size", "Large"], ["color", "Red"]],
+        },
+        {
+            "label": "images_provider_empty_then_recovery",
+            "category": "images",
+            "backend": "auto",
+            "max_results": 10,
+            **common,
+            "outcomes": {"duckduckgo": "empty"},
+        },
+        {
+            "label": "images_provider_error_then_recovery",
+            "category": "images",
+            "backend": "auto",
+            "max_results": 10,
+            **common,
+            "outcomes": {"duckduckgo": "error"},
+        },
+        {
+            "label": "news_all_provider_dedup",
+            "category": "news",
+            "backend": "all",
+            "max_results": 10,
+            **common,
+            "parameters": [["news_flag", "kept"]],
+        },
+        {
+            "label": "videos_auto",
+            "category": "videos",
+            "backend": "auto",
+            "max_results": 10,
+            **common,
+            "parameters": [["resolution", "high"], ["duration", "short"], ["license_videos", "share"]],
+        },
+        {
+            "label": "books_auto",
+            "category": "books",
+            "backend": "auto",
+            "max_results": 10,
+            **common,
+            "parameters": [["book_flag", "kept"]],
+        },
+        {
+            "label": "books_no_results",
+            "category": "books",
+            "backend": "annasarchive",
+            "max_results": 10,
+            "outcomes": {"annasarchive": "empty"},
+        },
+    ]
+
+    def result_for(category: str, name: str) -> Any:
+        url = f"https://{name}.fixture.example"
+        title = f"{query} {name}"
+        if category == "text":
+            return TextResult(title=title, href=url, body=title)
+        if category == "images":
+            return ImagesResult(title=title, image=f"{url}/image", url=url)
+        if category == "news":
+            return NewsResult(title=title, body=title, url=url)
+        if category == "videos":
+            return VideosResult(title=title, description=title, embed_url=url)
+        if category == "books":
+            return BooksResult(title=title, url=url)
+        raise AssertionError(f"unexpected category {category}")
+
+    cache_field = {
+        "text": "href",
+        "images": "image",
+        "news": "url",
+        "videos": "embed_url",
+        "books": "url",
+    }
+    output: dict[str, Any] = {}
+
+    for case in cases:
+        category = case["category"]
+        outcomes = case.get("outcomes", {})
+        started: list[str] = []
+        calls: list[dict[str, Any]] = []
+
+        def fake_search(search_query: str, *, name: str, **kwargs: Any) -> list[Any]:
+            started.append(name)
+            calls.append({"name": name, "query": search_query, "kwargs": kwargs, "keyword_order": list(kwargs)})
+            outcome = outcomes.get(name, "result")
+            if outcome == "timeout":
+                raise RuntimeError("operation timed out exactly")
+            if outcome == "empty":
+                return []
+            if outcome == "error":
+                raise RuntimeError("source failure exactly")
+            return [result_for(category, name)]
+
+        engines = {
+            category: {
+                name: _engine_class(
+                    name,
+                    engine_class.provider,
+                    engine_class.priority,
+                    lambda search_query, name=name, **kwargs: fake_search(search_query, name=name, **kwargs),
+                )
+                for name, engine_class in ENGINES[category].items()
+            }
+        }
+        shuffle_calls: list[list[str]] = []
+
+        def reverse(items: list[str]) -> None:
+            shuffle_calls.append(list(items))
+            items.reverse()
+
+        core, old_engines, old_shuffle, old_threads = _patched_core_engines(engines, reverse)
+        try:
+            selected = core.DDGS(timeout=1)._get_engines(category, case["backend"])
+            selected_output = [
+                {"name": engine.name, "provider": engine.provider, "priority": engine.priority}
+                for engine in selected
+            ]
+            selection_shuffle_inputs = list(shuffle_calls)
+            search = lambda: core.DDGS(timeout=1)._search_sync(
+                category,
+                query,
+                backend=case["backend"],
+                max_results=case["max_results"],
+                region=case.get("region", "us-en"),
+                safesearch=case.get("safesearch", "moderate"),
+                timelimit=case.get("timelimit"),
+                page=case.get("page", 1),
+                **dict(case.get("parameters", [])),
+            )
+            try:
+                search_output = _ok(search())
+            except Exception as exc:  # source may recover through a duplicate provider
+                search_output = _error_from_exception(exc)
+        finally:
+            _restore_core_engines(core, old_engines, old_shuffle, old_threads)
+
+        case_output: dict[str, Any] = {
+            "selection": selected_output,
+            "selection_shuffle_inputs": selection_shuffle_inputs,
+            "started": sorted(started),
+            "calls": calls,
+        }
+        if search_output["status"] == "ok":
+            case_output["identifiers"] = [item[cache_field[category]] for item in search_output["output"]]
+        else:
+            case_output["error"] = search_output["error"]
+        output[case["label"]] = case_output
+
+    return _fixture(
+        "pure.category-selector-scheduler-differential",
+        "category_selector_scheduler",
+        {"query": query, "cases": cases, "registry_fixture": "pure.engine-registry-active-and-disabled", "shuffle": "reverse"},
+        _ok(output),
+        random="shuffle patched to reverse; source scheduler uses completed in-process fake engines",
+        trace=[
+            {
+                "sequence": 1,
+                "kind": "note",
+                "note": "selection and scheduling use fake source engines only; no HTTP client is used",
+            }
+        ],
+    )
+
+
 def _search_invocation_fixtures() -> list[Fixture]:
     def capture(arguments: dict[str, Any]) -> dict[str, Any]:
         calls: list[dict[str, Any]] = []
@@ -7269,6 +7464,7 @@ def build_fixtures() -> list[Fixture]:
         *_backend_fixtures(),
         _frozen_registry_backend_fixture(),
         _disabled_text_bing_regression_fixture(),
+        _category_scheduler_differential_fixture(),
         *_search_invocation_fixtures(),
         *_scheduler_fixtures(),
         *_error_and_extract_fixtures(),

@@ -29,6 +29,7 @@ complete.
 | Q-16 | No-result becomes `TimeoutException` only when lowercase `"timed out"` appears in stringified last error; otherwise `DDGSException`. | Do not infer source timeout from arbitrary context or HTTP status. |
 | Q-17 | Neither `max_results` nor `DDGS.threads` is range-validated. Negative truthy values can make the computed `ThreadPoolExecutor(max_workers=...)` non-positive and expose its `ValueError`; `0` is treated as falsy/unlimited for `max_results` and ignored for `threads`. | Capture exact reference exceptions in the frozen Python environment. Do not add friendly validation or silently clamp values. |
 | Q-18 | `concurrent.futures.wait` first observes futures already completed before applying a zero timeout. | A zero scheduler wait must retain a completion already available at batch entry. |
+| Q-19 | `_search_sync` forwards `region`, `safesearch`, `timelimit`, and `page` to every submitted engine in that order, then preserves category `**kwargs` insertion order. A provider stays eligible after an empty or failed future and is marked only after a nonempty completed result. | Snapshot and copy ordered parameters at scheduler entry and per worker; do not reserve a provider on submit, empty result, or error. |
 
 ## Parser, result, and error behavior
 

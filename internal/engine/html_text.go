@@ -9,8 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jcastillo/goddgs/internal/parser"
-	"github.com/jcastillo/goddgs/internal/transport"
+	"github.com/jcastilloa/goddgs/internal/parser"
+	"github.com/jcastilloa/goddgs/internal/transport"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )

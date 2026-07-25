@@ -4,8 +4,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/jcastillo/goddgs/internal/engine"
-	"github.com/jcastillo/goddgs/internal/search"
+	"github.com/jcastilloa/goddgs/internal/engine"
+	"github.com/jcastilloa/goddgs/internal/search"
 )
 
 const torBrowserProxy = "socks5h://127.0.0.1:9150"

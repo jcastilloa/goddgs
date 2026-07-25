@@ -12,7 +12,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/jcastillo/goddgs/internal/engine"
+	"github.com/jcastilloa/goddgs/internal/engine"
 )
 
 type categoryDifferentialFixture struct {

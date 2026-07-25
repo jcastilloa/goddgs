@@ -361,8 +361,7 @@ HTML/XPath packages also passed under `-race`. The parser stays on its secure
 defaults: no external network/filesystem loader, DTD, XInclude, or cgo path.
 `github.com/antchfx/htmlquery v1.3.6` is rejected: it failed the Yahoo News
 union and malformed Startpage contracts. Do not rewrite selectors to fit a
-candidate. Capture all extract formats and accept renderer only when corpus
-matches; unknown format defaults to source Markdown.
+candidate.
 
 `internal/extract` owns a consumer-side, context-first fetcher port. The port
 receives an immutable `internal/transport.Config` snapshot and URL and returns
@@ -370,20 +369,21 @@ the already materialized source response (status, raw bytes, decoded text).
 This keeps proxy, timeout, TLS verification, cancellation, and response-body
 ownership in the lower transport layer while allowing extraction tests to use a
 small fake. Extraction selects exactly one source representation after a 200
-response; it must not eagerly render the other formats. The renderer remains a
-separate dependency decision and must not be selected or implemented before
-the frozen Markdown/plain/rich corpus is accepted.
+response; it must not eagerly render the other formats.
 
-**Renderer gate status (2026-07-25):** resolved `primp 1.3.1` calls Rust
+**Renderer comparison (2026-07-25):** resolved `primp 1.3.1` calls Rust
 `html2text 0.16.7` at width 100 with its default, `TrivialDecorator`, and
 `RichDecorator` outputs. Offline probes reject
 `JohannesKaufmann/html-to-markdown v1.6.0`, `k3a/html2text v1.4.0`, and
 `jaytaylor/html2text`
 `v0.0.0-20260303211410-1a4bdc82ecec`: all diverge on the minimal frozen
-heading/link/list fixture. No Go renderer is approved, so `internal/extract`
-remains RED-only and task 7.5 is blocked. See `docs/dependency-decisions.md`
-for license, provenance, and output evidence; do not add a best-effort
-converter merely to unblock the task.
+heading/link/list fixture. User authorization on 2026-07-25 accepts
+`github.com/JohannesKaufmann/html-to-markdown v1.6.0` as a practical renderer
+for this library's `text_markdown`, `text_plain`, and `text_rich` outputs.
+`internal/extract` keeps that dependency behind its renderer port. Its actual
+output receives dedicated Go tests; it must not be described as source-render
+parity. Frozen fixtures remain evidence for raw fetch/text/bytes/error
+semantics and representation selection. See `docs/dependency-decisions.md`.
 
 JSON-backed engines decode one complete JSON value through `internal/parser`
 with `json.Decoder.UseNumber`. This preserves integer-versus-float lexical
@@ -420,7 +420,7 @@ oracle encode guesses.
 | --- | --- |
 | Fingerprint mismatch blocks engines | Transport evidence gate; mark unproven engine incomplete. |
 | lxml/XPath mismatch | Capture corpus before parser choice; approve only passing candidate. |
-| Rendered extract mismatch | Differential formats; no completion without compatible renderer. |
+| Rendered extract mismatch | User-authorized practical renderer; document difference and test its local contract. |
 | Context timing differs from Python | Test/categorize caller cancellation separately from source timeout. |
 | Go race from source mutable state | Per-call state, isolated clients, race/leak tests. |
 | Engines change externally | Offline contracts primary; tagged live smoke tests secondary. |
@@ -440,9 +440,7 @@ oracle encode guesses.
 
 ## Open Questions
 
-1. What final Git remote/import path replaces `github.com/jcastillo/goddgs`?
-2. Which reviewed Go transport proves required fingerprinting without bad cgo,
+1. Which reviewed Go transport proves required fingerprinting without bad cgo,
    license, security, or maintenance trade-offs?
-3. Which renderer matches `primp` Markdown/plain/rich output?
-4. How should source-wide `DDGS.threads` map to Go without mutable global state?
-5. Can all source random choices be internal/injectable for deterministic tests?
+2. How should source-wide `DDGS.threads` map to Go without mutable global state?
+3. Can all source random choices be internal/injectable for deterministic tests?

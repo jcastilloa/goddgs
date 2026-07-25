@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jcastillo/goddgs/internal/engine"
-	"github.com/jcastillo/goddgs/internal/transport"
+	"github.com/jcastilloa/goddgs/internal/engine"
+	"github.com/jcastilloa/goddgs/internal/transport"
 )
 
 type sourceEngineFactory struct {

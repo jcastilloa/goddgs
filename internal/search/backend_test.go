@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/jcastillo/goddgs/internal/engine"
+	"github.com/jcastilloa/goddgs/internal/engine"
 )
 
 type backendFixture struct {

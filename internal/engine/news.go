@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jcastillo/goddgs/internal/normalize"
-	"github.com/jcastillo/goddgs/internal/parser"
-	"github.com/jcastillo/goddgs/internal/transport"
+	"github.com/jcastilloa/goddgs/internal/normalize"
+	"github.com/jcastilloa/goddgs/internal/parser"
+	"github.com/jcastilloa/goddgs/internal/transport"
 )
 
 const (

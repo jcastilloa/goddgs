@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/jcastillo/goddgs/internal/normalize"
-	"github.com/jcastillo/goddgs/internal/parser"
+	"github.com/jcastilloa/goddgs/internal/normalize"
+	"github.com/jcastilloa/goddgs/internal/parser"
 )
 
 // ErrUnknownResultCategory reports a category absent from the frozen source

@@ -12,7 +12,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/jcastillo/goddgs/internal/transport"
+	"github.com/jcastilloa/goddgs/internal/transport"
 )
 
 type duckDuckGoTextFixture struct {

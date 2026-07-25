@@ -116,10 +116,16 @@ or HTTP client types. Define small interfaces at consumers, inject them for
 tests, and avoid interfaces with one implementation unless they form a real
 test or architectural boundary.
 
-`github.com/jcastillo/goddgs` is provisional. Confirm final module path
-before publishing; changing it later is a breaking import-path change.
+Final module path: `github.com/jcastilloa/goddgs`. Changing it later is a
+breaking import-path change.
 
 ## Non-negotiable parity rules
+
+**Approved scoped exception (2026-07-25):** `Extract` keeps frozen fetch,
+bytes, decoded text, configuration, cancellation, and error behavior. Its
+`text_markdown`, `text_plain`, and `text_rich` HTML rendering uses the reviewed
+practical renderer documented in `docs/dependency-decisions.md`; do not claim
+those three rendered strings are `primp`-identical.
 
 - No invented fallback engine, payload, selector, header, parser cleanup,
   retry policy, ranking tweak, field coercion, or error swallowing.

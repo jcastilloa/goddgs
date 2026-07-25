@@ -20,8 +20,8 @@ close transport resources on success, failure, or cancellation.
 ### Requirement: Extraction format parity
 Extract operation SHALL support frozen source formats `text_markdown`,
 `text_plain`, `text_rich`, `text`, and `content`. It SHALL return raw response
-text for `text`, raw bytes for `content`, source-compatible rendered output for
-Markdown/plain/rich, and Markdown fallback for unknown format.
+text for `text`, raw bytes for `content`, practical documented rendered output
+for Markdown/plain/rich, and practical Markdown fallback for unknown format.
 
 #### Scenario: Raw text format is requested
 - **WHEN** caller requests `text`
@@ -33,7 +33,8 @@ Markdown/plain/rich, and Markdown fallback for unknown format.
 
 #### Scenario: Rendered formats are requested
 - **WHEN** fixtures request Markdown, plain, and rich output from representative HTML pages
-- **THEN** each Go output SHALL match corresponding frozen Python fixture output
+- **THEN** each Go output SHALL match the reviewed Go renderer contract and be
+  documented as non-identical to `primp` rendering
 
 #### Scenario: Unknown format is requested
 - **WHEN** caller supplies format not recognized by frozen source branching
@@ -41,10 +42,10 @@ Markdown/plain/rich, and Markdown fallback for unknown format.
 
 ### Requirement: Rendered-output evidence gate
 Rendered Markdown, plain-text, and rich-text implementation SHALL be selected
-only after differential fixture corpus proves it against frozen Python output.
-Generic renderer SHALL NOT be substituted merely because it produces readable
-output.
+only after dependency, license, maintenance, and frozen-output differences are
+recorded. Source-renderer mismatch requires an explicit scope decision.
 
 #### Scenario: Renderer candidate differs from source fixture
 - **WHEN** candidate renderer produces output different from frozen source for required fixture
-- **THEN** it SHALL not be accepted until compatibility adapter or explicit scope decision resolves difference
+- **THEN** it SHALL not be accepted until compatibility adapter or explicit
+  user-authorized scope decision resolves difference

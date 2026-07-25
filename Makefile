@@ -2,6 +2,7 @@
 
 GO ?= go
 GO_FILES := $(shell find . -type f -name '*.go' -not -path './vendor/*')
+INTEGRATION_PACKAGES := $(shell $(GO) list ./...)
 
 .PHONY: help fmt fmt-check vet test test-race integration cover tidy verify
 
@@ -33,7 +34,7 @@ test-race:
 	$(GO) test -race ./...
 
 integration:
-	$(GO) test -tags=integration ./...
+	GODDGS_INTEGRATION=1 $(GO) test -p=1 -count=1 -tags=integration $(INTEGRATION_PACKAGES)
 
 cover:
 	$(GO) test -coverprofile=coverage.out ./...

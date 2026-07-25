@@ -89,7 +89,7 @@ complete.
 | Q-43 | Frozen `extract()` accesses only chosen rendered property; unknown format selects Markdown. | Do not eagerly render all formats; preserve raw/fallback behavior. |
 | Q-44 | With resolved frozen `primp` 1.3.1, `extract(fmt="content")` preserves raw non-UTF-8 bytes while `extract(fmt="text")` exposes the source response decoding with replacement characters. | Preserve raw bytes without a text round trip; compare decoded raw text against extraction fixtures when selecting Go transport/renderer. |
 | Q-45 | Google calls `set_cookies("google.com", {"CONSENT": "YES+"})` without a scheme, while other engines pass full HTTPS URLs. | Canonicalize a bare domain to the cookie jar's HTTPS URL; do not silently drop Google consent state. |
-| Q-46 | Resolved `primp 1.3.1` renders `text_markdown`, `text_plain`, and `text_rich` through Rust `html2text 0.16.7` at width 100, using default, `TrivialDecorator`, and `RichDecorator` respectively. | Do not substitute a similarly named Go converter. It must match the frozen Markdown/plain/rich corpus exactly before extraction is implemented. |
+| Q-46 | Resolved `primp 1.3.1` renders `text_markdown`, `text_plain`, and `text_rich` through Rust `html2text 0.16.7` at width 100, using default, `TrivialDecorator`, and `RichDecorator` respectively. | Strict renderer parity is a known difference. The user approved the documented practical `html-to-markdown` renderer for these three formats; preserve source fetch/bytes/text/error behavior and never label the rendered strings `primp`-identical. |
 
 ## Upstream test gap
 

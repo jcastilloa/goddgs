@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/jcastillo/goddgs/internal/engine"
-	"github.com/jcastillo/goddgs/internal/transport"
+	"github.com/jcastilloa/goddgs/internal/engine"
+	"github.com/jcastilloa/goddgs/internal/transport"
 )
 
 type factoryEngineKey struct {
@@ -93,7 +93,11 @@ func TestSourceEngineFactory_CreatesFrozenActiveAdaptersWithIsolatedClients(t *t
 
 func TestNew_WiresFrozenSourceComposition(t *testing.T) {
 	client := New()
-	if _, ok := client.executor.(*composedExecutor); !ok {
+	executor, ok := client.executor.(*composedExecutor)
+	if !ok {
 		t.Fatalf("New executor = %T, want *composedExecutor", client.executor)
+	}
+	if got := len(executor.engines); got != 0 {
+		t.Fatalf("New constructed %d engines before a search, want 0", got)
 	}
 }

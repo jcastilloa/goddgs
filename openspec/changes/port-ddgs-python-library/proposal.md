@@ -29,8 +29,9 @@ aggregation, and ranking behavior must be preserved rather than approximated.
   module architecture with no service surface.
 - `search-engine-parity`: Source-compatible engine registry, transport,
   request construction, parsing, normalization, aggregation, and ranking.
-- `content-extraction-parity`: Source-compatible URL fetching and raw/plain/
-  rich/Markdown content output.
+- `content-extraction-parity`: Source-compatible URL fetching, raw bytes/text,
+  and documented practical plain/rich/Markdown content output. The rendered
+  formats are a user-authorized exception to strict formatter parity.
 - `parity-verification`: Offline Python-vs-Go differential fixtures, race-safe
   tests, and opt-in live engine verification.
 
@@ -40,7 +41,7 @@ None.
 
 ## Impact
 
-- Adds root Go module `github.com/jcastillo/goddgs` (provisional path) and
+- Adds root Go module `github.com/jcastilloa/goddgs` and
   internal library packages only.
 - Adds dependencies only after parser/transport/license evidence proves they
   are necessary for source parity.

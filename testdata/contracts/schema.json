@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/jcastillo/goddgs/testdata/contracts/schema.json",
+  "$id": "https://github.com/jcastilloa/goddgs/testdata/contracts/schema.json",
   "title": "goddgs frozen DDGS differential fixture",
   "description": "Sanitized observable behavior captured from one frozen Python DDGS source baseline.",
   "type": "object",

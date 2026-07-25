@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jcastillo/goddgs/internal/transport"
+	"github.com/jcastilloa/goddgs/internal/transport"
 )
 
 type extractFixture struct {
@@ -40,6 +40,10 @@ type extractFixture struct {
 			Type      string  `json:"type"`
 		} `json:"error"`
 	} `json:"result"`
+	Trace []struct {
+		ContentHex string `json:"content_hex"`
+		Kind       string `json:"kind"`
+	} `json:"trace"`
 }
 
 func TestExtractor_MatchesFrozenFixtures(t *testing.T) {
@@ -82,6 +86,24 @@ func TestExtractor_MatchesFrozenFixtures(t *testing.T) {
 				t.Fatalf("renderer calls = %d, want %d", got, boolToInt(wantRender))
 			}
 		})
+	}
+}
+
+func TestPracticalRenderer_ProducesDocumentedFormats(t *testing.T) {
+	renderer := NewPracticalRenderer()
+	rendered, err := renderer.Render(t.Context(), `<!doctype html><html><body><h1>Fixture heading</h1><p>Hello <a href="https://target.example/path">link</a>.</p><ul><li>One</li><li>Two</li></ul></body></html>`)
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+
+	if rendered.Markdown != "# Fixture heading\n\nHello [link](https://target.example/path).\n\n* One\n* Two" {
+		t.Fatalf("Markdown = %q", rendered.Markdown)
+	}
+	if rendered.Plain != "Fixture heading\n\nHello link.\n\nOne\nTwo" {
+		t.Fatalf("Plain = %q", rendered.Plain)
+	}
+	if rendered.Rich != rendered.Markdown {
+		t.Fatalf("Rich = %q, want practical Markdown %q", rendered.Rich, rendered.Markdown)
 	}
 }
 
@@ -134,11 +156,46 @@ func TestExtractor_PropagatesFetcherError(t *testing.T) {
 	}
 }
 
+func TestExtractor_ClosesFetcherIdleConnections(t *testing.T) {
+	fetcher := &closingFetcher{recordingFetcher: recordingFetcher{
+		response: transport.Response{StatusCode: http.StatusOK, Text: "raw"},
+	}}
+	_, err := New(fetcher, fixedRenderer{}).Extract(t.Context(), Request{
+		Method: http.MethodGet,
+		URL:    "https://extract.fixture/close",
+		Format: "text",
+	})
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+	if !fetcher.closed() {
+		t.Fatal("fetcher idle connections were not closed")
+	}
+}
+
 type recordingFetcher struct {
 	mu       sync.Mutex
 	response transport.Response
 	err      error
 	recorded []Request
+}
+
+type closingFetcher struct {
+	recordingFetcher
+	muClosed  sync.Mutex
+	wasClosed bool
+}
+
+func (f *closingFetcher) CloseIdleConnections() {
+	f.muClosed.Lock()
+	defer f.muClosed.Unlock()
+	f.wasClosed = true
+}
+
+func (f *closingFetcher) closed() bool {
+	f.muClosed.Lock()
+	defer f.muClosed.Unlock()
+	return f.wasClosed
 }
 
 func (f *recordingFetcher) Fetch(ctx context.Context, request Request) (transport.Response, error) {
@@ -210,6 +267,14 @@ func loadExtractFixture(t *testing.T, path string) extractFixture {
 func extractFixtureResponse(t *testing.T, fixture extractFixture) transport.Response {
 	t.Helper()
 	contentHex := fixture.Input.ResponseContentHex
+	if contentHex == "" {
+		for _, trace := range fixture.Trace {
+			if trace.Kind == "response" {
+				contentHex = trace.ContentHex
+				break
+			}
+		}
+	}
 	if contentHex == "" && fixture.Result.Status == "ok" && fixture.Result.Output.ContentHex != "" {
 		contentHex = fixture.Result.Output.ContentHex
 	}

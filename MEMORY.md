@@ -8,8 +8,8 @@ verification result.
 
 - Target: Go library port of DDGS only. No API server, CLI, MCP, DHT, cache,
   Docker service, or executable entrypoint.
-- Module scaffold exists. Root package is `ddgs`; module path is provisional:
-  `github.com/jcastillo/goddgs`.
+- Module scaffold exists. Root package is `ddgs`; final module path is
+  `github.com/jcastilloa/goddgs`.
 - Active OpenSpec change: `openspec/changes/port-ddgs-python-library/`.
 - Public façade/configuration, normalizers, ordered result aggregation, ranker,
   backend selection/static registry, isolated fixture-tested scheduler core,
@@ -20,9 +20,11 @@ verification result.
   Yahoo News adapters; DuckDuckGo Videos; and Anna's Archive Books are complete.
   Task 7.7 composes all active frozen adapters into the public client with lazy
   per-client caching, fresh isolated transports, source-order construction before
-  scheduler work, ordered keyword forwarding, and non-normalizing results. No
-  live search-engine proof, source TLS/H2 fingerprint parity, renderer, or
-  extraction implementation exists yet; those gates remain intentional.
+  scheduler work, ordered keyword forwarding, and non-normalizing results.
+  `Extract` preserves frozen fetch/bytes/text/error lifecycle with a
+  user-authorized practical renderer; its rendered strings are not source
+  `primp` claims. No live search-engine proof or source TLS/H2 fingerprint
+  parity exists yet.
 - Tasks 2.1–2.7 are complete. The isolated Python oracle lives temporarily at
   `/tmp/goddgs-reference-a12929a`; exact resolved packages and rebuild steps
   are in `docs/reference-environment.md`. It made no external engine request.
@@ -37,18 +39,20 @@ verification result.
   loopback with synthetic HTML/bytes and rewrites its URL before output.
   Parser, base transport, and request-local DDG HTTP/2 transport have
   independently consumed their relevant offline fixtures; the doubles/loopback
-  still do not prove renderer or browser/TLS-H2 fingerprint parity.
-- Task 7.3 is intentionally RED-only: `internal/extract` has a context-first
-  fetcher/renderer boundary and fixture tests for raw bytes/text, selected
-  render representation, non-200, config forwarding and cancellation. The
-  focused test fails only at the unavailable extractor implementation. Task
-  7.4 rejected three Go renderer candidates; source-compatible extraction must
-  not be implemented until a reviewed renderer passes the frozen corpus.
+  do not prove browser/TLS-H2 fingerprint parity. Extraction rendering is a
+  documented practical exception, not source-render equivalence.
+- Tasks 7.3–7.5 are complete. `internal/extract` has a context-first
+  fetcher/renderer boundary and frozen tests for raw bytes/text, selected
+  representation, non-200, config forwarding, cancellation, and fetch errors,
+  plus dedicated Go output tests for the practical renderer. Root `DDGS.Extract`
+  creates an isolated transport per call; rendered Markdown/plain/rich remains
+  explicitly excepted by the user decision below.
 - Task 5.5 is complete as an evidence gate, not a parity approval:
   `docs/fingerprint-gate.md` records one sanitized, tagged TLS/HTTP2
   observation per Python and Go client. Both Go clients negotiated HTTP/2 but
-  differed from `primp` and `HttpClient2` hashes, so every active engine stays
-  explicitly incomplete for browser-fingerprint parity.
+  differed from `primp` and `HttpClient2` hashes. This remains an explicit
+  strict-parity limitation; user-approved practical release scope does not
+  reinterpret it as browser-fingerprint equivalence.
 - Task 6.5 design decision: source image filters cross the Go façade as ordered
   source-keyword options (`size`, `color`, `type_image`, `layout`,
   `license_image`), while public `max_results` remains scheduler/slicing-only.
@@ -185,7 +189,7 @@ Treat registry output as truth.
 
 | Source dependency | Why it matters | Go status |
 | --- | --- | --- |
-| `primp>=1.2.3` | randomized browser impersonation, TLS/HTTP behavior, proxy/certs, HTML render properties | hard compatibility gate; `net/http` alone is not assumed sufficient |
+| `primp>=1.2.3` | randomized browser impersonation, TLS/HTTP behavior, proxy/certs, HTML render properties | TLS/H2 remains a hard compatibility gate; rendered extraction has a user-authorized practical exception |
 | `lxml>=4.9.4` | tolerant HTML parse + XPath | Helium v0.6.0 internal adapter passes 14 frozen lxml fixtures; JSON decoder preserves `json.Number`/raw mixed values |
 | `httpx[http2,socks,brotli]`, `httpcore`, `h2` | DDG text temporary client; random HTTP/2/TLS behavior | standard request-local H2/no-redirect/header behavior fixture-tested; randomized TLS/H2 fingerprint remains hard gate |
 | `fake-useragent>=2.2.0` | DDG text random user agent | capture/preserve acceptable UA behavior |
@@ -218,9 +222,9 @@ resolved runtime package versions (and preferably wheel hashes) as provenance.
 2. **Engine parser integration — high.** Internal Helium/JSON parser contracts
    are complete, but no engine adapter has consumed them with a real transport
    response or source-specific post-processing yet.
-3. **`extract()` rendering — critical.** `primp` provides `text_markdown`,
-   `text_plain`, and `text_rich`; no Go equivalent selected. Raw HTML/bytes
-   are easy, rendered output needs differential fixtures.
+3. **Rendered extraction divergence — accepted exception.** `primp` output is
+   not reproduced for Markdown/plain/rich. `html-to-markdown` plus a practical
+   plain-text projection is tested and documented; do not advertise it as 1:1.
 4. **Public Go API — high.** Python signatures and dynamic dict results cannot
    be copied literally. Design must retain raw parity and document Go-native
    `context.Context`/typed options without hiding source behavior.
@@ -232,12 +236,9 @@ resolved runtime package versions (and preferably wheel hashes) as provenance.
    rate-limited.
 7. **Source baseline drift — medium.** Source `__version__` and HEAD differ.
    Any upstream update requires a new audit/diff and explicit OpenSpec change.
-8. **Module path — medium.** Confirm final Git remote/import path before first
-   release.
-9. **Scheduler composition — high.** The tested scheduler core currently
-   receives only common fields and is not wired to public `DDGS` timeout or
-   category-specific source `**kwargs`. Capture a lossless immutable
-   per-category request contract before connecting public search to engines.
+8. **Module path — resolved.** Final Git remote/import path is
+   `github.com/jcastilloa/goddgs`; changing it later breaks every importing
+   program.
 
 ## Required evidence before an engine is complete
 
@@ -300,7 +301,7 @@ Verification recorded on 2026-07-20:
 | 2026-07-20 | Restrict epic to Go library | explicit user scope |
 | 2026-07-20 | Use root public `ddgs` package plus small internal library layers | Go-module adaptation of skeleton; avoids service boilerplate |
 | 2026-07-20 | Do not implement an engine before differential contracts | search-engine parity is product-critical |
-| 2026-07-20 | Keep module path provisional | target repository has no configured remote |
+| 2026-07-25 | Confirm final module path | User confirmed remote `https://github.com/jcastilloa/goddgs`; module/imports now use `github.com/jcastilloa/goddgs` |
 | 2026-07-20 | Complete OpenSpec artifacts; mark scaffold/governance tasks done | epic ready for evidence-first implementation |
 | 2026-07-20 | Record isolated Python oracle before fixture work | source lacks lockfile; fixtures need reproducible dependency provenance |
 | 2026-07-20 | Make all applicable local Go skills mandatory delivery gates | user requires full Go, clean-code, simplification, concurrency, debugger, testing, and TDD discipline; `AGENTS.md` defines evidence and N/A rules |
@@ -316,7 +317,7 @@ Verification recorded on 2026-07-20:
 | 2026-07-20 | Snapshot scheduler inputs at operation entry | Python core consumes immutable scalar/list values. Go clones optional request pointers and engine metadata slice before concurrent dispatch, then gives workers independent request values to avoid caller/sibling aliasing |
 | 2026-07-20 | Complete synthetic engine-visible capture adapters (task 2.4) | Nine sanitized fixtures cover DDG VQD media bootstraps, repeat Startpage `sc`, Wikipedia enrichment, Brave/Google cookies, Google/Yahoo redirect cleanup, and Yahoo/Yandex request-time randomness; fake `ddgs.base.HttpClient` forbids external requests |
 | 2026-07-20 | Complete active-engine request/response matrix (task 2.5) | 79 sanitized synthetic fixtures cover all 16 active category/engine pairs with option-bearing success, empty/malformed 200, and 503/`None`; capturer rejects frozen-registry pair missing required path |
-| 2026-07-20 | Complete extraction fixture corpus (task 2.6) | Nine sanitized loopback-only fixtures freeze raw bytes/text, Markdown/plain/rich output, unknown-format fallback, 503 error, selected response property, and invalid-UTF-8 behavior; no Go renderer is approved yet |
+| 2026-07-20 | Complete extraction fixture corpus (task 2.6) | Nine sanitized loopback-only fixtures freeze raw bytes/text, Markdown/plain/rich output, unknown-format fallback, 503 error, selected response property, and invalid-UTF-8 behavior |
 | 2026-07-20 | Make fixture sanitation executable (task 2.7) | Capturer audits/rejects URL userinfo, unapproved loopback, local paths, auth headers, and secret/session/token-like cookies; manual corpus audit found only synthetic/public values and no live payload or credentials |
 | 2026-07-20 | Approve Helium for internal XPath adapter (task 4.1) | `github.com/lestrrat-go/helium v0.6.0` matched all 14 frozen lxml fixtures and upstream `html`/`xpath1` race tests; pure Go core, MIT license, no enabled cgo path. Reject htmlquery and cgo libxml2 binding; adapter remains TDD pending |
 | 2026-07-20 | Complete parser TDD gate (tasks 4.2–4.5) | `internal/parser` preserves 14 lxml XPath contracts plus 7 JSON contracts with `UseNumber`; cgo-off, race x20, concurrent-document reads, and representative 100x benchmarks pass. Parser remains an offline syntax/XPath boundary, not transport or engine proof. |
@@ -332,11 +333,13 @@ Verification recorded on 2026-07-20:
 | 2026-07-21 | Complete Anna's Archive adapter gate (task 6.8) | Fixture RED/GREEN/REFACTOR proves one process-lifetime archive TLD, immutable adapter URL, ordered `q,page` GET (including page zero), comment delimiter removal, nil/empty/malformed distinctions, and source base-prefix repair even for absolute URLs. Full tests/race, adapter race stress x50, cgo-off, `make verify`, strict OpenSpec validation, and the 363-fixture oracle pass. Browser fingerprint proof and public composition remain intentionally open. |
 | 2026-07-21 | Complete disabled text Bing regression gate (task 6.9) | Direct frozen-source fixture proves `Bing.disabled=True` metadata, its absence from active text names, and explicit `backend="bing"` fallback to active `auto` after two shuffle calls. This task intentionally added no production code or active adapter; test-only TDD GREEN is existing behavior, with RED/GREEN production phases N/A. Focused race x20, full acceptance, and the 364-fixture oracle pass. |
 | 2026-07-25 | Complete category selector/scheduler differential gate (task 6.10) | Frozen synthetic engines drive every active category through explicit/comma, `auto`, `all`, invalid fallback, provider collisions, empty/error recovery, timeout/no-result, and max-result branches. RED caught missing common/category-keyword forwarding and source timeout-cause shape; scheduler now owns immutable ordered source parameters, copied again per worker. Focused race x50, full acceptance, and the 365-fixture oracle pass. Real adapter/public-client composition remains intentionally open. |
-| 2026-07-25 | Complete extraction RED contract (task 7.3) | `internal/extract/extract_test.go` fails only against the unavailable extractor, after proving 9 frozen extract fixtures plus constructor forwarding, GET, raw byte/text ownership, lazy rendering, unknown fallback, cancellation, and fetch-error propagation. It is intentionally not green until renderer gate resolves. |
-| 2026-07-25 | Reject current Go extract renderers (task 7.4 remains blocked) | Resolved `primp 1.3.1` calls Rust `html2text 0.16.7` width 100/default/Trivial/Rich decorators. Three MIT Go candidates diverge on frozen heading/link/list output; the exact MIT Rust crate is ~11.5k lines and this environment has no cargo. No cgo/subprocess/best-effort fallback is approved. |
+| 2026-07-25 | Complete extraction TDD (tasks 7.3–7.5) | RED fixture tests preceded `Extractor`; GREEN retains source GET/config, bytes/text/status/cancellation/error behavior and practical HTML renderer; root uses fresh isolated transport per `Extract` call. Focused and full race/CGO-off tests pass. |
+| 2026-07-25 | Accept practical Go extraction renderer | Source `primp` Rust output differs. User chose `html-to-markdown v1.6.0` after review; Go contract covers its Markdown/plain/rich output, never claims source formatting parity. |
 | 2026-07-25 | Complete browser-fingerprint evidence gate (task 5.5) | Endpoint-explicit tagged observations show both Go transports negotiate HTTP/2 but expose the same standard Go JA3/JA4/Akamai hashes, distinct from observed source `primp` and `HttpClient2` values. `docs/fingerprint-gate.md` maps every active engine to its still-unproven source client; no dependency or parity claim was added. |
 | 2026-07-25 | Complete public composition gate (task 7.7) | Root composition selects frozen metadata lazily, eagerly constructs all selected adapters before scheduler workers, caches adapters per public client under a narrow lock, and gives every engine a fresh isolated transport. DuckDuckGo text gets its separate H2 client plus the frozen full weighted `fake-useragent 2.2.0` pool, decoded/checksummed once per Go process. Public boundary preserves ordered keyword forwarding and maps scheduler timeout/generic failures to classifiable `DDGSError` values. |
-| 2026-07-25 | Complete completed-package refactor/audit gate (task 7.6) | Applied clean-code/simplification review across every green package. No behavior-preserving production rewrite was justified against the differential corpus; corrected stale public Godoc/README that claimed search was unimplemented. Non-extract unit/race/CGO-off, oracle, vet, formatting, and OpenSpec pass. Extract is excluded only because it remains intentionally RED-only under the renderer block. |
+| 2026-07-25 | Complete completed-package refactor/audit gate (task 7.6) | Applied clean-code/simplification review across every green package. No behavior-preserving production rewrite was justified against the differential corpus; corrected public Godoc/README for practical extraction and fingerprint limits. Full unit/race/CGO-off, oracle, vet, formatting, and OpenSpec pass. |
+| 2026-07-25 | Approve practical extraction renderer scope exception | User authorized `github.com/JohannesKaufmann/html-to-markdown v1.6.0` for `Extract` rendered formats after reviewing frozen differences. This unblocks task 7.5. Raw fetch, bytes, decoded text, configuration, cancellation, and error behavior remain source contracts; rendered Markdown/plain/rich are explicitly not claimed as `primp`-identical. |
+| 2026-07-25 | Complete practical-release review (task 8.6) | User explicitly accepted a practical release after reviewing renderer and fingerprint limits. All revised OpenSpec tasks are complete; documentation must continue to prohibit claims of a strict `primp` renderer or browser TLS/H2 fingerprint/complete 1:1 parity. The change is releasable as a tested Go module, but must not be marketed as strict source equivalence. |
 
 ## Core TDD evidence — 2026-07-20
 

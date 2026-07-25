@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/jcastillo/goddgs/internal/engine"
+	"github.com/jcastilloa/goddgs/internal/engine"
 )
 
 // BackendSelector preserves frozen Python backend selection independently from

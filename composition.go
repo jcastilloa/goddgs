@@ -3,12 +3,14 @@ package ddgs
 import (
 	"context"
 	"errors"
+	"net/http"
 	"strings"
 	"sync"
 
-	"github.com/jcastillo/goddgs/internal/engine"
-	"github.com/jcastillo/goddgs/internal/search"
-	"github.com/jcastillo/goddgs/internal/transport"
+	"github.com/jcastilloa/goddgs/internal/engine"
+	"github.com/jcastilloa/goddgs/internal/extract"
+	"github.com/jcastilloa/goddgs/internal/search"
+	"github.com/jcastilloa/goddgs/internal/transport"
 )
 
 type composedEngineFactory interface {
@@ -58,13 +60,13 @@ func (executor *composedExecutor) search(ctx context.Context, request searchRequ
 
 	metadata, err := executor.selector.Select(string(request.category), request.config.backend)
 	if err != nil {
-		return nil, publicSearchError(err)
+		return nil, publicOperationError(err)
 	}
 	adapters := make([]engine.Searcher, len(metadata))
 	for index, entry := range metadata {
 		adapters[index], err = executor.engineFor(entry)
 		if err != nil {
-			return nil, publicSearchError(err)
+			return nil, publicOperationError(err)
 		}
 	}
 	engines := make([]search.ScheduledEngine, len(metadata))
@@ -86,12 +88,12 @@ func (executor *composedExecutor) search(ctx context.Context, request searchRequ
 		Parameters: sourceParameters(request.config.sourceKeywords),
 	}, engines)
 	if err != nil {
-		return nil, publicSearchError(err)
+		return nil, publicOperationError(err)
 	}
 	return rawResults(results), nil
 }
 
-func publicSearchError(err error) error {
+func publicOperationError(err error) error {
 	if err == nil || errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 		return err
 	}
@@ -102,8 +104,29 @@ func publicSearchError(err error) error {
 	return newDDGSError(kind, err.Error(), err)
 }
 
-func (executor *composedExecutor) extract(context.Context, extractRequest) (ExtractResult, error) {
-	return ExtractResult{}, errFacadeUnavailable
+func (executor *composedExecutor) extract(ctx context.Context, request extractRequest) (ExtractResult, error) {
+	if err := ctx.Err(); err != nil {
+		return ExtractResult{}, err
+	}
+	if executor == nil {
+		return ExtractResult{}, errFacadeUnavailable
+	}
+
+	config := transportConfig(executor.config)
+	fetcher, err := extract.NewTransportFetcher(config)
+	if err != nil {
+		return ExtractResult{}, publicOperationError(err)
+	}
+	result, err := extract.New(fetcher, extract.NewPracticalRenderer()).Extract(ctx, extract.Request{
+		Method: http.MethodGet,
+		URL:    request.url,
+		Format: request.config.format,
+		Config: config,
+	})
+	if err != nil {
+		return ExtractResult{}, publicOperationError(err)
+	}
+	return ExtractResult{URL: result.URL, Content: result.Content}, nil
 }
 
 func searchEngine(adapter engine.Searcher) search.EngineSearch {

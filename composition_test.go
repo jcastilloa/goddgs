@@ -5,14 +5,16 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"reflect"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/jcastillo/goddgs/internal/engine"
-	"github.com/jcastillo/goddgs/internal/transport"
+	"github.com/jcastilloa/goddgs/internal/engine"
+	"github.com/jcastilloa/goddgs/internal/transport"
 )
 
 type facadeCompositionFixture struct {
@@ -280,6 +282,43 @@ func TestComposedExecutor_ConcurrentSearchesReuseOneCachedAdapter(t *testing.T) 
 	}
 	if got, want := factory.names(), []string{"fixture"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("constructed engines = %#v, want %#v", got, want)
+	}
+}
+
+func TestDDGS_ExtractUsesIsolatedLocalTransport(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodGet {
+			t.Errorf("method = %s, want GET", request.Method)
+		}
+		writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = writer.Write([]byte(`<h1>Fixture heading</h1><p>Hello <a href="https://target.example/path">link</a>.</p><ul><li>One</li><li>Two</li></ul>`))
+	}))
+	defer server.Close()
+
+	result, err := New().Extract(t.Context(), server.URL)
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+	if result.URL != server.URL {
+		t.Fatalf("URL = %q, want %q", result.URL, server.URL)
+	}
+	if result.Content != "# Fixture heading\n\nHello [link](https://target.example/path).\n\n* One\n* Two" {
+		t.Fatalf("Content = %#v", result.Content)
+	}
+}
+
+func TestDDGS_ExtractClassifiesNon200Response(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		writer.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	defer server.Close()
+
+	_, err := New().Extract(t.Context(), server.URL)
+	if !errors.Is(err, ErrDDGS) {
+		t.Fatalf("Extract error %v does not classify as ErrDDGS", err)
+	}
+	if want := "Failed to fetch " + server.URL + ": HTTP 503"; err.Error() != want {
+		t.Fatalf("Extract error = %q, want %q", err, want)
 	}
 }
 

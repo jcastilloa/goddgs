@@ -14,6 +14,15 @@ Parser dependency notice:
 
 - `github.com/lestrrat-go/helium` v0.6.0, Copyright (c) 2015 lestrrat, MIT.
 
+Extraction renderer dependency notices:
+
+- `github.com/JohannesKaufmann/html-to-markdown` v1.6.0, Copyright (c) 2018
+  Johannes Kaufmann, MIT.
+- `github.com/PuerkitoBio/goquery` v1.9.2, Copyright (c) 2012-2021 Martin
+  Angers & Contributors, BSD-3-Clause.
+- `github.com/andybalholm/cascadia` v1.3.2, Copyright (c) 2011 Andy Balholm,
+  BSD-2-Clause.
+
 DuckDuckGo text User-Agent data notice:
 
 - Derived from `fake-useragent` v2.2.0, Copyright (c) hellysmile@gmail.com,

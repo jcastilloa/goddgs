@@ -10,7 +10,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/jcastillo/goddgs/internal/engine"
+	"github.com/jcastilloa/goddgs/internal/engine"
 )
 
 var errEmptyCacheFields = errors.New("At least one cache_field must be provided")

@@ -89,7 +89,7 @@ equivalent. This closes task 5.5 only as an evidence gate: each affected engine
 is explicitly still incomplete in that dimension. No module or cgo dependency
 was added by the observation.
 
-## Extract renderers — no candidate approved, 2026-07-25
+## Extract renderers — practical renderer approved by scope exception, 2026-07-25
 
 Frozen extraction is not a generic HTML-to-text operation. The resolved source
 dependency `primp 1.3.1` is pinned to upstream tag `v1.3.1`
@@ -104,7 +104,7 @@ depends on `html5ever`/`tendril`/`unicode-width`.
 
 | Candidate | Version / license | Frozen fixture result | Decision |
 | --- | --- | --- | --- |
-| `github.com/JohannesKaufmann/html-to-markdown` | `v1.6.0`, MIT, `h1:04VXMiE50YYfCfLboJCLcgqF5x+rHJnb1ssNmqpLH/k=` | Markdown uses inline `[link](URL)` and `-` bullets, while source emits footnote links and `*` bullets; it does not provide source-equivalent plain/rich decorators. | Rejected. |
+| `github.com/JohannesKaufmann/html-to-markdown` | `v1.6.0`, MIT, `h1:04VXMiE50YYfCfLboJCLcgqF5x+rHJnb1ssNmqpLH/k=` | Markdown uses inline `[link](URL)` and `-` bullets by default, while source emits footnote links and `*` bullets; it does not provide source-equivalent plain/rich decorators. | **Accepted for practical extraction only**, by explicit user authorization on 2026-07-25. Kept behind `internal/extract`; frozen differences remain documented. |
 | `github.com/k3a/html2text` | `v1.4.0`, MIT, `h1:e4xarrVgZST+h+5C/fbA6AI49VFDSlEWMmIcDWcxsd0=` | Produces CRLF, URL-bearing text, and extra blank lines; source plain has neither link URL nor those line breaks. | Rejected. |
 | `github.com/jaytaylor/html2text` | `v0.0.0-20260303211410-1a4bdc82ecec`, MIT, `h1:DrV+GDNKHeHyfqEZaoxQoHlWcgTBiaJ8ZUyNyd5vvkY=` | Produces underline-style headings and `link ( URL )`; source emits ATX headings and source-specific decorator output. It also brings table-rendering dependencies. | Rejected. |
 
@@ -112,10 +112,20 @@ All probes use only `extract.html-*` synthetic fixtures in a temporary module;
 none changed `go.mod` or made a source-engine request. `cargo` is unavailable
 in this environment, and cgo/external-renderer shipping is not approved.
 Implementing a faithful internal port of the Rust crate would be a substantial
-new OpenSpec decision, not a safe fallback. Therefore no renderer dependency
-or extraction implementation is approved; task 7.5 remains blocked until a
-candidate matches the expanded frozen renderer corpus or the project explicitly
-authorizes a reviewed renderer-port scope.
+new OpenSpec decision, not a safe fallback. User explicitly chose the practical
+renderer exception instead: raw fetch/text/bytes/error semantics remain frozen
+contracts; `text_markdown`, `text_plain`, and `text_rich` use reviewed Go
+output and are not source-render-compatible claims. `html-to-markdown` brings
+`goquery` and its reviewed Go dependencies; pin through Go modules, run its
+output through focused local contracts, and update only after a new license and
+behavior review.
+
+`html-to-markdown` is MIT (copyright 2018 Johannes Kaufmann). Its transitive
+runtime parser dependencies are `goquery v1.9.2` (BSD-3-Clause) and `cascadia
+v1.3.2` (BSD-2-Clause); all three licenses were read from the pinned module
+cache on 2026-07-25 and are listed in `NOTICE.md`. None use cgo, access the
+network, or cross the public API. The converter is created per render call, so
+HTML conversion does not share mutable request state.
 
 ## DuckDuckGo text User-Agent pool — vendored data approved, 2026-07-25
 

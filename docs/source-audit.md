@@ -155,7 +155,7 @@ algorithm and test controlled scheduler/fixture cases.
 
 | Dependency | Declared role | Port implication |
 | --- | --- | --- |
-| `primp>=1.2.3` | default HTTP client, random browser/OS impersonation, certificates/proxy, rendered text | `net/http` has a different TLS/HTTP fingerprint; prove replacement per engine |
+| `primp>=1.2.3` | default HTTP client, random browser/OS impersonation, certificates/proxy, rendered text | `net/http` has a different TLS/HTTP fingerprint; source rendering has a documented user-authorized practical exception |
 | `lxml>=4.9.4` | HTML parsing and XPath | choose only after lxml-vs-Go selector corpus passes |
 | `httpx[http2,socks,brotli]>=0.28.1` | temporary DuckDuckGo text client | HTTP/2, SOCKS, compression and redirect behavior need an equivalent |
 | `httpcore`, `h2` | imported by `http_client2.py` patch | source overrides H2 initial settings per request; Go solution must not globally patch shared state |
@@ -187,13 +187,13 @@ transport, TLS/fingerprint, or engine-specific post-processing parity.
 | Severity | Blocker | Required response |
 | --- | --- | --- |
 | critical | Browser TLS/HTTP2 fingerprint differences can cause engine blocks | design/prove a Go transport; no fake parity claim with default `net/http` |
-| critical | `primp` rendered markdown/plain/rich output lacks a selected Go equivalent | create differential fixtures and select/implement renderer before `extract()` completion |
+| accepted exception | `primp` rendered markdown/plain/rich differs from Go output | preserve source fetch/bytes/text/error behavior; use documented practical renderer and never claim its strings are source-identical |
 | critical | lxml XPath/recovery may differ | fixture corpus for all selectors; no hand-rewritten selectors without evidence |
 | high | Cached mutable engines and global `HttpClient2.Patch` are unsafe under concurrent calls | isolate request state, close bodies, use contexts, race-test; document any semantic decision |
 | high | Live search pages and anti-bot defenses change independently of code | offline golden tests primary; tagged slow/rate-limited integration secondary |
 | high | Dynamic Python result values do not fit naïve Go structs | retain raw heterogeneous values and specify typed conversions explicitly |
 | medium | Source version field differs from source commit | pin SHA and update only with an explicit source-diff audit |
-| medium | Final Go module path unknown | decide before publishing first public version |
+| resolved | Final Go module path | `github.com/jcastilloa/goddgs`, confirmed before public release |
 | medium | Random values/UAs/TLDs/tokens affect requests | inject deterministic random source in tests; use source-equivalent secure randomness at runtime |
 
 ## Verification plan

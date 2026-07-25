@@ -2,15 +2,16 @@
 
 Go library port of [deedy5/ddgs](https://github.com/deedy5/ddgs), focused only on embeddable metasearch functionality.
 
-Status: public search composition is implemented against frozen offline source
-contracts. Extraction rendering and browser TLS/HTTP2 fingerprint parity remain
-explicitly unapproved; this module must not yet be described as a complete 1:1
-port or production-ready release.
+Status: public search composition and extraction are implemented against frozen
+offline source contracts. Rendered extraction formats are a documented practical
+exception; browser TLS/HTTP2 fingerprint parity remains unproven. Do not
+describe this module as a complete 1:1 port or production-ready release.
 
 ## Scope
 
 - Go module for importing from Go programs.
-- Text, image, news, video, book search, and content extraction parity with source `ddgs`.
+- Text, image, news, video, book search, and source-compatible content fetching
+  with practical HTML rendering.
 - Engine request construction, parsing, normalization, aggregation, ranking, proxy, TLS, and timeout behavior.
 
 Excluded: HTTP API server, CLI, MCP server, DHT/cache service, Docker service, and unrelated application wiring.
@@ -36,7 +37,7 @@ OpenSpec change [`port-ddgs-python-library`](openspec/changes/port-ddgs-python-l
 ├── doc.go                 # Public package: ddgs
 ├── internal/
 │   ├── engine/            # Source-engine adapters and registry
-│   ├── extract/           # HTML/content rendering parity
+│   ├── extract/           # Source fetch lifecycle + practical HTML rendering
 │   ├── normalize/         # URL, text, and date normalization
 │   ├── parser/            # HTML/XPath and JSON extraction
 │   ├── search/            # Search orchestration, aggregation, ranking
@@ -48,7 +49,7 @@ OpenSpec change [`port-ddgs-python-library`](openspec/changes/port-ddgs-python-l
 └── openspec/
 ```
 
-`github.com/jcastillo/goddgs` is a provisional module path. Confirm it before the first published release.
+Module path: `github.com/jcastilloa/goddgs`.
 
 ## Commands
 
@@ -60,10 +61,13 @@ make verify
 make integration # networked tests; opt-in only
 ```
 
-`make verify` is intentionally red while the frozen extraction renderer gate is
-blocked; see [docs/dependency-decisions.md](docs/dependency-decisions.md). The
-search/parser/transport packages pass their offline unit and race suites without
-external engine requests.
+See [docs/integration.md](docs/integration.md) before `make integration`: it
+serializes five minimal live smoke requests and remains separate from default
+test commands.
+
+`make verify` is fully offline and makes no external engine requests. See
+[docs/dependency-decisions.md](docs/dependency-decisions.md) for the approved
+practical extraction-rendering exception and remaining fingerprint limitation.
 
 ## License and attribution
 

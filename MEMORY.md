@@ -674,3 +674,14 @@ Verification recorded on 2026-07-20:
   TDD RED→GREEN→REFACTOR, `clean-code`, `go-code-simplification`,
   `go-concurrency-patterns`, `go-debugger-pro`, and `openspec-apply-change`.
   Published in `ca7c613`.
+- **OpenSpec archive (2026-07-26):** synced and archived completed
+  `port-ddgs-python-library` and `randomize-browser-profiles` as
+  `openspec/changes/archive/2026-07-25-*`. The library change created the
+  canonical content-extraction, module, parity-verification, and
+  search-engine specs; randomization created its profile spec and updated the
+  actual `Practical browser-profile transport` requirement. The historical
+  randomization delta named an obsolete module requirement, so it was
+  reconciled against that canonical transport requirement before archival; no
+  production code changed. `openspec validate --all --strict --no-interactive`
+  passed 7/7 and `openspec list --json` returned no active changes. Archive
+  sync committed and pushed as `5bd75b3`.

@@ -6,6 +6,32 @@ verification result.
 
 ## Current state — 2026-07-25
 
+- **Handoff status:** all OpenSpec work is complete: `port-ddgs-python-library`
+  is **56/56** and `randomize-browser-profiles` is **15/15**. Published
+  baseline is `ca7c613` (`feat: randomize coherent browser profiles`) on
+  `origin/master`; worktree was clean immediately after publishing. Do not
+  restart implementation from the historical task lists below.
+- **Next concrete action:** only opt-in functional connectivity checks remain.
+  The user will run them because they contact real search engines:
+  `make integration`. Do not run that target without explicit rate-limit/network
+  authorization. No development task is currently open. If a live engine fails,
+  open a focused OpenSpec change, capture sanitized evidence, and preserve the
+  frozen source contract before changing an adapter or transport.
+- **Known scoped exceptions:** `Extract` Markdown/plain/rich rendering is the
+  user-authorized practical renderer exception; raw fetch/bytes/text/errors
+  remain frozen-source contracts. DuckDuckGo text's separate temporary
+  `HttpClient2` TLS/H2 randomization remains unported. These are the only
+  material compatibility limits recorded at handoff; base `primp.HttpClient`
+  uses the complete 23×5 coherent profile catalog.
+- **Final offline verification (2026-07-25):** passed `gofmt -d`, `git diff
+  --check`, `go vet ./...`, `go test -count=1 -timeout=120s ./...`, `go test
+  -race -count=1 -timeout=180s ./...`, `CGO_ENABLED=0 go test -count=1
+  -timeout=120s ./...`, integration-tag compilation and opt-out smoke,
+  `tools/reference_capture.py --check`,
+  `tools/capture_browser_profiles.py --verify-http-connect`, `make verify`,
+  strict validation of both OpenSpec changes, and 80.2% line coverage for
+  `internal/transport`. Controlled diagnostic only (no engine) matched
+  explicit Python/Go Chrome, Edge, Opera, Safari and Firefox observations.
 - Target: Go library port of DDGS only. No API server, CLI, MCP, DHT, cache,
   Docker service, or executable entrypoint.
 - Module scaffold exists. Root package is `ddgs`; final module path is
@@ -72,27 +98,27 @@ verification result.
   long-form timelimit, metadata/dimension errors, and source provider collision;
   DuckDuckGo preserves header order, VQD/bootstrap/error order, six filter
   slots, raw image values, and result-root errors. They are composed through
-  task 7.7 but remain without browser/TLS-H2 fingerprint proof.
+  task 7.7 and use the completed base `primp` 23×5 browser-profile transport.
 - Task 6.6 complete: News adapters use injected request ports and per-instance
   UTC clock seams. Bing preserves payload mapping, source local-zone absolute
   date conversion, localized relative dates, and image truncation; DuckDuckGo
   preserves VQD-before-safe validation and raw dynamic `results` iteration;
   Yahoo preserves fixed-relative-date units, URL/image/source cleanup, and its
-  broad partial postprocess failure. They are composed through task 7.7 but
-  remain without browser/TLS-H2 fingerprint proof.
+  broad partial postprocess failure. They are composed through task 7.7 and use
+  the completed base `primp` 23×5 browser-profile transport.
 - Task 6.7 complete: DuckDuckGo Videos uses an injected request port and
   preserves VQD-before-safe validation, mandatory four-slot filters, page
   stride 60, nested heterogeneous video values, and raw iterable/attribute
   errors. Video filters cross the façade as ordered `resolution`, `duration`,
   and `license_videos` keywords; public `max_results` remains scheduler-only.
-  It is composed through task 7.7 but remains without browser/TLS-H2
-  fingerprint proof.
+  It is composed through task 7.7 and uses the completed base `primp` 23×5
+  browser-profile transport.
 - Task 6.8 complete: Anna's Archive uses a private process-lifetime,
   synchronized TLD selector and an immutable per-adapter search URL. Fixtures
   preserve its ordered GET pagination, HTML comment delimiter removal,
   nil-versus-empty response boundary, and the intentional base prefix on an
-  already-absolute URL. It is composed through task 7.7 but remains without
-  browser/TLS-H2 fingerprint proof.
+  already-absolute URL. It is composed through task 7.7 and uses the completed
+  base `primp` 23×5 browser-profile transport.
 - Task 6.9 complete: disabled text Bing is captured as source metadata outside
   the active text registry. Explicit `backend="bing"` runs the source invalid
   backend fallback to `auto` and performs two shuffle calls; no active Go Bing
@@ -616,3 +642,19 @@ Verification recorded on 2026-07-20:
   20–30 repetitions. A controlled TLS diagnostic (not an engine search)
   observed HTTP/2, source Chrome JA4/Akamai H2, and GREASE-varying JA3 values
   including `0482d5…`; no live search-engine request ran.
+- **Acceptance randomize-browser-profiles (2026-07-25):** source chronology
+  was corrected to the Python binding's OS-first (`5`) then browser-version
+  (`23`) draws. The 115-pair `primp 1.3.1` loopback asset is SHA/provenance
+  verified and passes target-side HTTP CONNECT verification. All profiles pass
+  fresh uTLS instantiation and local TLS/H2 wire tests, including headers,
+  SETTINGS/order, windows, priority, pseudo order, reuse, cancellation and
+  failed-dial retry. Direct, PEM, disabled-verification, HTTP(S) CONNECT and
+  SOCKS target routes preserve the same full selected bundle; plain HTTP stays
+  standard. Final full/race/CGO-off tests, fixture verification, `make verify`
+  and strict validation pass; transport coverage is 80.2%. The controlled
+  diagnostic (not a search engine) matched explicit source Chrome 146/Windows,
+  Edge 148/Linux, Opera 131/Android, Safari 26.3/macOS and Firefox 148/iOS.
+  Skills applied: `golang-pro`, `go-clean-ddd-hexagonal`, `golang-testing`,
+  TDD RED→GREEN→REFACTOR, `clean-code`, `go-code-simplification`,
+  `go-concurrency-patterns`, `go-debugger-pro`, and `openspec-apply-change`.
+  Published in `ca7c613`.

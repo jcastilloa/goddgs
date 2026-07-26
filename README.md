@@ -1,3 +1,5 @@
+![goddgs — Powerful Metasearch Client for Go](assets/goddgs-header.png)
+
 # goddgs
 
 `goddgs` is a Go port of [`deedy5/ddgs`](https://github.com/deedy5/ddgs), the

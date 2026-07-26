@@ -4,16 +4,39 @@ Persistent project state. Read before changing behavior. Update after every
 material decision, completed OpenSpec task, source-baseline change, blocker, or
 verification result.
 
-## Current state — 2026-07-25
+## Current state — 2026-07-26
 
 - **Handoff status:** historical changes `port-ddgs-python-library` (**56/56**)
-  and `randomize-browser-profiles` (**15/15**) remain complete. Active change
-  `port-ddg-session-fingerprint` (**12/12**) was synced and archived at
-  `openspec/changes/archive/2026-07-25-port-ddg-session-fingerprint/`. Do not
-  restart historical task lists or run a live search request.
-- **Next concrete action:** no migration development task remains. A controlled
-  fingerprint observation still needs an explicitly supplied endpoint;
-  `make integration` contacts real engines and remains user-authorized only.
+  and `randomize-browser-profiles` (**15/15**) remain complete. Completed
+  `add-live-api-examples` (**6/6**) synced its three canonical requirements and
+  is archived at `openspec/changes/archive/2026-07-26-add-live-api-examples/`.
+  `port-ddg-session-fingerprint` (**12/12**) remains synced and archived at
+  `openspec/changes/archive/2026-07-25-port-ddg-session-fingerprint/`.
+- **Next concrete action:** no migration development task remains. New examples
+  are ready for user-run requests.
+- **Live API examples (2026-07-26):** `examples/{text,images,news,videos,books,extract}`
+  are standalone programs using public `ddgs` APIs, bounded contexts/client
+  timeouts, explicit active backends, compact limits, and JSON output. They
+  are documentation source, not a library CLI or default test. Shared
+  `examples/internal/output` preserves heterogeneous `RawResult` values via
+  JSON and reports errors to standard error.
+- **Example verification (2026-07-26):** `gofmt`, `git diff --check`, `go build
+  ./examples/...`, and `make verify` passed. Test design/TDD RED→GREEN→REFACTOR
+  are genuinely N/A: this change adds no production behavior or deterministic
+  test contract, and live output cannot be a Go `Example` assertion. `golang-pro`,
+  `clean-code`, `go-code-simplification`, and `golang-testing` reviews found
+  focused, idiomatic documentation code; `go-clean-ddd-hexagonal` is N/A
+  (no API/package boundary change), while `go-concurrency-patterns` and
+  `go-debugger-pro` are N/A for the new code (no owned goroutine, shared state,
+  response body, or transport lifecycle). Full existing `make verify` race
+  coverage passed.
+- **Live observations (2026-07-26):** user-authorized `go run ./examples/text`
+  and `go run ./examples/news` both made external DuckDuckGo requests and
+  returned `No results found.`. User-authorized `make integration` ran all
+  five categories: text/images also returned no results; Anna's Archive tried
+  `127.0.0.1:443` and was refused; News and Videos passed. These are current
+  endpoint/network observations only, not offline fixture, parity, or code
+  failures. Do not make an external result look deterministic.
 - **Known scoped exceptions:** `Extract` Markdown/plain/rich rendering is the
   user-authorized practical renderer exception; raw fetch/bytes/text/errors
   remain frozen-source contracts. DDG `HttpClient2` now has local TLS/H2
@@ -38,11 +61,13 @@ verification result.
   `-race -count=20` passed concurrent clients, reuse/reconnect and cancellation.
   The concurrency/debugger review found no shared mutable profile, response-body,
   cancellation or goroutine-lifecycle hazard. No external request ran.
-- Target: Go library port of DDGS only. No API server, CLI, MCP, DHT, cache,
-  Docker service, or executable entrypoint.
+- Target: Go library port of DDGS only. No API server, supported CLI, MCP,
+  DHT, cache, Docker service, or application entrypoint. Standalone `examples/`
+  `main` packages are documentation source, not a product command surface.
 - Module scaffold exists. Root package is `ddgs`; final module path is
   `github.com/jcastilloa/goddgs`.
-- Current OpenSpec work is archived; DDG session transport specs live in
+- All OpenSpec work is archived. Canonical live-example requirements live in
+  `openspec/specs/live-api-examples/`; DDG session transport specs live in
   `openspec/specs/duckduckgo-text-session-transport/` and
   `openspec/specs/duckduckgo-text-fingerprint-verification/`.
 - Public façade/configuration, normalizers, ordered result aggregation, ranker,
@@ -67,8 +92,8 @@ verification result.
   Linux, macOS, Windows), then browser variant. Local wire tests cover all 115
   pairs; controlled diagnostics match explicit Chrome, Edge, Opera, Safari and
   Firefox source observations. DuckDuckGo now has its own source-shaped local
-  TLS/H2 profile path; no live search-engine request has been made by this
-  work.
+  TLS/H2 profile path; no live search-engine request ran during that transport
+  work before the separately user-authorized example observations above.
 - Tasks 2.1–2.7 are complete. The isolated Python oracle lives temporarily at
   `/tmp/goddgs-reference-a12929a`; exact resolved packages and rebuild steps
   are in `docs/reference-environment.md`. It made no external engine request.
@@ -380,6 +405,7 @@ Verification recorded on 2026-07-20:
 | 2026-07-25 | Complete practical-release review (task 8.6) | User explicitly accepted a practical release after reviewing renderer and fingerprint limits. All revised OpenSpec tasks are complete; documentation must continue to prohibit claims of a strict `primp` renderer or browser TLS/H2 fingerprint/complete 1:1 parity. The change is releasable as a tested Go module, but must not be marketed as strict source equivalence. |
 | 2026-07-25 | Complete practical browser transport and final review (tasks 5.6, 8.7) | Historical fixed-Chrome transport proof: `sardanioss/utls v1.10.3` supplied the first isolated direct-HTTPS Chrome 146 ClientHello/H2 implementation. It is superseded by the completed 23×5 browser-profile change below; DuckDuckGo temporary `HttpClient2` remains a distinct limit. |
 | 2026-07-25 | Complete source-shaped browser-profile randomization | `primp-python` chooses operating system first (`android`, `ios`, `linux`, `macos`, `windows`) then one of 23 browser variants. Go now retains the same two independent draws as one immutable 23×5 TLS/ALPN/H2/header identity per base client, across direct, PEM, verify-off, HTTP(S) CONNECT and SOCKS HTTPS target routes. The 115-pair loopback capture asset is checksum/provenance verified; every bundle passes uTLS instantiation and local wire tests. TDD RED exposed the former fixed-profile/wrong-draw-order gap, then GREEN/REFACTOR unified catalog, TLS and H2 ownership. `golang-pro`, hexagonal boundary review, `golang-testing`, TDD RED→GREEN→REFACTOR, clean-code and simplification applied. Concurrency patterns/debugger review covered per-origin cache, cancellation, retry and reuse; focused `-race -count=10` passes. Final acceptance passed formatter, diff check, vet, full tests/race/CGO-off, integration-tag compile/opt-out, Python fixture/profile verification, `make verify`, strict OpenSpec validation and 80.2% transport coverage. Controlled diagnostics match explicit `primp` Chrome 146/Windows, Edge 148/Linux, Opera 131/Android, Safari 26.3/macOS and Firefox 148/iOS observations. No search engine request ran. |
+| 2026-07-26 | Add and archive live API examples | Six `examples/` programs document all public categories and extraction without changing library behavior. `go build ./examples/...` and `make verify` pass. User-authorized live requests exposed current DuckDuckGo/Anna's Archive availability failures while integration News/Videos passed; examples preserve those errors and documentation states live output is not parity evidence. `openspec archive -y add-live-api-examples` added the three canonical `live-api-examples` requirements and archived the completed change. |
 
 ## Core TDD evidence — 2026-07-20
 

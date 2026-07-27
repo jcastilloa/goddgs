@@ -65,3 +65,10 @@ and memory/audit update.
 #### Scenario: New upstream release appears
 - **WHEN** contributor wants newer upstream commit
 - **THEN** contributor SHALL create or update approved OpenSpec change before changing source SHA or contracts
+
+### Requirement: Diagnostics have deterministic offline and race evidence
+The diagnostic extension SHALL have offline tests for successful, empty, and failed engine completion events, plus race-enabled verification for concurrent callbacks.
+
+#### Scenario: Diagnostic scheduler code changes
+- **WHEN** scheduler completion diagnostics are added or modified
+- **THEN** focused offline tests and `go test -race ./...` SHALL pass without external engine requests

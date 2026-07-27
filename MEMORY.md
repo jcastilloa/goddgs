@@ -6,6 +6,8 @@ verification result.
 
 ## Current state — 2026-07-26
 
+- **Search backend diagnostics (2026-07-27):** opt-in `WithSearchDiagnostics` reports every completed engine execution with backend name, provider, result count, and error. It is a Go-only observability extension for downstream orchestration; default raw result shape and frozen selection/scheduling/aggregation/ranking behavior remain unchanged. Completion callbacks run on scheduler workers and are completion-ordered, so callers collecting events must synchronize. Focused RED/GREEN tests plus `go test ./...`, `go test -race ./...`, `go vet ./...`, and `make verify` passed without external engine requests.
+
 - **Handoff status:** historical changes `port-ddgs-python-library` (**56/56**)
   and `randomize-browser-profiles` (**15/15**) remain complete. Completed
   `add-live-api-examples` (**6/6**) synced its three canonical requirements and

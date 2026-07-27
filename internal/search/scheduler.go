@@ -50,6 +50,14 @@ type ScheduledEngine struct {
 	Search   EngineSearch
 }
 
+// Completion describes one completed engine search.
+type Completion struct {
+	Name        string
+	Provider    string
+	ResultCount int
+	Err         error
+}
+
 // ScheduleRequest holds source scheduling inputs without normalizing their
 // omitted, zero, or negative forms.
 type ScheduleRequest struct {
@@ -62,6 +70,7 @@ type ScheduleRequest struct {
 	Parameters  []SourceParameter
 	Threads     *int
 	WaitTimeout *time.Duration
+	OnComplete  func(Completion)
 }
 
 // Scheduler coordinates source-compatible engine execution.
@@ -134,7 +143,7 @@ func (s *Scheduler) Search(ctx context.Context, request ScheduleRequest, engines
 		Page:       request.Page,
 		Parameters: request.Parameters,
 	})
-	startSchedulerWorkers(&workersGroup, workers, jobs, completions, operationContext, engineRequest)
+	startSchedulerWorkers(&workersGroup, workers, jobs, completions, operationContext, engineRequest, request.OnComplete)
 	jobsClosed := false
 	closeJobs := func() {
 		if !jobsClosed {
@@ -261,6 +270,7 @@ func startSchedulerWorkers(
 	completions chan<- schedulerCompletion,
 	ctx context.Context,
 	request EngineRequest,
+	onComplete func(Completion),
 ) {
 	for range workers {
 		group.Add(1)
@@ -275,6 +285,9 @@ func startSchedulerWorkers(
 						return
 					}
 					results, err := future.engine.Search(ctx, copyEngineRequest(request))
+					if onComplete != nil {
+						onComplete(Completion{Name: future.engine.Name, Provider: future.engine.Provider, ResultCount: len(results), Err: err})
+					}
 					completions <- schedulerCompletion{future: future, results: results, err: err}
 				}
 			}

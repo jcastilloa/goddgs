@@ -68,6 +68,14 @@ func (e *DDGSError) Is(target error) bool {
 // SearchOption configures one search operation.
 type SearchOption func(*searchConfig)
 
+// SearchDiagnostic describes one completed search backend execution.
+type SearchDiagnostic struct {
+	Backend     string
+	Provider    string
+	ResultCount int
+	Err         error
+}
+
 // ExtractOption configures one extraction operation.
 type ExtractOption func(*extractConfig)
 
@@ -100,6 +108,7 @@ type searchConfig struct {
 	page           int
 	backend        string
 	sourceKeywords []sourceKeyword
+	diagnostics    func(SearchDiagnostic)
 }
 
 type sourceKeyword struct {
@@ -162,6 +171,13 @@ func WithPage(page int) SearchOption {
 func WithBackend(backend string) SearchOption {
 	return func(config *searchConfig) {
 		config.backend = backend
+	}
+}
+
+// WithSearchDiagnostics reports each completed backend execution.
+func WithSearchDiagnostics(report func(SearchDiagnostic)) SearchOption {
+	return func(config *searchConfig) {
+		config.diagnostics = report
 	}
 }
 

@@ -78,7 +78,7 @@ func (executor *composedExecutor) search(ctx context.Context, request searchRequ
 		}
 	}
 
-	results, err := executor.scheduler.Search(ctx, search.ScheduleRequest{
+	scheduleRequest := search.ScheduleRequest{
 		Query:      request.query,
 		Region:     request.config.region,
 		SafeSearch: request.config.safeSearch,
@@ -86,7 +86,18 @@ func (executor *composedExecutor) search(ctx context.Context, request searchRequ
 		MaxResults: copyIntPointer(request.config.maxResults),
 		Page:       request.config.page,
 		Parameters: sourceParameters(request.config.sourceKeywords),
-	}, engines)
+	}
+	if request.config.diagnostics != nil {
+		scheduleRequest.OnComplete = func(completion search.Completion) {
+			request.config.diagnostics(SearchDiagnostic{
+				Backend:     completion.Name,
+				Provider:    completion.Provider,
+				ResultCount: completion.ResultCount,
+				Err:         completion.Err,
+			})
+		}
+	}
+	results, err := executor.scheduler.Search(ctx, scheduleRequest, engines)
 	if err != nil {
 		return nil, publicOperationError(err)
 	}

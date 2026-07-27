@@ -192,6 +192,53 @@ func TestComposedExecutor_ClassifiesSchedulerFailuresAtPublicBoundary(t *testing
 	}
 }
 
+func TestComposedExecutorReportsSearchDiagnostics(t *testing.T) {
+	factory := compositionFactoryFunc(func(metadata engine.Metadata, _ transport.Config) (engine.Searcher, error) {
+		return diagnosticSearcher{name: metadata.Name}, nil
+	})
+	selector := compositionSelectorFunc(func(string, string) ([]engine.Metadata, error) {
+		return []engine.Metadata{
+			{Name: "results", Category: "text", Provider: "provider-a"},
+			{Name: "empty", Category: "text", Provider: "provider-b"},
+		}, nil
+	})
+	executor := newComposedExecutor(defaultClientConfig(), factory, selector)
+	var mutex sync.Mutex
+	var diagnostics []SearchDiagnostic
+
+	_, err := executor.search(context.Background(), searchRequest{
+		category: textCategory,
+		query:    "needle",
+		config: searchConfig{
+			backend: "auto",
+			diagnostics: func(diagnostic SearchDiagnostic) {
+				mutex.Lock()
+				defer mutex.Unlock()
+				diagnostics = append(diagnostics, diagnostic)
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("search error = %v", err)
+	}
+
+	mutex.Lock()
+	defer mutex.Unlock()
+	if len(diagnostics) != 2 {
+		t.Fatalf("diagnostics = %#v, want two events", diagnostics)
+	}
+	byBackend := make(map[string]SearchDiagnostic, len(diagnostics))
+	for _, diagnostic := range diagnostics {
+		byBackend[diagnostic.Backend] = diagnostic
+	}
+	if diagnostic := byBackend["results"]; diagnostic.Provider != "provider-a" || diagnostic.ResultCount != 1 || diagnostic.Err != nil {
+		t.Errorf("results diagnostic = %#v", diagnostic)
+	}
+	if diagnostic := byBackend["empty"]; diagnostic.Provider != "provider-b" || diagnostic.ResultCount != 0 || diagnostic.Err != nil {
+		t.Errorf("empty diagnostic = %#v", diagnostic)
+	}
+}
+
 func TestComposedExecutor_ConstructsAllSelectedAdaptersBeforeScheduler(t *testing.T) {
 	fixture := loadFacadeCompositionFixture(t, "testdata/contracts/pure/pure.facade-lazy-engine-cache-and-forwarding.json")
 	selected := fixture.Result.Output.EagerAuto.InstanceNames
@@ -374,6 +421,17 @@ type compositionSearcher struct {
 
 type compositionErrorSearcher struct {
 	err error
+}
+
+type diagnosticSearcher struct {
+	name string
+}
+
+func (s diagnosticSearcher) Search(_ context.Context, _ engine.SearchRequest) ([]engine.Result, error) {
+	if s.name == "empty" {
+		return nil, nil
+	}
+	return []engine.Result{mustCompositionTextResult(s.name, "body")}, nil
 }
 
 func (s compositionErrorSearcher) Search(context.Context, engine.SearchRequest) ([]engine.Result, error) {

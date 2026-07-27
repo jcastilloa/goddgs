@@ -108,6 +108,59 @@ func TestSourceWorkerCount_MatchesFrozenFixtures(t *testing.T) {
 	}
 }
 
+func TestSchedulerReportsCompletedEngines(t *testing.T) {
+	var mutex sync.Mutex
+	var completions []Completion
+	engines := []ScheduledEngine{
+		{
+			Name: "successful", Provider: "source-a",
+			Search: func(_ context.Context, _ EngineRequest) ([]Result, error) {
+				return schedulerThreeResults(t), nil
+			},
+		},
+		{
+			Name: "empty", Provider: "source-b",
+			Search: func(_ context.Context, _ EngineRequest) ([]Result, error) {
+				return nil, nil
+			},
+		},
+		{
+			Name: "failed", Provider: "source-c",
+			Search: func(_ context.Context, _ EngineRequest) ([]Result, error) {
+				return nil, errors.New("source failed")
+			},
+		},
+	}
+
+	_, _ = NewScheduler().Search(context.Background(), ScheduleRequest{
+		Query:      "query",
+		MaxResults: intPointer(30),
+		OnComplete: func(completion Completion) {
+			mutex.Lock()
+			defer mutex.Unlock()
+			completions = append(completions, completion)
+		},
+	}, engines)
+	mutex.Lock()
+	defer mutex.Unlock()
+	if len(completions) != 3 {
+		t.Fatalf("completion count = %d, want 3", len(completions))
+	}
+	got := make(map[string]Completion, len(completions))
+	for _, completion := range completions {
+		got[completion.Name] = completion
+	}
+	if completion := got["successful"]; completion.Provider != "source-a" || completion.ResultCount != 3 || completion.Err != nil {
+		t.Errorf("successful completion = %#v", completion)
+	}
+	if completion := got["empty"]; completion.Provider != "source-b" || completion.ResultCount != 0 || completion.Err != nil {
+		t.Errorf("empty completion = %#v", completion)
+	}
+	if completion := got["failed"]; completion.Provider != "source-c" || completion.ResultCount != 0 || completion.Err == nil || completion.Err.Error() != "source failed" {
+		t.Errorf("failed completion = %#v", completion)
+	}
+}
+
 func TestScheduler_MatchesFrozenWorkerPoolBoundFixture(t *testing.T) {
 	fixture := loadSchedulerFixture(t, "../../testdata/contracts/pure/pure.scheduler-worker-pool-bound.json")
 	release := make(chan struct{})

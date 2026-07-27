@@ -8,4 +8,4 @@
 
 - [x] 2.1 Run focused tests, full tests, race tests, vet, and `make verify`.
 - [x] 2.2 Record extension/parity decision and verification evidence in `MEMORY.md`.
-- [ ] 2.3 Commit and push the library change for server consumption.
+- [x] 2.3 Commit and push the library change for server consumption.
